@@ -1,8 +1,7 @@
 export const theme = {
   colors: {
     appBackground: '#F9FAFB',
-    surfacePrimary: '#FFFFFF',
-    surfaceSubtle: '#F9FAFB',
+    surfaceSubtle: '#F3F4F6',
     borderSubtle: '#E5E7EB',
     textHeading: '#101828',
     textStrong: '#0A0A0A',
@@ -13,23 +12,6 @@ export const theme = {
     white: '#FFFFFF',
     black: '#000000',
     purple: '#6C5CE7',
-    heroGradientStart: '#2B7FFF',
-    heroGradientEnd: '#155DFC',
-    statBlue: '#2B7FFF',
-    statGreen: '#00C950',
-    statPurple: '#AD46FF',
-    statOrange: '#FF6900',
-    quickActionPurpleBg: '#FAF5FF',
-    quickActionPurpleText: '#59168B',
-    quickActionPurpleIcon: '#9810FA',
-    quickActionBlueBg: '#EFF6FF',
-    quickActionBlueText: '#1C398E',
-    quickActionBlueIcon: '#155DFC',
-    quickActionGreenBg: '#F0FDF4',
-    quickActionGreenText: '#0D542B',
-    quickActionGreenIcon: '#00A63E',
-    quickActionOrangeBg: '#FFF7ED',
-    quickActionOrangeText: '#CA3500',
     approvalCardBg: '#FFF7ED',
     pendingChipBg: '#FFEDD4',
     pendingChipText: '#CA3500',
@@ -47,9 +29,9 @@ export const theme = {
     link: '#155DFC',
   },
   spacing: {
-    xxs: 4,
-    xs: 8,
-    sm: 12,
+    xxs: 6,
+    xs: 10,
+    sm: 14,
     md: 16,
     lg: 20,
     xl: 24,
@@ -65,9 +47,10 @@ export const theme = {
   typography: {
     title: {
       fontSize: 24,
-      fontWeight: '600',
+      fontWeight: '800',
       color: '#0A0A0A',
       lineHeight: 28,
+      fontFamily: 'Outfit',
     },
     sectionTitle: {
       fontSize: 24,
@@ -128,5 +111,24 @@ export const theme = {
       shadowOffset: { width: 0, height: 10 },
       elevation: 6,
     },
+  },
+  gradients: {
+    orange: [
+      '#FFC107',
+      '#FFA000',
+    ],
+    purple: [
+      '#6C5CE7',
+      '#6354D9',
+      '#5849C7',
+    ],
+    green: [
+      '#10B981',
+      '#059669',
+    ],
+    blue: [
+      '#3B82F6',
+      '#2563EB'
+    ]
   },
 };

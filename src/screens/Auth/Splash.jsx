@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { SvgUri } from 'react-native-svg';
-import {useEffect} from 'react';
+import { StyleSheet, Text, View, Image } from 'react-native'
+import React, { useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LinearGradient from 'react-native-linear-gradient';
+import { theme } from '../../theme/theme';
 
 // const { width, height } = Dimensions.get('window');
 
@@ -13,13 +13,14 @@ const Splash = ({ navigation }) => {
         const hasSeenOnboarding = await AsyncStorage.getItem(
           'hasSeenOnboarding',
         );
+        console.log('Onboarding status:', hasSeenOnboarding); 
         setTimeout(() => {
           if (hasSeenOnboarding === null) {
             navigation.replace('Onboarding'); // first time → show onboarding
           } else {
             navigation.replace('Login'); // already seen → go to login
           }
-        }, 2000); // keep your splash delay
+        }, 3000); // keep your splash delay
       } catch (e) {
         console.log('Error checking onboarding:', e);
         navigation.replace('Login');
@@ -30,7 +31,12 @@ const Splash = ({ navigation }) => {
   }, [navigation]);
   
   return (
-    <View style={styles.container}>
+    <LinearGradient 
+      colors={theme.gradients.purple} 
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
       {/* Blurred background decorative element */}
       <View style={styles.blurredContainer} />
 
@@ -38,11 +44,10 @@ const Splash = ({ navigation }) => {
       <View style={styles.contentContainer}>
         {/* Logo box */}
         <View style={styles.iconBox}>
-          {/* <SvgUri
-            width="100%"
-            height="100%"
-            uri={require('../../assets/icons/Icon.svg')}
-          /> */}
+          <Image
+            source={require('../../assets/icons/degree-icon.png')}
+            style={styles.logoImage}
+          />
         </View>
 
         {/* Text container */}
@@ -51,7 +56,7 @@ const Splash = ({ navigation }) => {
           <Text style={styles.subheading}>Society</Text>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   )
 }
 
@@ -76,16 +81,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-    iconBox: {
+  iconBox: {
     width: 95,
     height: 95,
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.purple,
     borderWidth: 1.38,
-    borderColor: 'rgba(255, 255, 255)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 25,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  logoImage: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
   },
   heading: {
     fontSize: 30,
@@ -93,16 +108,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'Outfit',
     letterSpacing: -0.75,
-    lineHeight: 36,
     textAlign: 'center',
   },
   subheading: {
-    fontSize: 16,
+    fontSize: theme.spacing.md,
     fontWeight: '500',
     color: '#FFFFFF',
     fontFamily: 'Manrope',
     letterSpacing: 0.4,
-    lineHeight: 24,
     textAlign: 'center',
   },
 })

@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
   pillActive: {
     width: 36,
     height: 8,
-    borderRadius: 8,
+    borderRadius: 50,
     marginHorizontal: 4,
-    backgroundColor: theme.colors.statPurple,
+    backgroundColor: theme.colors.purple,
   },
 })

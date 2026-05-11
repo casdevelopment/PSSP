@@ -37,6 +37,7 @@ export default function OnboardingPager({ slides = [], onFinish }) {
         keyExtractor={(item, i) => item.id || String(i)}
         horizontal
         pagingEnabled
+        scrollEnabled={true}
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={{ width }}>

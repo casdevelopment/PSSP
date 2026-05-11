@@ -2,7 +2,7 @@ import React from 'react'
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native'
 import { theme } from '../theme/theme'
 
-export default function PrimaryButton({ title, onPress, style, disabled }) {
+export default function PrimaryButton({ title, onPress, style, disabled, showChevron = true }) {
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -12,12 +12,15 @@ export default function PrimaryButton({ title, onPress, style, disabled }) {
       disabled={disabled}
     >
       <Text style={styles.text}>{title}</Text>
-      <View style={styles.chevWrap}>
-        <Text style={styles.chev}>›</Text>
-      </View>
+      {showChevron && (
+        <View style={styles.chevWrap}>
+          <Text style={styles.chev}>›</Text>
+        </View>
+      )}
     </TouchableOpacity>
   )
 }
+
 
 const styles = StyleSheet.create({
   button: {
