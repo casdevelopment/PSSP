@@ -127,8 +127,8 @@ export const theme = {
       '#059669',
     ],
     blue: [
-      '#3B82F6',
-      '#2563EB'
+      '#2B7FFF',
+      '#155DFC'
     ],
     button: [
       '#155DFC',

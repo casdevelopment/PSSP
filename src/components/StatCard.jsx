@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../theme/theme';
 
-export default function StatCard({ title, value, trend, trendColor, iconName, gradient }) {
+export default function StatCard({ title, value, iconName, gradient }) {
   return (
     <View style={styles.card}>
       <LinearGradient 
@@ -15,11 +15,8 @@ export default function StatCard({ title, value, trend, trendColor, iconName, gr
       >
         <Icon name={iconName} size={20} color={theme.colors.white} />
       </LinearGradient>
+      <Text style={styles.value}>{value}</Text>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.bottomRow}>
-        <Text style={styles.value}>{value}</Text>
-        <Text style={[styles.trend, { color: trendColor }]}>{trend}</Text>
-      </View>
     </View>
   );
 }
@@ -40,25 +37,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  value: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: theme.colors.textHeading,
+    marginBottom: 4,
   },
   title: {
     fontSize: 14,
     color: theme.colors.textMuted,
-    marginBottom: 8,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  value: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: theme.colors.heading,
-  },
-  trend: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });
