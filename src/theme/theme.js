@@ -129,6 +129,10 @@ export const theme = {
     blue: [
       '#3B82F6',
       '#2563EB'
-    ]
+    ],
+    button: [
+      '#155DFC',
+      '#9810FA',
+    ],
   },
 };

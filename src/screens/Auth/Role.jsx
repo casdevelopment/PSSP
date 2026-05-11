@@ -1,47 +1,69 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import RoleCard from '../../components/RoleCard';
+import PrimaryButton from '../../components/PrimaryButton';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
 
 export default function Role() {
   const demoLogin = useAuthStore((state) => state.demoLogin);
+  const [selectedRole, setSelectedRole] = useState('principal');
 
-  const handleRoleSelect = (role) => {
-    // In a real app we might pass the selected role to demoLogin or setAuth
-    demoLogin();
+  const handleContinue = () => {
+    demoLogin(selectedRole);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Select Your Role</Text>
-          <Text style={styles.subtitle}>Choose how you want to continue</Text>
+          <LinearGradient
+            colors={['#155DFC', '#9810FA']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.logoBox, theme.shadow.card]}
+          >
+            <Image source={require('../../assets/icons/degree-icon.png')} style={styles.logoIcon} />
+          </LinearGradient>
+          <Text style={styles.title}>School Manager</Text>
+          <Text style={styles.subtitle}>Select your role to continue</Text>
         </View>
 
         <View style={styles.rolesContainer}>
           <RoleCard
-            title="Principal"
-            description="Full access to all modules and administration"
+            title="Coordinator"
+            description="Super Admin"
             icon={require('../../assets/icons/crown-icon.png')}
             iconBgColor={theme.gradients.purple}
-            onPress={() => handleRoleSelect('principal')}
+            isSelected={selectedRole === 'coordinator'}
+            onPress={() => setSelectedRole('coordinator')}
+          />
+          <RoleCard
+            title="Principal"
+            description="School Admin"
+            icon={require('../../assets/icons/degree-icon.png')}
+            iconBgColor={theme.colors.linkPrimary}
+            isSelected={selectedRole === 'principal'}
+            onPress={() => setSelectedRole('principal')}
           />
           <RoleCard
             title="Staff"
-            description="Access to teaching and class management"
+            description="Teacher"
             icon={require('../../assets/icons/profile-icon.png')}
-            iconBgColor={theme.gradients.orange}
-            onPress={() => handleRoleSelect('staff')}
+            iconBgColor={theme.gradients.green[0]}
+            isSelected={selectedRole === 'staff'}
+            onPress={() => setSelectedRole('staff')}
           />
         </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            Your access level is determined by your account type. Contact the administrator if you need to change your role.
-          </Text>
+        <View style={styles.footer}>
+          <PrimaryButton 
+            title="Continue" 
+            onPress={handleContinue} 
+            showChevron={false} 
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -51,15 +73,30 @@ export default function Role() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.appBackground,
+    backgroundColor: '#F7F8FC', // matches light image bg
   },
   content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
+    paddingHorizontal: 24,
+    paddingTop: 60,
   },
   header: {
+    alignItems: 'center',
     marginBottom: 40,
+  },
+  logoBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  logoIcon: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+    tintColor: theme.colors.white,
   },
   title: {
     fontSize: 28,
@@ -69,23 +106,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: theme.colors.textMuted,
+    color: '#6B7280',
   },
   rolesContainer: {
     flex: 1,
   },
-  infoBox: {
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSubtle,
-    marginBottom: theme.spacing.xl,
-  },
-  infoText: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  footer: {
+    paddingBottom: 40,
+  }
 });

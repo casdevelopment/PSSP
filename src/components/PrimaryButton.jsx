@@ -1,5 +1,6 @@
 import React from 'react'
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native'
+import LinearGradient from 'react-native-linear-gradient'
 import { theme } from '../theme/theme'
 
 export default function PrimaryButton({ title, onPress, style, disabled, showChevron = true }) {
@@ -7,35 +8,44 @@ export default function PrimaryButton({ title, onPress, style, disabled, showChe
     <TouchableOpacity
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.button, disabled && styles.disabled, style]}
+      style={[styles.buttonWrap, disabled && styles.disabled, style]}
       activeOpacity={0.9}
       disabled={disabled}
     >
-      <Text style={styles.text}>{title}</Text>
-      {showChevron && (
-        <View style={styles.chevWrap}>
-          <Text style={styles.chev}>›</Text>
-        </View>
-      )}
+      <LinearGradient
+        colors={theme.gradients.button}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.button}
+      >
+        <Text style={styles.text}>{title}</Text>
+        {showChevron && (
+          <View style={styles.chevWrap}>
+            <Text style={styles.chev}>›</Text>
+          </View>
+        )}
+      </LinearGradient>
     </TouchableOpacity>
   )
 }
 
 
 const styles = StyleSheet.create({
+  buttonWrap: {
+    borderRadius: theme.radius.pill || 28,
+    shadowColor: '#155DFC',
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
   button: {
-    backgroundColor: theme.colors.purple,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 18,
     paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.pill || 28,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: '#6C5CE7',
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
   },
   disabled: {
     opacity: 0.6,
