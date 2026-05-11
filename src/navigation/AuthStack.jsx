@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Splash from '../screens/Auth/Splash';
 import Login from '../screens/Auth/Login';
-import Signup from '../screens/Auth/Role';
+import Role from '../screens/Auth/Role';
 import Onboarding from '../screens/Auth/Onboarding';
 
 const Stack = createNativeStackNavigator();
@@ -11,7 +11,7 @@ export default function AuthStack() {
         <Stack.Navigator initialRouteName='Splash' screenOptions={{ headerShown: false }}>
             <Stack.Screen name='Splash' component={Splash} />
             <Stack.Screen name='Login' component={Login} />
-            <Stack.Screen name='Signup' component={Signup} />
+            <Stack.Screen name='Role' component={Role} />
             <Stack.Screen name='Onboarding' component={Onboarding} />
         </Stack.Navigator>
     );

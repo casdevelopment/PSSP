@@ -27,7 +27,8 @@ export const useAuthStore = create(
       updateUser: (updates) =>
         set((state) => ({ user: { ...state.user, ...updates } })),
 
-      logout: () => {
+      logout: async () => {
+        // await AsyncStorage.removeItem('hasSeenOnboarding');
         set({ user: null, accessToken: null, isAuthenticated: false })
       },
     }),

@@ -100,9 +100,9 @@ export const theme = {
     card: {
       shadowColor: '#000000',
       shadowOpacity: 0.1,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-      elevation: 2,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 8,
     },
     hero: {
       shadowColor: '#000000',

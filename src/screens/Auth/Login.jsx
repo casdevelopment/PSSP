@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
 import CustomInput from '../../components/CustomInput';
 import PrimaryButton from '../../components/PrimaryButton';
 
-export default function Login() {
+export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleSignIn = () => {
+    navigation.replace('Role');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -16,7 +21,7 @@ export default function Login() {
         <View style={styles.header}>
           <LinearGradient
             colors={theme.gradients.purple}
-            style={styles.logoBox}
+            style={[styles.logoBox, theme.shadow.card]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
@@ -57,7 +62,7 @@ export default function Login() {
         {/* Action Buttons */}
         <PrimaryButton 
           title="Sign In" 
-          onPress={() => {}} 
+          onPress={handleSignIn} 
           showChevron={false} 
           style={styles.signInBtnWrapper} 
         />
@@ -94,7 +99,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
   },
   header: {
     flexDirection: 'row',
