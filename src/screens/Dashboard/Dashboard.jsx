@@ -10,10 +10,13 @@ import TodaySchedule from '../../components/TodaySchedule';
 import PendingCard from '../../components/PendingCard';
 import RecentNotifications from '../../components/RecentNotifications';
 import RecentSchools from '../../components/RecentSchools';
+import HeroCard from '../../components/HeroCard';
 import LinearGradient from 'react-native-linear-gradient';
 import PrimaryButton from '../../components/PrimaryButton';
+import { useNavigation } from '@react-navigation/native';
 
 const Dashboard = () => {
+  const navigation = useNavigation();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const role = user?.role;
@@ -33,18 +36,12 @@ const Dashboard = () => {
         {(!role || role === 'principal' || role === 'staff' || role === 'coordinator') && (
           <>
             {(!role || role === 'principal' || role === 'staff') && (
-              <View style={styles.headerContainer}>
-                <LinearGradient
-                  style={[styles.headerBox, theme.shadow.hero]}
-                  colors={theme.gradients.blue}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.schoolName}>Greenwood High School</Text>
-                  <Text style={styles.welcomeText}>Welcome, {user?.name}!</Text>
-                  <Text style={styles.dateText}>Thursday, April 30, 2026</Text>
-                </LinearGradient>
-              </View>
+              <HeroCard
+                colors={theme.gradients.blue}
+                topLabel="Greenwood High School"
+                title={`Welcome, ${user?.name || 'User'}!`}
+                subtitle="Thursday, April 30, 2026"
+              />
             )}
             <View style={styles.statsGrid}>
               <StatCard
@@ -83,7 +80,7 @@ const Dashboard = () => {
                   title="Mark Attendance"
                   bgColor="#FDF4FF"
                   textColor="#8B5CF6"
-                  onPress={() => { }}
+                  onPress={() => navigation.navigate('Attendance')}
                 />
                 <QuickActionCard
                   title="Manage Staff"

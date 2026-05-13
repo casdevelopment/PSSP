@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
 import Dashboard from '../screens/Dashboard/Dashboard';
+import Attendance from '../screens/Attendance/Attendance';
 
 const Tab = createBottomTabNavigator();
 
@@ -91,9 +92,7 @@ export default function MainTabs() {
         </>
       ) : role === 'staff' ? (
         <>
-          <Tab.Screen name="Attendance">
-            {() => <PlaceholderScreen name="Attendance" />}
-          </Tab.Screen>
+          <Tab.Screen name="Attendance" component={Attendance} />
           <Tab.Screen name="Students">
             {() => <PlaceholderScreen name="Students" />}
           </Tab.Screen>

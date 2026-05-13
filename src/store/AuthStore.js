@@ -19,7 +19,7 @@ export const useAuthStore = create(
         const demoUser = {
           id: 'demo-user-123',
           name: 'Demo User',
-          role: 'coordinator',
+          role: 'principal', // Change role here for testing different views
           email: 'demo@prepmate.com',
         }
         const demoToken = 'demo-token-' + Date.now()
