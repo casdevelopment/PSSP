@@ -6,11 +6,12 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
+      role: null,   // 'coordinator', 'principal', 'staff'
       accessToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken) => {
-        set({ user, accessToken, isAuthenticated: true })
+      setAuth: (user, role, accessToken) => {
+        set({ user, role, accessToken, isAuthenticated: true })
       },
 
       // Demo mode - bypass authentication for testing
@@ -18,10 +19,11 @@ export const useAuthStore = create(
         const demoUser = {
           id: 'demo-user-123',
           name: 'Demo User',
+          role: 'coordinator',
           email: 'demo@prepmate.com',
         }
         const demoToken = 'demo-token-' + Date.now()
-        set({ user: demoUser, accessToken: demoToken, isAuthenticated: true })
+        set({ user: demoUser, role: demoUser.role, accessToken: demoToken, isAuthenticated: true })
       },
 
       updateUser: (updates) =>
@@ -29,7 +31,7 @@ export const useAuthStore = create(
 
       logout: async () => {
         // await AsyncStorage.removeItem('hasSeenOnboarding');
-        set({ user: null, accessToken: null, isAuthenticated: false })
+        set({ user: null, role: null, accessToken: null, isAuthenticated: false })
       },
     }),
     {
@@ -37,6 +39,7 @@ export const useAuthStore = create(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         user: state.user,
+        role: state.role,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),

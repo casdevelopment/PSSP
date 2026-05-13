@@ -6,10 +6,17 @@ import { useAuthStore } from '../../store/AuthStore';
 import { theme } from '../../theme/theme';
 import StatCard from '../../components/StatCard';
 import QuickActionCard from '../../components/QuickActionCard';
+import TodaySchedule from '../../components/TodaySchedule';
+import PendingCard from '../../components/PendingCard';
+import RecentNotifications from '../../components/RecentNotifications';
+import RecentSchools from '../../components/RecentSchools';
 import LinearGradient from 'react-native-linear-gradient';
+import PrimaryButton from '../../components/PrimaryButton';
 
 const Dashboard = () => {
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const role = user?.role;
   const insets = useSafeAreaInsets();
 
   return (
@@ -23,74 +30,96 @@ const Dashboard = () => {
           <Text style={styles.screenTitle}>Dashboard</Text>
         </View>
 
-        <View style={styles.headerContainer}>
-          <LinearGradient 
-            style={[styles.headerBox, theme.shadow.hero]}
-            colors={theme.gradients.blue}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Text style={styles.schoolName}>Greenwood High School</Text>
-            <Text style={styles.welcomeText}>Welcome, Sarah!</Text>
-            <Text style={styles.dateText}>Thursday, April 30, 2026</Text>
-          </LinearGradient>
-        </View>
+        {(!role || role === 'principal' || role === 'staff' || role === 'coordinator') && (
+          <>
+            {(!role || role === 'principal' || role === 'staff') && (
+              <View style={styles.headerContainer}>
+                <LinearGradient
+                  style={[styles.headerBox, theme.shadow.hero]}
+                  colors={theme.gradients.blue}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.schoolName}>Greenwood High School</Text>
+                  <Text style={styles.welcomeText}>Welcome, {user?.name}!</Text>
+                  <Text style={styles.dateText}>Thursday, April 30, 2026</Text>
+                </LinearGradient>
+              </View>
+            )}
+            <View style={styles.statsGrid}>
+              <StatCard
+                title="Total Staff"
+                value="32"
+                iconName="users"
+                gradient={theme.gradients.blue}
+              />
+              <StatCard
+                title="Students"
+                value="450"
+                iconName="square"
+                gradient={theme.gradients.green}
+              />
+              <StatCard
+                title="Attendance"
+                value="96%"
+                iconName="calendar"
+                gradient={theme.gradients.purple}
+              />
+              <StatCard
+                title="Leave Requests"
+                value="4"
+                iconName="alert-circle"
+                gradient={theme.gradients.orange}
+              />
+            </View>
 
-        <View style={styles.statsGrid}>
-          <StatCard
-            title="Total Staff"
-            value="32"
-            iconName="users"
-            gradient={theme.gradients.blue}
-          />
-          <StatCard
-            title="Students"
-            value="450"
-            iconName="square"
-            gradient={theme.gradients.green}
-          />
-          <StatCard
-            title="Attendance"
-            value="96%"
-            iconName="calendar"
-            gradient={theme.gradients.purple}
-          />
-          <StatCard
-            title="Leave Requests"
-            value="4"
-            iconName="alert-circle"
-            gradient={theme.gradients.orange}
-          />
-        </View>
+            <View style={styles.bottomCardBox}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Quick Actions</Text>
+              </View>
 
-        <View style={styles.bottomCardBox}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-          </View>
+              <View style={styles.quickActionsList}>
+                <QuickActionCard
+                  title="Mark Attendance"
+                  bgColor="#FDF4FF"
+                  textColor="#8B5CF6"
+                  onPress={() => { }}
+                />
+                <QuickActionCard
+                  title="Manage Staff"
+                  bgColor="#F0F5FF"
+                  textColor="#2563EB"
+                  onPress={() => { }}
+                />
+                <QuickActionCard
+                  title="Salary Distribution"
+                  bgColor="#F0FDF4"
+                  textColor="#059669"
+                  onPress={() => { }}
+                />
+              </View>
+            </View>
 
-          <View style={styles.quickActionsList}>
-            <QuickActionCard
-              title="Mark Attendance"
-              bgColor="#FDF4FF"
-              textColor="#8B5CF6"
-              onPress={() => { }}
-            />
-            <QuickActionCard
-              title="Manage Staff"
-              bgColor="#F0F5FF"
-              textColor="#2563EB"
-              onPress={() => { }}
-            />
-            <QuickActionCard
-              title="Salary Distribution"
-              bgColor="#F0FDF4"
-              textColor="#059669"
-              onPress={() => { }}
-            />
-          </View>
-        </View>
+            {(role === 'coordinator') ? (
+              <RecentSchools />
+            ) : (
+              <TodaySchedule />
+            )}
 
-      </ScrollView>
+
+            {(!role || role === 'principal' || role === 'coordinator') && (
+              <PendingCard />
+            )}
+
+          </>
+        )}
+            {(!role || role === 'staff') && (
+              <RecentNotifications />
+            )}
+
+            <PrimaryButton title="Logout" onPress={() => { logout() }} />
+
+          </ScrollView>
     </View>
   );
 };
