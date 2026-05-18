@@ -15,11 +15,11 @@ export const useAuthStore = create(
       },
 
       // Demo mode - bypass authentication for testing
-      demoLogin: () => {
+      demoLogin: (role) => {
         const demoUser = {
           id: 'demo-user-123',
           name: 'Demo User',
-          role: 'principal', // Change role here for testing different views
+          role: role,
           email: 'demo@prepmate.com',
         }
         const demoToken = 'demo-token-' + Date.now()

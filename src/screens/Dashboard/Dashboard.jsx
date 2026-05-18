@@ -14,13 +14,15 @@ import HeroCard from '../../components/HeroCard';
 import LinearGradient from 'react-native-linear-gradient';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useNavigation } from '@react-navigation/native';
+import { getQuickActions } from '../../utils/QuickActions';
 
 const Dashboard = () => {
   const navigation = useNavigation();
-  const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const role = user?.role;
   const insets = useSafeAreaInsets();
+
+  const quickActions = getQuickActions(role, navigation);
 
   return (
     <View style={styles.container}>
@@ -76,24 +78,15 @@ const Dashboard = () => {
               </View>
 
               <View style={styles.quickActionsList}>
-                <QuickActionCard
-                  title="Mark Attendance"
-                  bgColor="#FDF4FF"
-                  textColor="#8B5CF6"
-                  onPress={() => navigation.navigate('Attendance')}
-                />
-                <QuickActionCard
-                  title="Manage Staff"
-                  bgColor="#F0F5FF"
-                  textColor="#2563EB"
-                  onPress={() => { }}
-                />
-                <QuickActionCard
-                  title="Salary Distribution"
-                  bgColor="#F0FDF4"
-                  textColor="#059669"
-                  onPress={() => { }}
-                />
+                {quickActions.map((action, index) => (
+                  <QuickActionCard
+                    key={index}
+                    title={action.title}
+                    bgColor={action.bgColor}
+                    textColor={action.textColor}
+                    onPress={action.onPress}
+                  />
+                ))}
               </View>
             </View>
 
