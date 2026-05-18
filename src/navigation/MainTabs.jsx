@@ -6,6 +6,7 @@ import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Attendance from '../screens/Attendance/Attendance';
+import Profile from '../screens/Profile/Profile';
 
 const Tab = createBottomTabNavigator();
 
@@ -114,9 +115,7 @@ export default function MainTabs() {
         </>
       )}
 
-      <Tab.Screen name="Profile">
-        {() => <PlaceholderScreen name="Profile" />}
-      </Tab.Screen>
+      <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );
 }

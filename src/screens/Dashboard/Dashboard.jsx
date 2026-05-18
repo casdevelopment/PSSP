@@ -114,8 +114,6 @@ const Dashboard = () => {
               <RecentNotifications />
             )}
 
-            <PrimaryButton title="Logout" onPress={() => { logout() }} />
-
           </ScrollView>
     </View>
   );
