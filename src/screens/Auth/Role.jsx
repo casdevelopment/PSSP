@@ -9,7 +9,7 @@ import { useAuthStore } from '../../store/AuthStore';
 
 export default function Role() {
   const demoLogin = useAuthStore((state) => state.demoLogin);
-  const [selectedRole, setSelectedRole] = useState('principal');
+  const [selectedRole, setSelectedRole] = useState('');
 
   const handleContinue = () => {
     demoLogin(selectedRole);

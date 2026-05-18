@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import AttendanceCard from '../../components/AttendanceCard';
@@ -30,6 +30,7 @@ const initialStudentData = [
 export default function Attendance() {
   const insets = useSafeAreaInsets();
   const route = useRoute();
+  const navigation = useNavigation();
   const role = useAuthStore((state) => state.role);
   
   // Determine if it is student or staff attendance
@@ -65,7 +66,7 @@ export default function Attendance() {
           title="April 30, 2026"
           subtitle={`${markedCount} of ${data.length} marked`}
           rightActionText="History"
-          onRightAction={() => {}}
+          onRightAction={() => navigation.navigate('AttendanceHistory', { type })}
         />
 
         {isStudent && (

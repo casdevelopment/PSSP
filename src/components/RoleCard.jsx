@@ -6,14 +6,11 @@ import { theme } from '../theme/theme'
 
 export default function RoleCard({ title, description, icon, iconBgColor, onPress, isSelected }) {
   const gradientColors = Array.isArray(iconBgColor) ? iconBgColor : [iconBgColor, iconBgColor]
+  const selectedStyles = isSelected ? [styles.cardSelected, theme.shadow.card] : null
 
   return (
     <TouchableOpacity 
-      style={[
-        styles.card, 
-        isSelected && styles.cardSelected,
-        isSelected && theme.shadow.card
-      ]} 
+      style={[styles.card, selectedStyles]} 
       onPress={onPress} 
       activeOpacity={0.8}
     >
@@ -51,7 +48,9 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     borderWidth: 1,
-    borderColor: theme.colors.borderSubtle, 
+    borderColor: theme.colors.borderSubtle,
+    // borderColor: theme.colors.linkPrimary,
+    // backgroundColor: '#F8F9FF', 
   },
   iconBox: {
     width: 60,
