@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../theme/theme';
+import { useNavigation } from '@react-navigation/native';
 
 const leaveRequestsData = [
   { id: '1', name: 'John Smith', type: 'Sick Leave', duration: '2 days' },
@@ -9,11 +10,13 @@ const leaveRequestsData = [
 ];
 
 const PendingCard = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pending Leave Requests</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('LeaveRequests')}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
