@@ -20,7 +20,7 @@ import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
 import { useAuthStore } from '../../store/AuthStore';
 
-const LEAVE_REQUESTS = [
+export const LEAVE_REQUESTS = [
     {
         id: '1',
         type: 'Sick Leave',
@@ -177,7 +177,11 @@ export default function LeaveRequests() {
                 {/* Requests List */}
                 <View style={styles.listContainer}>
                     {LEAVE_REQUESTS.map((request) => (
-                        <LeaveRequestCard key={request.id} request={request} onPress={() => {}} />
+                        <LeaveRequestCard
+                            key={request.id}
+                            request={request}
+                            onPress={() => navigation.navigate('LeaveDetail', { id: request.id })}
+                        />
                     ))}
                 </View>
             </ScrollView>
