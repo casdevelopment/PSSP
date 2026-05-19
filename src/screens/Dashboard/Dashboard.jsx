@@ -11,8 +11,6 @@ import PendingCard from '../../components/PendingCard';
 import RecentNotifications from '../../components/RecentNotifications';
 import RecentSchools from '../../components/RecentSchools';
 import HeroCard from '../../components/HeroCard';
-import LinearGradient from 'react-native-linear-gradient';
-import PrimaryButton from '../../components/PrimaryButton';
 import { useNavigation } from '@react-navigation/native';
 import { getQuickActions } from '../../utils/QuickActions';
 
@@ -31,10 +29,6 @@ const Dashboard = () => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topNav}>
-          <Text style={styles.screenTitle}>Dashboard</Text>
-        </View>
-
         {(!role || role === 'principal' || role === 'staff' || role === 'coordinator') && (
           <>
             {(!role || role === 'principal' || role === 'staff') && (
@@ -120,46 +114,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB', // Light mode bg
   },
   scrollContent: {
-    paddingTop: 60, // accommodate safe area
+    paddingTop: 10, // accommodate safe area
     paddingBottom: 40,
-  },
-  topNav: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#000',
-  },
-  headerContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  headerBox: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    shadowColor: '#155DFC',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  schoolName: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  welcomeText: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: theme.colors.white,
-    marginBottom: 12,
-  },
-  dateText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
   },
   statsGrid: {
     flexDirection: 'row',

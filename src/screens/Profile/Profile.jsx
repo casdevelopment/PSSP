@@ -71,11 +71,9 @@ export default function Profile() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20, paddingBottom: 100 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>Profile</Text>
-
         <LinearGradient
           colors={data.gradient}
           start={{ x: 0, y: 0 }}
@@ -200,16 +198,12 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB', // Light mode bg
   },
   scrollContent: {
-    paddingHorizontal: 20,
-  },
-  screenTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0A0A0A',
-    marginBottom: 20,
+    paddingTop: 10, // accommodate safe area
+    paddingBottom: 40,
+    paddingHorizontal: 16,
   },
   heroCard: {
     borderRadius: 20,

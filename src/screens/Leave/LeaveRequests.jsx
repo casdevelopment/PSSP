@@ -89,7 +89,7 @@ export default function LeaveRequests() {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
-            {/* Header */}
+            {/* Header
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -107,7 +107,7 @@ export default function LeaveRequests() {
                         <Icon name="plus" size={24} color="#FFF" />
                     </TouchableOpacity>
                 )}
-            </View>
+            </View> */}
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -304,8 +304,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 16,
+        padding: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.borderSubtle,
+        ...theme.shadow.header,
     },
     backButton: {
         paddingRight: 10,
@@ -333,6 +335,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
         marginBottom: 20,
+                marginTop: 20,
     },
     heroTop: {
         flexDirection: 'row',

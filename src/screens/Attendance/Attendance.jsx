@@ -55,10 +55,6 @@ export default function Attendance() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topNav}>
-          <Text style={styles.screenTitle}>{isStudent ? 'Student Attendance' : 'Staff Attendance'}</Text>
-        </View>
-
         <HeroCard
           colors={theme.gradients.purple}
           topIcon="calendar"
@@ -103,16 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   scrollContent: {
-    paddingTop: 60,
-  },
-  topNav: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#000',
+    paddingTop: 10,
   },
   inputContainer: {
     paddingHorizontal: 16,

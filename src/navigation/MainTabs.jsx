@@ -49,7 +49,7 @@ export default function MainTabs() {
         },
         tabBarActiveTintColor: theme.colors.tabActive,
         tabBarInactiveTintColor: theme.colors.tabInactive,
-        headerShown: false,
+        headerShown: true, // Enable headers for all screens
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopLeftRadius: 24,
