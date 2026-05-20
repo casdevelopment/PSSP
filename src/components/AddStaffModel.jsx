@@ -14,24 +14,22 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 
-export default function AddStudentModal({ visible, onClose }) {
+export default function AddStaffmodel({ visible, onClose }) {
     const insets = useSafeAreaInsets();
     
     // Form states
-    const [studentName, setStudentName] = useState('');
-    const [rollNumber, setRollNumber] = useState('');
-    const [studentClass, setStudentClass] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [subject, setSubject] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
 
     const handleSubmit = () => {
         // Handle your API call here
-        console.log('Submitting Student:', { studentName, rollNumber, studentClass, email, phone });
+        console.log('Submitting Staff:', { fullName, subject, email, phone });
         
         // Reset form and close
-        setStudentName('');
-        setRollNumber('');
-        setStudentClass('');
+        setFullName('');
+        setSubject('');
         setEmail('');
         setPhone('');
         onClose();
@@ -45,11 +43,11 @@ export default function AddStudentModal({ visible, onClose }) {
             onRequestClose={onClose}
         >
             <KeyboardAvoidingView
-                style={styles.modalBg}
+                style={styles.modelBg}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <Pressable
-                    style={styles.modalDismiss}
+                    style={styles.modelDismiss}
                     onPress={onClose}
                 />
 
@@ -60,42 +58,31 @@ export default function AddStudentModal({ visible, onClose }) {
                     ]}
                 >
                     <View style={styles.dragIndicator} />
-                    <Text style={styles.modalTitle}>Add New Student</Text>
+                    <Text style={styles.modelTitle}>Add New Staff</Text>
 
                     <ScrollView
                         contentContainerStyle={styles.formContent}
                         showsVerticalScrollIndicator={false}
                     >
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Student Name</Text>
+                            <Text style={styles.inputLabel}>Full Name</Text>
                             <TextInput
                                 style={styles.inputBox}
                                 placeholder="Enter name"
                                 placeholderTextColor={theme.colors.textMuted}
-                                value={studentName}
-                                onChangeText={setStudentName}
+                                value={fullName}
+                                onChangeText={setFullName}
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Roll Number</Text>
+                            <Text style={styles.inputLabel}>Subject</Text>
                             <TextInput
                                 style={styles.inputBox}
-                                placeholder="Enter roll number"
+                                placeholder="Enter subject"
                                 placeholderTextColor={theme.colors.textMuted}
-                                value={rollNumber}
-                                onChangeText={setRollNumber}
-                                keyboardType="default"
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Class</Text>
-                            <TextInput
-                                style={styles.inputBox}
-                                placeholder="" 
-                                value={studentClass}
-                                onChangeText={setStudentClass}
+                                value={subject}
+                                onChangeText={setSubject}
                             />
                         </View>
 
@@ -125,7 +112,7 @@ export default function AddStudentModal({ visible, onClose }) {
                         </View>
                     </ScrollView>
 
-                    <View style={styles.modalActions}>
+                    <View style={styles.modelActions}>
                         <TouchableOpacity
                             style={styles.cancelBtn}
                             onPress={onClose}
@@ -137,7 +124,7 @@ export default function AddStudentModal({ visible, onClose }) {
                             style={styles.submitBtn}
                             onPress={handleSubmit}
                         >
-                            <Text style={styles.submitBtnText}>Add Student</Text>
+                            <Text style={styles.submitBtnText}>Add Staff</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -147,12 +134,12 @@ export default function AddStudentModal({ visible, onClose }) {
 }
 
 const styles = StyleSheet.create({
-    modalBg: {
+    modelBg: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         justifyContent: 'flex-end',
     },
-    modalDismiss: {
+    modelDismiss: {
         flex: 1,
     },
     bottomSheet: {
@@ -165,12 +152,12 @@ const styles = StyleSheet.create({
     dragIndicator: {
         width: 40,
         height: 4,
-        backgroundColor: '#D1D5DB', // Kept hardcoded as it wasn't an exact match in the theme
+        backgroundColor: '#D1D5DB', 
         borderRadius: 2,
         alignSelf: 'center',
         marginBottom: 20,
     },
-    modalTitle: {
+    modelTitle: {
         fontSize: 20,
         fontWeight: '700',
         color: theme.colors.textHeading,
@@ -198,7 +185,7 @@ const styles = StyleSheet.create({
         color: theme.colors.textStrong,
         backgroundColor: theme.colors.white,
     },
-    modalActions: {
+    modelActions: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,

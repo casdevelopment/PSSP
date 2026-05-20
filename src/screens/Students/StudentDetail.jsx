@@ -11,13 +11,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
-import FullReportModal from '../../components/FullReportModal';
+import FullReportmodel from '../../components/FullReportModel';
 
 export default function StudentDetail() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [ismodelVisible, setmodelVisible] = useState(false);
 
   // Retrieve the passed student data, fallback to Alice if none provided
   const student = route.params?.student || { 
@@ -177,15 +177,15 @@ export default function StudentDetail() {
           <Text style={styles.primaryBtnText}>Send Message</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.secondaryBtn} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity style={styles.secondaryBtn} onPress={() => setmodelVisible(true)}>
           <Text style={styles.secondaryBtnText}>View Full Report</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Embedded Modal - Passing student object downward */}
-      <FullReportModal 
-        visible={isModalVisible} 
-        onClose={() => setModalVisible(false)} 
+      {/* Embedded model - Passing student object downward */}
+      <FullReportmodel 
+        visible={ismodelVisible} 
+        onClose={() => setmodelVisible(false)} 
         student={student}
       />
     </View>

@@ -10,10 +10,12 @@ import Dashboard from '../screens/Dashboard/Dashboard';
 import Attendance from '../screens/Attendance/Attendance';
 import Profile from '../screens/Profile/Profile';
 import Students from '../screens/Students/Students';
+import Staff from '../screens/staff/StaffList';
 
 // Components
 import HeaderPlusButton from '../components/HeaderPlusButton';
-import AddStudentModal from '../components/AddStudentModal'; // <-- Import the new modal
+import AddStudentModel from '../components/AddStudentModel';
+import AddStaffModel from '../components/AddStaffModel';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,9 +27,8 @@ const PlaceholderScreen = ({ name }) => (
 
 export default function MainTabs() {
   const role = useAuthStore((state) => state.role);
-  
-  // State to handle the Add Student modal
-  const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
+  const [isAddStudentmodelVisible, setIsAddStudentmodelVisible] = useState(false);
+  const [isAddStaffmodelVisible, setIsAddStaffmodelVisible] = useState(false);
 
   return (
     <>
@@ -47,7 +48,7 @@ export default function MainTabs() {
             } else if (route.name === 'Profile') {
               iconName = 'user';
             } else if (route.name === 'Schools') {
-              iconName = 'trello'; // nearest matching feather icon for building 
+              iconName = 'trello';
             } else if (route.name === 'Expenses') {
               iconName = 'file-text';
             } else if (route.name === 'Attendance') {
@@ -60,7 +61,7 @@ export default function MainTabs() {
           },
           tabBarActiveTintColor: theme.colors.tabActive,
           tabBarInactiveTintColor: theme.colors.tabInactive,
-          headerShown: true, // Enable headers for all screens
+          headerShown: true,
           tabBarStyle: {
             backgroundColor: theme.colors.surface,
             borderTopLeftRadius: 24,
@@ -71,10 +72,7 @@ export default function MainTabs() {
             paddingBottom: 20,
             height: 80,
             shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: -4,
-            },
+            shadowOffset: { width: 0, height: -4 },
             shadowOpacity: 0.05,
             shadowRadius: 10,
             elevation: 10,
@@ -89,7 +87,7 @@ export default function MainTabs() {
         })}
       >
         <Tab.Screen name="Home" component={Dashboard} />
-        
+
         {role === 'coordinator' ? (
           <>
             <Tab.Screen name="Schools">
@@ -105,19 +103,18 @@ export default function MainTabs() {
         ) : role === 'staff' ? (
           <>
             <Tab.Screen name="Attendance" component={Attendance} />
-            <Tab.Screen 
-              name="Students" 
-              component={Students} 
+            <Tab.Screen
+              name="Students"
+              component={Students}
               options={{
                 title: 'My Students',
                 headerTitle: 'My Students',
                 headerTitleStyle: {
-                  fontSize: 22,
-                  fontWeight: '800',
+                  fontSize: 20,
+                  fontWeight: '600',
                 },
                 headerRight: () => (
-                  // Trigger modal visibility here
-                  <HeaderPlusButton onPress={() => setIsAddStudentModalVisible(true)} />
+                  <HeaderPlusButton onPress={() => setIsAddStudentmodelVisible(true)} />
                 )
               }}
             />
@@ -127,9 +124,25 @@ export default function MainTabs() {
           </>
         ) : (
           <>
-            <Tab.Screen name="Staff">
-              {() => <PlaceholderScreen name="Staff" />}
-            </Tab.Screen>
+            {/* FIXED: Formatted the Tab.Screen correctly and added headers matching the screenshot */}
+            <Tab.Screen
+              name="Staff"
+              component={Staff}
+              options={{
+                title: 'Staff',
+                headerTitle: 'Staff Management',
+                headerTitleStyle: {
+                  fontSize: 20,
+                  fontWeight: '600',
+                },
+                headerRight: () => (
+                  <HeaderPlusButton onPress={() => {
+                    console.log("Plus button pressed!");
+                    setIsAddStaffmodelVisible(true);
+                  }} />
+                )
+              }}
+            />
             <Tab.Screen name="Timetable">
               {() => <PlaceholderScreen name="Timetable" />}
             </Tab.Screen>
@@ -142,10 +155,13 @@ export default function MainTabs() {
         <Tab.Screen name="Profile" component={Profile} />
       </Tab.Navigator>
 
-      {/* Render the modal at the top level of the tab navigator */}
-      <AddStudentModal 
-        visible={isAddStudentModalVisible} 
-        onClose={() => setIsAddStudentModalVisible(false)} 
+      <AddStudentModel
+        visible={isAddStudentmodelVisible}
+        onClose={() => setIsAddStudentmodelVisible(false)}
+      />
+      <AddStaffModel
+        visible={isAddStaffmodelVisible}
+        onClose={() => setIsAddStaffmodelVisible(false)}
       />
     </>
   );

@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 
-export default function RequestLeaveModal({ visible, onClose }) {
+export default function RequestLeaveModel({ visible, onClose }) {
     const insets = useSafeAreaInsets();
     
     // Form states
@@ -43,11 +43,11 @@ export default function RequestLeaveModal({ visible, onClose }) {
             onRequestClose={onClose}
         >
             <KeyboardAvoidingView
-                style={styles.modalBg}
+                style={styles.modelBg}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <Pressable
-                    style={styles.modalDismiss}
+                    style={styles.modelDismiss}
                     onPress={onClose}
                 />
 
@@ -58,7 +58,7 @@ export default function RequestLeaveModal({ visible, onClose }) {
                     ]}
                 >
                     <View style={styles.dragIndicator} />
-                    <Text style={styles.modalTitle}>Request Leave</Text>
+                    <Text style={styles.modelTitle}>Request Leave</Text>
 
                     <ScrollView
                         contentContainerStyle={styles.formContent}
@@ -110,7 +110,7 @@ export default function RequestLeaveModal({ visible, onClose }) {
                         </View>
                     </ScrollView>
 
-                    <View style={styles.modalActions}>
+                    <View style={styles.modelActions}>
                         <TouchableOpacity
                             style={styles.cancelBtn}
                             onPress={onClose}
@@ -132,12 +132,12 @@ export default function RequestLeaveModal({ visible, onClose }) {
 }
 
 const styles = StyleSheet.create({
-    modalBg: {
+    modelBg: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         justifyContent: 'flex-end',
     },
-    modalDismiss: {
+    modelDismiss: {
         flex: 1,
     },
     bottomSheet: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginBottom: 20,
     },
-    modalTitle: {
+    modelTitle: {
         fontSize: 22,
         fontWeight: '700',
         color: '#0A0A0A',
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
         height: 120,
         paddingTop: 16,
     },
-    modalActions: {
+    modelActions: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,

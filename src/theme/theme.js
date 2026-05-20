@@ -6,6 +6,7 @@ export const theme = {
     borderSubtle: '#E5E7EB',
     purpleSurface: '#FAF5FF',
     blueSurface: '#EFF6FF',
+    greenSurface: '#ECFDF5',
     
     // Text Colors
     textHeading: '#101828',

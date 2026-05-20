@@ -4,32 +4,32 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
+  model,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 
-export default function FullReportModal({ visible, onClose, student }) {
+export default function FullReportmodel({ visible, onClose, student }) {
   const insets = useSafeAreaInsets();
   
   // Guard clause against undefined props on initial mount
   const currentStudent = student || { name: 'Student', rollNo: '-', attendance: '-' };
 
   return (
-    <Modal
+    <model
       animationType="fade"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { marginTop: insets.top + 40, marginBottom: insets.bottom + 40 }]}>
+      <View style={styles.modelOverlay}>
+        <View style={[styles.modelContainer, { marginTop: insets.top + 40, marginBottom: insets.bottom + 40 }]}>
           
           {/* Header */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Full Student Report</Text>
+          <View style={styles.modelHeader}>
+            <Text style={styles.modelTitle}>Full Student Report</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Icon name="x" size={20} color={theme.colors.textBody} />
             </TouchableOpacity>
@@ -133,19 +133,19 @@ export default function FullReportModal({ visible, onClose, student }) {
 
         </View>
       </View>
-    </Modal>
+    </model>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modelOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  modalContainer: {
+  modelContainer: {
     width: '100%',
     maxHeight: '85%',
     backgroundColor: theme.colors.white,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...theme.shadow.card,
   },
-  modalHeader: {
+  modelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 16,
   },
-  modalTitle: {
+  modelTitle: {
     fontSize: 20,
     fontWeight: '800',
     color: theme.colors.textHeading,

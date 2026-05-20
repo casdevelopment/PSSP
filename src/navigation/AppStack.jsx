@@ -7,8 +7,9 @@ import LeaveRequests from '../screens/Leave/LeaveRequests';
 import LeaveDetail from '../screens/Leave/LeaveDetail';
 import { useAuthStore } from '../store/AuthStore';
 import HeaderPlusButton from '../components/HeaderPlusButton';
-import RequestLeaveModal from '../components/RequestLeaveModal';
+import RequestLeaveModel from '../components/RequestLeaveModel';
 import StudentDetail from '../screens/Students/StudentDetail';
+import StaffDetail from '../screens/staff/StaffDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,8 +17,8 @@ export default function AppStack() {
     const user = useAuthStore((state) => state.user);
     const role = user?.role;
     
-    // State to handle the modal at the stack level
-    const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+    // State to handle the model at the stack level
+    const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
 
     return (
         <>
@@ -36,7 +37,7 @@ export default function AppStack() {
                         },
                         headerRight: () => (
                             (role === 'principal' || role === 'staff') ? (
-                                <HeaderPlusButton onPress={() => setIsLeaveModalVisible(true)} />
+                                <HeaderPlusButton onPress={() => setIsLeavemodelVisible(true)} />
                             ) : null
                         )
                     }}
@@ -52,12 +53,13 @@ export default function AppStack() {
                     component={StudentDetail}
                     options={{ headerShown: false }} // We built a custom header in the component
                 />
+                <Stack.Screen name="StaffDetail" component={StaffDetail} options={{ headerShown: false }} />
             </Stack.Navigator>
 
-            {/* Modal is mounted here so it can lay over the stack cleanly */}
-            <RequestLeaveModal 
-                visible={isLeaveModalVisible} 
-                onClose={() => setIsLeaveModalVisible(false)} 
+            {/* model is mounted here so it can lay over the stack cleanly */}
+            <RequestLeaveModel 
+                visible={isLeavemodelVisible} 
+                onClose={() => setIsLeavemodelVisible(false)} 
             />
         </>
     );
