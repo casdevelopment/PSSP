@@ -4,9 +4,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
+
+// Screens
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Attendance from '../screens/Attendance/Attendance';
 import Profile from '../screens/Profile/Profile';
+import Students from '../screens/Students/Students';
+
+// Components
+import HeaderPlusButton from '../components/HeaderPlusButton';
 
 const Tab = createBottomTabNavigator();
 
@@ -94,9 +100,21 @@ export default function MainTabs() {
       ) : role === 'staff' ? (
         <>
           <Tab.Screen name="Attendance" component={Attendance} />
-          <Tab.Screen name="Students">
-            {() => <PlaceholderScreen name="Students" />}
-          </Tab.Screen>
+          <Tab.Screen 
+            name="Students" 
+            component={Students} 
+            options={{
+              title: 'My Students',
+              headerTitle: 'My Students',
+              headerTitleStyle: {
+                fontSize: 22,
+                fontWeight: '800',
+              },
+              headerRight: () => (
+                <HeaderPlusButton onPress={() => console.log('Add Student tapped!')} />
+              )
+            }}
+          />
           <Tab.Screen name="Salary">
             {() => <PlaceholderScreen name="Salary" />}
           </Tab.Screen>

@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
     StatusBar,
-    Modal,
-    TextInput,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -71,43 +64,13 @@ const ProgressBar = ({ label, used, total, color }) => {
 };
 
 export default function LeaveRequests() {
-    const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const [modalVisible, setModalVisible] = useState(false);
     const user = useAuthStore((state) => state.user);
     const role = user?.role;
-
-    // Form states
-    const [leaveType, setLeaveType] = useState('');
-    const [fromDate, setFromDate] = useState('');
-    const [toDate, setToDate] = useState('');
-    const [reason, setReason] = useState('');
-
-    
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
-
-            {/* Header
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Icon name="arrow-left" size={24} color={theme.colors.textHeading} />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>Leave Requests</Text>
-                {(role === 'principal' || role === 'staff') && (
-                    <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Icon name="plus" size={24} color="#FFF" />
-                    </TouchableOpacity>
-                )}
-            </View> */}
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -137,13 +100,14 @@ export default function LeaveRequests() {
                     <Text style={styles.heroValue}>2</Text>
                     {role === 'principal' || role === 'coordinator' ? (
                         <Text style={styles.heroSubText}>Days remaining</Text>
-                    ) : (<Text style={styles.heroSubText}>Re</Text>
+                    ) : (
+                        <Text style={styles.heroSubText}>Remaining</Text>
                     )}
                 </LinearGradient>
 
                 {role === 'staff' && (
                     <View style={styles.sectionCard}>
-                        <Text style={styles.sectionTitle}>Pending Requests</Text>
+                        <Text style={styles.sectionTitle}>Leave Balances</Text>
                         <ProgressBar
                             label="Sick Leave"
                             used={2}
@@ -170,6 +134,7 @@ export default function LeaveRequests() {
                         />
                     </View>
                 )}
+                
                 {role === 'staff' && (
                     <Text style={styles.listTitle}>My Requests</Text>
                 )}
@@ -185,112 +150,6 @@ export default function LeaveRequests() {
                     ))}
                 </View>
             </ScrollView>
-
-            {/* Request Leave Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <KeyboardAvoidingView
-                    style={styles.modalBg}
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                >
-                    <Pressable
-                        style={styles.modalDismiss}
-                        onPress={() => setModalVisible(false)}
-                    />
-
-                    <View
-                        style={[
-                            styles.bottomSheet,
-                            { paddingBottom: insets.bottom + 20 },
-                        ]}
-                    >
-                        <View style={styles.dragIndicator} />
-                        <Text style={styles.modalTitle}>Request Leave</Text>
-
-                        <ScrollView
-                            contentContainerStyle={styles.formContent}
-                            showsVerticalScrollIndicator={false}
-                        >
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Leave Type</Text>
-                                <TextInput
-                                    style={styles.inputBox}
-                                    placeholder=""
-                                    value={leaveType}
-                                    onChangeText={setLeaveType}
-                                />
-                            </View>
-
-                            <View style={styles.rowInputs}>
-                                <View
-                                    style={[
-                                        styles.inputGroup,
-                                        { flex: 1, marginRight: 8 },
-                                    ]}
-                                >
-                                    <Text style={styles.inputLabel}>From Date</Text>
-                                    <TextInput
-                                        style={styles.inputBox}
-                                        placeholder=""
-                                        value={fromDate}
-                                        onChangeText={setFromDate}
-                                    />
-                                </View>
-
-                                <View
-                                    style={[
-                                        styles.inputGroup,
-                                        { flex: 1, marginLeft: 8 },
-                                    ]}
-                                >
-                                    <Text style={styles.inputLabel}>To Date</Text>
-                                    <TextInput
-                                        style={styles.inputBox}
-                                        placeholder=""
-                                        value={toDate}
-                                        onChangeText={setToDate}
-                                    />
-                                </View>
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Reason</Text>
-                                <TextInput
-                                    style={[styles.inputBox, styles.textArea]}
-                                    placeholder="Enter reason for leave"
-                                    placeholderTextColor={theme.colors.textMuted}
-                                    value={reason}
-                                    onChangeText={setReason}
-                                    multiline
-                                    textAlignVertical="top"
-                                />
-                            </View>
-                        </ScrollView>
-
-                        <View style={styles.modalActions}>
-                            <TouchableOpacity
-                                style={styles.cancelBtn}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.cancelBtnText}>Cancel</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.submitBtn}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.submitBtnText}>
-                                    Submit Request
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
         </View>
     );
 }
@@ -300,33 +159,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAFAFA',
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.borderSubtle,
-        ...theme.shadow.header,
-    },
-    backButton: {
-        paddingRight: 10,
-        display: 'none',
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: '#0A0A0A',
-        flex: 1,
-    },
-    addButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: theme.colors.linkPrimary,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
     scrollContent: {
         paddingHorizontal: 16,
         paddingBottom: 40,
@@ -335,7 +167,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
         marginBottom: 20,
-                marginTop: 20,
+        marginTop: 20,
     },
     heroTop: {
         flexDirection: 'row',
@@ -414,94 +246,5 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         gap: 12,
-    },
-    
-    modalBg: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        justifyContent: 'flex-end',
-    },
-    modalDismiss: {
-        flex: 1,
-    },
-    bottomSheet: {
-        backgroundColor: '#FFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 20,
-        paddingTop: 12,
-    },
-    dragIndicator: {
-        width: 40,
-        height: 4,
-        backgroundColor: '#E5E7EB',
-        borderRadius: 2,
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    modalTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#0A0A0A',
-        marginBottom: 24,
-    },
-    formContent: {
-        paddingBottom: 20,
-    },
-    inputGroup: {
-        marginBottom: 16,
-    },
-    inputLabel: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#4A5565',
-        marginBottom: 8,
-    },
-    inputBox: {
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: '#0A0A0A',
-        backgroundColor: '#FFF',
-    },
-    rowInputs: {
-        flexDirection: 'row',
-    },
-    textArea: {
-        height: 120,
-        paddingTop: 16,
-    },
-    modalActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        marginTop: 8,
-    },
-    cancelBtn: {
-        flex: 1,
-        backgroundColor: '#F3F4F6',
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    cancelBtnText: {
-        color: '#0A0A0A',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    submitBtn: {
-        flex: 1,
-        backgroundColor: theme.colors.linkPrimary,
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    submitBtnText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '600',
     },
 });
