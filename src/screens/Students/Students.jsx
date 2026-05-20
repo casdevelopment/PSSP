@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -25,6 +26,7 @@ function getAttendanceColor(attendanceStr) {
 
 export default function Students() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
@@ -49,7 +51,12 @@ export default function Students() {
 
         <View style={styles.listContainer}>
           {STUDENTS_DATA.map((student) => (
-            <View key={student.id} style={styles.studentCard}>
+            <TouchableOpacity 
+              key={student.id} 
+              style={styles.studentCard}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('StudentDetail', { student })}
+            >
               <View style={styles.cardHeader}>
                 <View style={styles.nameWrap}>
                   <Text style={styles.studentName}>{student.name}</Text>
@@ -73,7 +80,7 @@ export default function Students() {
                 <Icon name="phone" size={16} color={theme.colors.textBody} />
                 <Text style={styles.contactText}>{student.phone}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>

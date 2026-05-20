@@ -8,6 +8,7 @@ import LeaveDetail from '../screens/Leave/LeaveDetail';
 import { useAuthStore } from '../store/AuthStore';
 import HeaderPlusButton from '../components/HeaderPlusButton';
 import RequestLeaveModal from '../components/RequestLeaveModal';
+import StudentDetail from '../screens/Students/StudentDetail';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,11 @@ export default function AppStack() {
                     name='LeaveDetail'
                     component={LeaveDetail}
                     options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name='StudentDetail'
+                    component={StudentDetail}
+                    options={{ headerShown: false }} // We built a custom header in the component
                 />
             </Stack.Navigator>
 

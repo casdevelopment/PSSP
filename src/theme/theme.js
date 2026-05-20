@@ -4,6 +4,8 @@ export const theme = {
     backgroundLight: '#FAFAFA', 
     surfaceSubtle: '#F3F4F6',
     borderSubtle: '#E5E7EB',
+    purpleSurface: '#FAF5FF',
+    blueSurface: '#EFF6FF',
     
     // Text Colors
     textHeading: '#101828',
