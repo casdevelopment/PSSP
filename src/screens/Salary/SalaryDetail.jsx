@@ -202,10 +202,10 @@ const styles = StyleSheet.create({
     statusCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.successSubtle,
+        backgroundColor: theme.colors.greenSurface,
         borderRadius: 16,
         padding: 16,
-        marginBottom: 24,
+        marginBottom: 4,
     },
     statusIconCircle: {
         width: 32,

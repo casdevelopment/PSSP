@@ -12,6 +12,7 @@ import StudentDetail from '../screens/Students/StudentDetail';
 import StaffDetail from '../screens/staff/StaffDetails';
 import SalaryHistory from '../screens/Salary/SalaryHistory';
 import SalaryDetail from '../screens/Salary/SalaryDetail';
+import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails'; // Ensure this file exists and is exported as default!
 
 const Stack = createNativeStackNavigator();
 
@@ -53,7 +54,7 @@ export default function AppStack() {
                 <Stack.Screen
                     name='StudentDetail'
                     component={StudentDetail}
-                    options={{ headerShown: false }} // We built a custom header in the component
+                    options={{ headerShown: false }} 
                 />
 
                 {/* Salary Routing */}
@@ -67,10 +68,18 @@ export default function AppStack() {
                     component={SalaryDetail}
                     options={{ headerShown: false }}
                 />
-                <Stack.Screen name="StaffDetail" component={StaffDetail} options={{ headerShown: false }} />
+                <Stack.Screen 
+                    name="StaffDetail" 
+                    component={StaffDetail} 
+                    options={{ headerShown: false }} 
+                />
+                <Stack.Screen 
+                    name="StaffSalaryDetails" 
+                    component={StaffSalaryDetails} 
+                    options={{ headerShown: false }} 
+                />
             </Stack.Navigator>
 
-            {/* model is mounted here so it can lay over the stack cleanly */}
             <RequestLeaveModel
                 visible={isLeavemodelVisible}
                 onClose={() => setIsLeavemodelVisible(false)}

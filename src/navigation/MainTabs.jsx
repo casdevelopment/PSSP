@@ -12,6 +12,7 @@ import Profile from '../screens/Profile/Profile';
 import Students from '../screens/Students/Students';
 import Staff from '../screens/staff/StaffList';
 import MySalary from '../screens/Salary/MySalary';
+import SalaryDistribution from '../screens/Salary/SalaryDistribution';
 
 // Components
 import HeaderPlusButton from '../components/HeaderPlusButton';
@@ -94,9 +95,10 @@ export default function MainTabs() {
             <Tab.Screen name="Schools">
               {() => <PlaceholderScreen name="Schools" />}
             </Tab.Screen>
-            <Tab.Screen name="Salary">
-              {() => <PlaceholderScreen name="Salary" />}
-            </Tab.Screen>
+            
+            {/* FIXED: Name kept as "Salary" so the icon triggers, mapped component to SalaryDistribution, hid default header */}
+            <Tab.Screen name="Salary" component={SalaryDistribution} options={{ headerShown: false }} />
+            
             <Tab.Screen name="Expenses">
               {() => <PlaceholderScreen name="Expenses" />}
             </Tab.Screen>
@@ -123,7 +125,6 @@ export default function MainTabs() {
           </>
         ) : (
           <>
-            {/* FIXED: Formatted the Tab.Screen correctly and added headers matching the screenshot */}
             <Tab.Screen
               name="Staff"
               component={Staff}
@@ -135,19 +136,16 @@ export default function MainTabs() {
                   fontWeight: '600',
                 },
                 headerRight: () => (
-                  <HeaderPlusButton onPress={() => {
-                    console.log("Plus button pressed!");
-                    setIsAddStaffmodelVisible(true);
-                  }} />
+                  <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
                 )
               }}
             />
             <Tab.Screen name="Timetable">
               {() => <PlaceholderScreen name="Timetable" />}
             </Tab.Screen>
-            <Tab.Screen name="Salary">
-              {() => <PlaceholderScreen name="Salary" />}
-            </Tab.Screen>
+            
+            {/* FIXED: Name kept as "Salary" so the icon triggers, mapped component to SalaryDistribution, hid default header */}
+            <Tab.Screen name="Salary" component={SalaryDistribution} options={{ headerShown: false }} />
           </>
         )}
 
