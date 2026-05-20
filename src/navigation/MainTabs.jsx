@@ -11,6 +11,7 @@ import Attendance from '../screens/Attendance/Attendance';
 import Profile from '../screens/Profile/Profile';
 import Students from '../screens/Students/Students';
 import Staff from '../screens/staff/StaffList';
+import MySalary from '../screens/Salary/MySalary';
 
 // Components
 import HeaderPlusButton from '../components/HeaderPlusButton';
@@ -118,9 +119,7 @@ export default function MainTabs() {
                 )
               }}
             />
-            <Tab.Screen name="Salary">
-              {() => <PlaceholderScreen name="Salary" />}
-            </Tab.Screen>
+            <Tab.Screen name="Salary" component={MySalary} options={{ headerShown: false }} />
           </>
         ) : (
           <>

@@ -10,13 +10,15 @@ import HeaderPlusButton from '../components/HeaderPlusButton';
 import RequestLeaveModel from '../components/RequestLeaveModel';
 import StudentDetail from '../screens/Students/StudentDetail';
 import StaffDetail from '../screens/staff/StaffDetails';
+import SalaryHistory from '../screens/Salary/SalaryHistory';
+import SalaryDetail from '../screens/Salary/SalaryDetail';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppStack() {
     const user = useAuthStore((state) => state.user);
     const role = user?.role;
-    
+
     // State to handle the model at the stack level
     const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
 
@@ -26,7 +28,7 @@ export default function AppStack() {
                 <Stack.Screen name='MainTabs' component={MainTabs} options={{ headerShown: false }} />
                 <Stack.Screen name='Attendance' component={Attendance} />
                 <Stack.Screen name='AttendanceHistory' component={AttendanceHistory} options={{ headerShown: false }} />
-                
+
                 <Stack.Screen name='LeaveRequests' component={LeaveRequests}
                     options={{
                         title: 'Leave Requests',
@@ -42,7 +44,7 @@ export default function AppStack() {
                         )
                     }}
                 />
-                
+
                 <Stack.Screen
                     name='LeaveDetail'
                     component={LeaveDetail}
@@ -53,13 +55,25 @@ export default function AppStack() {
                     component={StudentDetail}
                     options={{ headerShown: false }} // We built a custom header in the component
                 />
+
+                {/* Salary Routing */}
+                <Stack.Screen
+                    name="SalaryHistory"
+                    component={SalaryHistory}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="SalaryDetail"
+                    component={SalaryDetail}
+                    options={{ headerShown: false }}
+                />
                 <Stack.Screen name="StaffDetail" component={StaffDetail} options={{ headerShown: false }} />
             </Stack.Navigator>
 
             {/* model is mounted here so it can lay over the stack cleanly */}
-            <RequestLeaveModel 
-                visible={isLeavemodelVisible} 
-                onClose={() => setIsLeavemodelVisible(false)} 
+            <RequestLeaveModel
+                visible={isLeavemodelVisible}
+                onClose={() => setIsLeavemodelVisible(false)}
             />
         </>
     );
