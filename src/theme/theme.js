@@ -1,24 +1,48 @@
 export const theme = {
   colors: {
     appBackground: '#F9FAFB',
+    backgroundLight: '#FAFAFA', 
     surfaceSubtle: '#F3F4F6',
     borderSubtle: '#E5E7EB',
+    
+    // Text Colors
     textHeading: '#101828',
     textStrong: '#0A0A0A',
     textBody: '#4A5565',
     textMuted: '#6A7282',
+    textMutedAlt: '#6B7280', 
     textOnDarkMuted: '#DBEAFE',
+    
+    // Core Colors
     linkPrimary: '#155DFC',
+    bluePrimary: '#2B7FFF', 
     white: '#FFFFFF',
+    white90: 'rgba(255, 255, 255, 0.9)', // Added opacity variant
+    white80: 'rgba(255, 255, 255, 0.8)', // Added opacity variant
     black: '#000000',
     purple: '#6C5CE7',
+    accentPurple: '#8B5CF6', 
+    purpleSubtle: '#F3E8FF', 
+    
+    // Status Colors 
+    success: '#10B981',
+    successStrong: '#16A34A',
+    successSubtle: '#ECFDF5',
+    
+    danger: '#E11D48',
+    dangerStrong: '#DC2626',
+    dangerSubtle: '#FEF2F2',
+    
+    warning: '#EA580C',
+    warningSubtle: '#FFF7ED',
+
     approvalCardBg: '#FFF7ED',
     pendingChipBg: '#FFEDD4',
     pendingChipText: '#CA3500',
     tabActive: '#155DFC',
     tabInactive: '#6A7282',
 
-    // Compatibility aliases for already implemented screens.
+    // Compatibility aliases
     background: '#F9FAFB',
     surface: '#FFFFFF',
     cardSurface: '#F9FAFB',

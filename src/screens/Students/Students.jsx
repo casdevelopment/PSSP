@@ -18,9 +18,9 @@ const STUDENTS_DATA = [
 
 function getAttendanceColor(attendanceStr) {
   const num = parseInt(attendanceStr);
-  if (num >= 95) return '#16A34A'; // green
-  if (num >= 90) return '#EA580C'; // orange/reddish
-  return '#DC2626'; // red
+  if (num >= 95) return theme.colors.successStrong; 
+  if (num >= 90) return theme.colors.warning; 
+  return theme.colors.dangerStrong; 
 }
 
 export default function Students() {
@@ -37,7 +37,7 @@ export default function Students() {
           topIcon="users"
           title="6"
           subtitle="Across 4 classes"
-          colors={['#2B7FFF', '#155DFC']}
+          colors={[theme.colors.bluePrimary, theme.colors.linkPrimary]}
         />
 
         <View style={styles.filterSection}>
@@ -84,7 +84,7 @@ export default function Students() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.appBackground || '#FAFAFA',
+    backgroundColor: theme.colors.backgroundLight,
   },
   scrollContent: {
     paddingTop: 16,
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 14,
-    color: theme.colors.textHeading || '#0A0A0A',
+    color: theme.colors.textHeading,
     fontWeight: '500',
     marginBottom: 8,
   },
   inputContainer: {
-    backgroundColor: theme.colors.white || '#FFF',
+    backgroundColor: theme.colors.white,
     borderWidth: 1,
-    borderColor: theme.colors.borderSubtle || '#E5E7EB',
+    borderColor: theme.colors.borderSubtle,
     borderRadius: 12,
     height: 40,
   },
@@ -115,11 +115,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   studentCard: {
-    backgroundColor: theme.colors.white || '#FFF',
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: theme.colors.borderSubtle || '#E5E7EB',
+    borderColor: theme.colors.borderSubtle,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -133,19 +133,19 @@ const styles = StyleSheet.create({
   studentName: {
     fontSize: 18,
     fontWeight: '700',
-    color: theme.colors.textHeading || '#0A0A0A',
+    color: theme.colors.textHeading,
     marginBottom: 4,
   },
   rollNo: {
     fontSize: 14,
-    color: theme.colors.linkPrimary || '#2B7FFF',
+    color: theme.colors.bluePrimary,
   },
   attendanceWrap: {
     alignItems: 'flex-end',
   },
   attendanceLabel: {
     fontSize: 14,
-    color: theme.colors.textMuted || '#6B7280',
+    color: theme.colors.textMutedAlt,
     marginBottom: 4,
   },
   attendanceValue: {
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: theme.colors.surfaceSubtle || '#F3F4F6',
+    backgroundColor: theme.colors.surfaceSubtle,
     marginBottom: 12,
   },
   contactRow: {
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 14,
-    color: theme.colors.textBody || '#4A5565',
+    color: theme.colors.textBody,
     marginLeft: 8,
   },
 });

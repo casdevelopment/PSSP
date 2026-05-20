@@ -87,7 +87,7 @@ export default function LeaveRequests() {
                         <Icon
                             name="calendar"
                             size={20}
-                            color="#FFF"
+                            color={theme.colors.white}
                             style={styles.heroIcon}
                         />
                         {role === 'principal' || role === 'coordinator' ? (
@@ -121,7 +121,7 @@ export default function LeaveRequests() {
                             label="Casual Leave"
                             used={4}
                             total={12}
-                            color="#10B981"
+                            color={theme.colors.success}
                         />
 
                         <View style={styles.divider} />
@@ -130,7 +130,7 @@ export default function LeaveRequests() {
                             label="Personal Leave"
                             used={3}
                             total={8}
-                            color="#8B5CF6"
+                            color={theme.colors.accentPurple}
                         />
                     </View>
                 )}
@@ -157,7 +157,7 @@ export default function LeaveRequests() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
+        backgroundColor: theme.colors.backgroundLight,
     },
     scrollContent: {
         paddingHorizontal: 16,
@@ -178,22 +178,22 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     heroLabel: {
-        color: 'rgba(255, 255, 255, 0.9)',
+        color: theme.colors.white90,
         fontSize: 16,
         fontWeight: '500',
     },
     heroValue: {
-        color: '#FFF',
+        color: theme.colors.white,
         fontSize: 48,
         fontWeight: '800',
         marginBottom: 4,
     },
     heroSubText: {
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: theme.colors.white80,
         fontSize: 14,
     },
     sectionCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: theme.colors.white,
         borderRadius: 16,
         padding: 20,
         borderWidth: 1,
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#0A0A0A',
+        color: theme.colors.textStrong,
         marginBottom: 20,
     },
     divider: {
         height: 1,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: theme.colors.surfaceSubtle,
         marginVertical: 16,
     },
     progressContainer: {
@@ -226,11 +226,11 @@ const styles = StyleSheet.create({
     progressValue: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#0A0A0A',
+        color: theme.colors.textStrong,
     },
     progressTrack: {
         height: 8,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: theme.colors.surfaceSubtle,
         borderRadius: 4,
         overflow: 'hidden',
     },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     listTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#0A0A0A',
+        color: theme.colors.textStrong,
         marginBottom: 16,
     },
     listContainer: {

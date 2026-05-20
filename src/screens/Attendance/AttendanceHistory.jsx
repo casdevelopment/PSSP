@@ -22,18 +22,18 @@ const DUMMY_STUDENT_HISTORY = [
 ];
 
 const StatChip = ({ value, label, type }) => {
-    let textColor = '#000';
-    let bgColor = '#FFF';
+    let textColor = theme.colors.black;
+    let bgColor = theme.colors.white;
 
     if (type === 'present') {
-        textColor = '#10B981';
-        bgColor = '#ECFDF5';
+        textColor = theme.colors.success;
+        bgColor = theme.colors.successSubtle;
     } else if (type === 'absent') {
-        textColor = '#E11D48';
-        bgColor = '#FEF2F2';
+        textColor = theme.colors.danger;
+        bgColor = theme.colors.dangerSubtle;
     } else if (type === 'late') {
-        textColor = '#EA580C';
-        bgColor = '#FFF7ED';
+        textColor = theme.colors.warning;
+        bgColor = theme.colors.warningSubtle;
     }
 
     return (
@@ -56,21 +56,21 @@ export default function AttendanceHistory() {
 
     const topStats = isStudent
         ? [
-            { value: '15', label: 'Classes', color: '#155DFC' },
-            { value: '206', label: 'Present', color: '#10B981' },
-            { value: '5', label: 'Absent', color: '#E11D48' }
+            { value: '15', label: 'Classes', color: theme.colors.linkPrimary },
+            { value: '206', label: 'Present', color: theme.colors.success },
+            { value: '5', label: 'Absent', color: theme.colors.danger }
         ]
         : [
-            { value: '152', label: 'Present', color: '#10B981' },
-            { value: '5', label: 'Absent', color: '#E11D48' },
-            { value: '3', label: 'Late', color: '#EA580C' }
+            { value: '152', label: 'Present', color: theme.colors.success },
+            { value: '5', label: 'Absent', color: theme.colors.danger },
+            { value: '3', label: 'Late', color: theme.colors.warning }
         ];
 
     const getPercentStyle = (percent) => {
         if (percent >= 95) {
-            return { bg: '#ECFDF5', text: '#10B981' };
+            return { bg: theme.colors.successSubtle, text: theme.colors.success };
         }
-        return { bg: '#FFF7ED', text: '#EA580C' };
+        return { bg: theme.colors.warningSubtle, text: theme.colors.warning };
     };
 
     return (
@@ -81,7 +81,7 @@ export default function AttendanceHistory() {
             <View style={[styles.headerBg, { paddingTop: insets.top }]}>
                 <View style={styles.headerTop}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Icon name="chevron-left" size={24} color="#FFF" />
+                        <Icon name="chevron-left" size={24} color={theme.colors.white} />
                         <Text style={styles.backText}>Back</Text>
                     </TouchableOpacity>
                 </View>
@@ -173,20 +173,20 @@ const styles = StyleSheet.create({
         marginLeft: -8,
     },
     backText: {
-        color: '#FFF',
+        color: theme.colors.white,
         fontSize: 16,
         fontWeight: '500',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#FFF',
+        color: theme.colors.white,
         marginBottom: 4,
         marginTop: 8,
     },
     headerSubtitle: {
         fontSize: 16,
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.white80,
     },
     scrollContent: {
         paddingTop: 10,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#F3E8FF', // light purple tint
+        backgroundColor: theme.colors.purpleSubtle,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 16,
