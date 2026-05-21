@@ -144,6 +144,10 @@ export const theme = {
       '#FFC107',
       '#FFA000',
     ],
+    darkOrange: [
+      '#FF6900',
+      '#F54900'
+    ],
     purple: [
       '#6C5CE7',
       '#6354D9',

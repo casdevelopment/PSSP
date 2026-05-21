@@ -13,6 +13,7 @@ import StaffDetail from '../screens/staff/StaffDetails';
 import SalaryHistory from '../screens/Salary/SalaryHistory';
 import SalaryDetail from '../screens/Salary/SalaryDetail';
 import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails';
+import ExpenseDetails from '../screens/Expenses/ExpenseDetails';
 // FIXED: Changed TimeTable to Timetable
 import ClassDetails from '../screens/Timetable/ClassDetails'; 
 
@@ -80,6 +81,7 @@ export default function AppStack() {
                     options={{ headerShown: false }} 
                 />
                 <Stack.Screen name="ClassDetails" component={ClassDetails} options={{ headerShown: false }} />
+                <Stack.Screen name="ExpenseDetails" component={ExpenseDetails} options={{ headerShown: false }} />
             </Stack.Navigator>
 
             <RequestLeaveModel

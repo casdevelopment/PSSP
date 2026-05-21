@@ -14,6 +14,7 @@ import Staff from '../screens/staff/StaffList';
 import MySalary from '../screens/Salary/MySalary';
 import SalaryDistribution from '../screens/Salary/SalaryDistribution';
 import Timetable from '../screens/Timetable/Timetable';
+import ExpenseRequests from '../screens/Expenses/ExpenseRequests';
 
 // Components
 import HeaderPlusButton from '../components/HeaderPlusButton';
@@ -93,9 +94,15 @@ export default function MainTabs() {
               component={SalaryDistribution}
               options={{ headerShown: false, title: 'Salary' }}
             />
-            <Tab.Screen name="Expenses">
-              {() => <PlaceholderScreen name="Expenses" />}
-            </Tab.Screen>
+            <Tab.Screen
+              name="Expenses"
+              component={ExpenseRequests}
+              options={{
+                title: 'Expenses',
+                headerTitle: 'Expenses Requests',
+                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+              }}
+            />
           </>
         ) : role === 'staff' ? (
           <>

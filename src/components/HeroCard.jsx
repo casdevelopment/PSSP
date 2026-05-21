@@ -15,6 +15,7 @@ export default function HeroCard({
   rightElement, // Added to support custom right-side elements (like the check circle)
   children,     // Added to support custom bottom elements (like the date row)
   titleStyle,   // Added to support custom title sizing
+  topLabelStyle, // Added to support custom Top Label styling (like changing color)
 }) {
   return (
     <View style={styles.headerContainer}>
@@ -28,14 +29,14 @@ export default function HeroCard({
         <View style={styles.topRow}>
           <View style={styles.topLeft}>
             {topIcon && <Icon name={topIcon} size={16} color="rgba(255,255,255,0.8)" style={styles.topIcon} />}
-            <Text style={styles.topLabel}>{topLabel}</Text>
+            <Text style={[styles.topLabel, topLabelStyle]}>{topLabel}</Text>
           </View>
         </View>
-        
+
         {/* Title Row: Title on the left, rightElement on the right */}
         <View style={styles.titleRow}>
           <Text style={[styles.title, titleStyle]}>{title}</Text>
-          
+
           {/* Render custom right element if provided, otherwise fallback to standard text button */}
           {rightElement ? rightElement : (
             rightActionText && (
@@ -47,7 +48,7 @@ export default function HeroCard({
         </View>
 
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        
+
         {/* Render extra custom content at the bottom */}
         {children}
       </LinearGradient>
