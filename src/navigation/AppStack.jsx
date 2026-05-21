@@ -12,7 +12,9 @@ import StudentDetail from '../screens/Students/StudentDetail';
 import StaffDetail from '../screens/staff/StaffDetails';
 import SalaryHistory from '../screens/Salary/SalaryHistory';
 import SalaryDetail from '../screens/Salary/SalaryDetail';
-import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails'; // Ensure this file exists and is exported as default!
+import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails';
+// FIXED: Changed TimeTable to Timetable
+import ClassDetails from '../screens/Timetable/ClassDetails'; 
 
 const Stack = createNativeStackNavigator();
 
@@ -20,7 +22,6 @@ export default function AppStack() {
     const user = useAuthStore((state) => state.user);
     const role = user?.role;
 
-    // State to handle the model at the stack level
     const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
 
     return (
@@ -78,6 +79,7 @@ export default function AppStack() {
                     component={StaffSalaryDetails} 
                     options={{ headerShown: false }} 
                 />
+                <Stack.Screen name="ClassDetails" component={ClassDetails} options={{ headerShown: false }} />
             </Stack.Navigator>
 
             <RequestLeaveModel

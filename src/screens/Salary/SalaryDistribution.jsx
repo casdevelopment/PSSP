@@ -31,11 +31,7 @@ export default function SalaryDistribution() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
-      
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.headerTitle}>Salary Distribution</Text>
-      </View>
-
+    
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Total Distribution Hero using Custom Component */}
@@ -125,16 +121,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.backgroundLight,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    backgroundColor: theme.colors.backgroundLight,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: theme.colors.textHeading,
   },
   scrollContent: {
     paddingBottom: 100,

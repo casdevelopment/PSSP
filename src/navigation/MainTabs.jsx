@@ -13,11 +13,13 @@ import Students from '../screens/Students/Students';
 import Staff from '../screens/staff/StaffList';
 import MySalary from '../screens/Salary/MySalary';
 import SalaryDistribution from '../screens/Salary/SalaryDistribution';
+import Timetable from '../screens/Timetable/Timetable';
 
 // Components
 import HeaderPlusButton from '../components/HeaderPlusButton';
 import AddStudentModel from '../components/AddStudentModel';
 import AddStaffModel from '../components/AddStaffModel';
+import AddScheduleModal from '../components/AddScheduleModal';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,6 +33,7 @@ export default function MainTabs() {
   const role = useAuthStore((state) => state.role);
   const [isAddStudentmodelVisible, setIsAddStudentmodelVisible] = useState(false);
   const [isAddStaffmodelVisible, setIsAddStaffmodelVisible] = useState(false);
+  const [isAddScheduleModalVisible, setIsAddScheduleModalVisible] = useState(false);
 
   return (
     <>
@@ -38,26 +41,16 @@ export default function MainTabs() {
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
-
-            if (route.name === 'Home') {
-              iconName = 'home';
-            } else if (route.name === 'Staff') {
-              iconName = 'users';
-            } else if (route.name === 'Timetable') {
-              iconName = 'calendar';
-            } else if (route.name === 'Salary') {
-              iconName = 'dollar-sign';
-            } else if (route.name === 'Profile') {
-              iconName = 'user';
-            } else if (route.name === 'Schools') {
-              iconName = 'trello';
-            } else if (route.name === 'Expenses') {
-              iconName = 'file-text';
-            } else if (route.name === 'Attendance') {
-              iconName = 'clipboard';
-            } else if (route.name === 'Students') {
-              iconName = 'book-open';
-            }
+            // Map icon strictly by route name
+            if (route.name === 'Home') iconName = 'home';
+            else if (route.name === 'Staff') iconName = 'users';
+            else if (route.name === 'Timetable') iconName = 'calendar';
+            else if (route.name === 'Salary' || route.name === 'Salary Management') iconName = 'dollar-sign';
+            else if (route.name === 'Profile') iconName = 'user';
+            else if (route.name === 'Schools') iconName = 'trello';
+            else if (route.name === 'Expenses') iconName = 'file-text';
+            else if (route.name === 'Attendance') iconName = 'clipboard';
+            else if (route.name === 'Students') iconName = 'book-open';
 
             return <Icon name={iconName} size={24} color={color} />;
           },
@@ -95,10 +88,11 @@ export default function MainTabs() {
             <Tab.Screen name="Schools">
               {() => <PlaceholderScreen name="Schools" />}
             </Tab.Screen>
-            
-            {/* FIXED: Name kept as "Salary" so the icon triggers, mapped component to SalaryDistribution, hid default header */}
-            <Tab.Screen name="Salary" component={SalaryDistribution} options={{ headerShown: false }} />
-            
+            <Tab.Screen
+              name="Salary Management"
+              component={SalaryDistribution}
+              options={{ headerShown: false, title: 'Salary' }}
+            />
             <Tab.Screen name="Expenses">
               {() => <PlaceholderScreen name="Expenses" />}
             </Tab.Screen>
@@ -112,16 +106,11 @@ export default function MainTabs() {
               options={{
                 title: 'My Students',
                 headerTitle: 'My Students',
-                headerTitleStyle: {
-                  fontSize: 20,
-                  fontWeight: '600',
-                },
-                headerRight: () => (
-                  <HeaderPlusButton onPress={() => setIsAddStudentmodelVisible(true)} />
-                )
+                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+                headerRight: () => <HeaderPlusButton onPress={() => setIsAddStudentmodelVisible(true)} />
               }}
             />
-            <Tab.Screen name="Salary" component={MySalary} options={{ headerShown: false }} />
+            <Tab.Screen name="Salary" component={MySalary} options={{ headerShown: true }} />
           </>
         ) : (
           <>
@@ -131,27 +120,36 @@ export default function MainTabs() {
               options={{
                 title: 'Staff',
                 headerTitle: 'Staff Management',
-                headerTitleStyle: {
-                  fontSize: 20,
-                  fontWeight: '600',
-                },
-                headerRight: () => (
-                  <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
-                )
+                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+                headerRight: () => <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
               }}
             />
-            <Tab.Screen name="Timetable">
-              {() => <PlaceholderScreen name="Timetable" />}
-            </Tab.Screen>
-            
-            {/* FIXED: Name kept as "Salary" so the icon triggers, mapped component to SalaryDistribution, hid default header */}
-            <Tab.Screen name="Salary" component={SalaryDistribution} options={{ headerShown: false }} />
+            <Tab.Screen
+              name="Timetable"
+              component={Timetable}
+              options={{
+                headerTitleStyle: { fontSize: 24, fontWeight: '800', color: theme.colors.textHeading },
+                headerRight: () => <HeaderPlusButton onPress={() => setIsAddScheduleModalVisible(true)} />
+              }}
+            />
+            <Tab.Screen
+              name="Salary Management"
+              component={SalaryDistribution}
+              options={{
+                title: 'Salary',
+                headerTitle: 'Salary',
+              }}
+            />
           </>
         )}
 
         <Tab.Screen name="Profile" component={Profile} />
       </Tab.Navigator>
 
+      <AddScheduleModal
+        visible={isAddScheduleModalVisible}
+        onClose={() => setIsAddScheduleModalVisible(false)}
+      />
       <AddStudentModel
         visible={isAddStudentmodelVisible}
         onClose={() => setIsAddStudentmodelVisible(false)}
