@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
+import SchoolsList from '../screens/Schools/SchoolsList';
 
 // Screens
 import Dashboard from '../screens/Dashboard/Dashboard';
@@ -86,9 +87,16 @@ export default function MainTabs() {
 
         {role === 'coordinator' ? (
           <>
-            <Tab.Screen name="Schools">
-              {() => <PlaceholderScreen name="Schools" />}
-            </Tab.Screen>
+            <Tab.Screen
+              name="Schools"
+              component={SchoolsList}
+              // options={{ headerShown: false }}
+              options={{
+                title: 'Schools',
+                headerTitle: 'My Schools',
+                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+              }}
+            />
             <Tab.Screen
               name="Salary Management"
               component={SalaryDistribution}

@@ -24,8 +24,8 @@ export default function Profile() {
           thirdLabel: 'Assigned Schools',
           thirdValue: '12 Schools',
           thirdIcon: 'trello', 
-          thirdIconBg: '#F3E8FF',
-          thirdIconColor: '#6C5CE7',
+          thirdIconBg: theme.colors.purpleSubtle,
+          thirdIconColor: theme.colors.purple,
           showEdit: false,
           showStats: false,
         };
@@ -40,8 +40,8 @@ export default function Profile() {
           thirdLabel: 'School',
           thirdValue: 'Greenwood High School',
           thirdIcon: 'trello', 
-          thirdIconBg: '#EFF6FF',
-          thirdIconColor: '#155DFC',
+          thirdIconBg: theme.colors.blueSurface,
+          thirdIconColor: theme.colors.linkPrimary,
           showEdit: true,
           showStats: false,
         };
@@ -57,8 +57,8 @@ export default function Profile() {
           thirdLabel: 'Subject',
           thirdValue: 'Mathematics',
           thirdIcon: 'book-open',
-          thirdIconBg: '#F3E8FF',
-          thirdIconColor: '#6C5CE7',
+          thirdIconBg: theme.colors.purpleSubtle,
+          thirdIconColor: theme.colors.purple,
           showEdit: true,
           showStats: true,
         };
@@ -71,7 +71,8 @@ export default function Profile() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
+        /* FIXED: Amplified bottom padding buffer structure safely to prevent tab bar overlay clipping issues */
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 110 }]}
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
@@ -82,7 +83,7 @@ export default function Profile() {
         >
           <View style={styles.heroContent}>
             <View style={styles.avatarCircle}>
-              <Icon name="user" size={32} color="#FFF" />
+              <Icon name="user" size={32} color={theme.colors.white} />
             </View>
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroName}>{data.name}</Text>
@@ -103,8 +104,8 @@ export default function Profile() {
           </View>
 
           <View style={styles.infoRow}>
-            <View style={[styles.iconCircle, { backgroundColor: '#EFF6FF' }]}>
-              <Icon name="mail" size={20} color="#155DFC" />
+            <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
+              <Icon name="mail" size={20} color={theme.colors.linkPrimary} />
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoLabel}>Email</Text>
@@ -113,8 +114,8 @@ export default function Profile() {
           </View>
 
           <View style={styles.infoRow}>
-            <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
-              <Icon name="phone" size={20} color="#10B981" />
+            <View style={[styles.iconCircle, { backgroundColor: theme.colors.greenSurface }]}>
+              <Icon name="phone" size={20} color={theme.colors.success} />
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoLabel}>Phone</Text>
@@ -137,16 +138,16 @@ export default function Profile() {
           <View style={styles.statsCard}>
             <Text style={styles.cardTitle}>Teaching Stats</Text>
             <View style={styles.statsRow}>
-              <View style={[styles.statBox, { backgroundColor: '#EFF6FF' }]}>
-                <Text style={[styles.statValue, { color: '#155DFC' }]}>5</Text>
+              <View style={[styles.statBox, { backgroundColor: theme.colors.blueSurface }]}>
+                <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>5</Text>
                 <Text style={styles.statLabel}>Classes</Text>
               </View>
-              <View style={[styles.statBox, { backgroundColor: '#ECFDF5' }]}>
-                <Text style={[styles.statValue, { color: '#10B981' }]}>142</Text>
+              <View style={[styles.statBox, { backgroundColor: theme.colors.greenSurface }]}>
+                <Text style={[styles.statValue, { color: theme.colors.success }]}>142</Text>
                 <Text style={styles.statLabel}>Students</Text>
               </View>
-              <View style={[styles.statBox, { backgroundColor: '#F3E8FF' }]}>
-                <Text style={[styles.statValue, { color: '#6C5CE7' }]}>98%</Text>
+              <View style={[styles.statBox, { backgroundColor: theme.colors.purpleSubtle }]}>
+                <Text style={[styles.statValue, { color: theme.colors.purple }]}>98%</Text>
                 <Text style={styles.statLabel}>Attendance</Text>
               </View>
             </View>
@@ -187,7 +188,7 @@ export default function Profile() {
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
-          <Icon name="log-out" size={20} color="#E11D48" />
+          <Icon name="log-out" size={20} color={theme.colors.danger} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -198,12 +199,12 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Light mode bg
+    backgroundColor: theme.colors.appBackground,
   },
   scrollContent: {
-    paddingTop: 10, // accommodate safe area
-    paddingBottom: 40,
+    paddingTop: 10,
     paddingHorizontal: 16,
+    // Removed alternative conflicting hardcoded paddingBottom entry line from here
   },
   heroCard: {
     borderRadius: 20,
@@ -229,25 +230,25 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFF',
+    color: theme.colors.white,
     marginBottom: 4,
   },
   heroRole: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: theme.colors.white90,
     marginBottom: 4,
   },
   heroSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: theme.colors.white80,
   },
   card: {
-    backgroundColor: '#FFF',
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.borderSubtle,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -258,17 +259,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: theme.colors.textStrong,
   },
   editLink: {
     fontSize: 14,
-    color: '#155DFC',
+    color: theme.colors.linkPrimary,
     fontWeight: '500',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: theme.colors.appBackground,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
@@ -286,13 +287,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 13,
-    color: '#6A7282',
+    color: theme.colors.textMuted,
     marginBottom: 2,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#0A0A0A',
+    color: theme.colors.textStrong,
   },
   statsCard: {
     marginBottom: 24,
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.borderSubtle,
   },
   statValue: {
     fontSize: 24,
@@ -318,16 +319,16 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 13,
-    color: '#4A5565',
+    color: theme.colors.textBody,
     fontWeight: '500',
   },
   menuCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     paddingVertical: 8,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.borderSubtle,
   },
   menuItem: {
     flexDirection: 'row',
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#0A0A0A',
+    color: theme.colors.textStrong,
     marginLeft: 12,
   },
   menuItemRight: {
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badge: {
-    backgroundColor: '#E11D48',
+    backgroundColor: theme.colors.danger,
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -360,20 +361,20 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   badgeText: {
-    color: '#FFF',
+    color: theme.colors.white,
     fontSize: 12,
     fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: theme.colors.surfaceSubtle,
     marginHorizontal: 20,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: theme.colors.dangerSubtle,
     borderRadius: 12,
     paddingVertical: 16,
   },
@@ -381,6 +382,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '600',
-    color: '#E11D48',
+    color: theme.colors.danger,
   },
 });

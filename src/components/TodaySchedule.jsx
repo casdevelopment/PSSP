@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../theme/theme';
+import { useNavigation } from '@react-navigation/native';
 
 const scheduleData = [
   { id: '1', time: '9:00 AM', subject: 'Mathematics', teacher: 'John Smith', grade: 'Grade 10-A' },
@@ -9,11 +10,14 @@ const scheduleData = [
 ];
 
 const TodaySchedule = () => {
+
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Today's Schedule</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MySchedule')}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>

@@ -14,8 +14,10 @@ import SalaryHistory from '../screens/Salary/SalaryHistory';
 import SalaryDetail from '../screens/Salary/SalaryDetail';
 import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails';
 import ExpenseDetails from '../screens/Expenses/ExpenseDetails';
+import SchoolDetail from '../screens/Schools/SchoolDetail';
+import MySchedule from '../screens/Timetable/MySchedule';
 // FIXED: Changed TimeTable to Timetable
-import ClassDetails from '../screens/Timetable/ClassDetails'; 
+import ClassDetails from '../screens/Timetable/ClassDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -56,7 +58,7 @@ export default function AppStack() {
                 <Stack.Screen
                     name='StudentDetail'
                     component={StudentDetail}
-                    options={{ headerShown: false }} 
+                    options={{ headerShown: false }}
                 />
 
                 {/* Salary Routing */}
@@ -70,18 +72,24 @@ export default function AppStack() {
                     component={SalaryDetail}
                     options={{ headerShown: false }}
                 />
-                <Stack.Screen 
-                    name="StaffDetail" 
-                    component={StaffDetail} 
-                    options={{ headerShown: false }} 
+                <Stack.Screen
+                    name="StaffDetail"
+                    component={StaffDetail}
+                    options={{ headerShown: false }}
                 />
-                <Stack.Screen 
-                    name="StaffSalaryDetails" 
-                    component={StaffSalaryDetails} 
-                    options={{ headerShown: false }} 
+                <Stack.Screen
+                    name="StaffSalaryDetails"
+                    component={StaffSalaryDetails}
+                    options={{ headerShown: false }}
                 />
                 <Stack.Screen name="ClassDetails" component={ClassDetails} options={{ headerShown: false }} />
                 <Stack.Screen name="ExpenseDetails" component={ExpenseDetails} options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="SchoolDetail"
+                    component={SchoolDetail}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen name="MySchedule" component={MySchedule} options={{ headerShown: false }} />
             </Stack.Navigator>
 
             <RequestLeaveModel
