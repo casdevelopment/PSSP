@@ -5,11 +5,13 @@ import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const role = useAuthStore((state) => state.role);
   const logout = useAuthStore((state) => state.logout);
+  const navigation = useNavigation();
 
   const getProfileData = () => {
     switch (role) {
@@ -97,7 +99,7 @@ export default function Profile() {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Contact Information</Text>
             {data.showEdit && (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
                 <Text style={styles.editLink}>Edit Details</Text>
               </TouchableOpacity>
             )}
@@ -155,7 +157,7 @@ export default function Profile() {
         )}
 
         <View style={styles.menuCard}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Notifications')}>
             <View style={styles.menuItemLeft}>
               <Icon name="bell" size={20} color={theme.colors.textBody} />
               <Text style={styles.menuItemText}>Notifications</Text>
@@ -169,7 +171,7 @@ export default function Profile() {
           </TouchableOpacity>
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Settings')}>
             <View style={styles.menuItemLeft}>
               <Icon name="shield" size={20} color={theme.colors.textBody} />
               <Text style={styles.menuItemText}>Settings</Text>

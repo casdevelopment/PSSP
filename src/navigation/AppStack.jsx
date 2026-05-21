@@ -16,6 +16,14 @@ import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails';
 import ExpenseDetails from '../screens/Expenses/ExpenseDetails';
 import SchoolDetail from '../screens/Schools/SchoolDetail';
 import MySchedule from '../screens/Timetable/MySchedule';
+import Settings from '../screens/Profile/Settings';
+import LiveChat from '../screens/Profile/LiveChat';
+import HelpCenter from '../screens/Profile/HelpCenter';
+import ArticleList from '../screens/Profile/ArticleList';
+import NotificationSettings from '../screens/Profile/NotificationSettings';
+import Notifications from '../screens/Profile/Notifications';
+import ChangePassword from '../screens/Profile/ChangePassword';
+import EditProfile from '../screens/Profile/EditProfile';
 // FIXED: Changed TimeTable to Timetable
 import ClassDetails from '../screens/Timetable/ClassDetails';
 
@@ -84,12 +92,20 @@ export default function AppStack() {
                 />
                 <Stack.Screen name="ClassDetails" component={ClassDetails} options={{ headerShown: false }} />
                 <Stack.Screen name="ExpenseDetails" component={ExpenseDetails} options={{ headerShown: false }} />
+                <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+                <Stack.Screen name="LiveChat" component={LiveChat} options={{ headerShown: false }} />
+                <Stack.Screen name="HelpCenter" component={HelpCenter} options={{ headerShown: false }} />
+                <Stack.Screen name="ArticleList" component={ArticleList} options={{ headerShown: false }} />
+                <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
+                <Stack.Screen name="Notifications" component={Notifications} options={{ headerShown: false }} />
+                <Stack.Screen name="ChangePassword" component={ChangePassword} options={{ headerShown: false }} />
                 <Stack.Screen
                     name="SchoolDetail"
                     component={SchoolDetail}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen name="MySchedule" component={MySchedule} options={{ headerShown: false }} />
+                <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }} />
             </Stack.Navigator>
 
             <RequestLeaveModel
