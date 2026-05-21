@@ -5,6 +5,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 
+// Adjust path as needed for your project structure
+import HeroCard from '../../components/HeroCard'; 
+
 export default function StaffSalaryDetails() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -42,30 +45,39 @@ export default function StaffSalaryDetails() {
         </View>
       </View>
 
-      {/* Total Amount Card (Floating) */}
-      <View style={[styles.amountCard, theme.shadow.card]}>
-        <View style={styles.amountTop}>
-          <View>
-            <Text style={styles.amountLabel}>Total Amount</Text>
-            <Text style={styles.amountValue}>{record.amount}</Text>
+{/* Total Amount Card (Floating) Replaced with HeroCard */}
+      <View style={{ marginTop: -30 }}>
+        <HeroCard
+          // Using an array of white to ensure the LinearGradient renders as a solid white card
+          colors={[theme.colors.white, theme.colors.white]} 
+          
+          // Passing a Text component directly into the string prop overrides the HeroCard's hardcoded white label
+          topLabel={<Text style={{ color: theme.colors.textMuted }}>Total Amount</Text>} 
+          
+          title={record.amount}
+          titleStyle={{ fontSize: 36, fontWeight: '800', color: theme.colors.textHeading }} 
+          
+          rightElement={
+            <View 
+              style={[
+                styles.statusIconCircle, 
+                { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }
+              ]}
+            >
+              <Icon 
+                name={isPaid ? "check" : "dollar-sign"} 
+                size={24} 
+                color={isPaid ? theme.colors.successStrong : theme.colors.pendingChipText} 
+              />
+            </View>
+          }
+        >
+          {/* Bottom section updated to use dark text and subtle borders for the white background */}
+          <View style={[styles.amountBottom, { borderTopColor: theme.colors.surfaceSubtle }]}>
+            <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
+            <Text style={[styles.dateText, { color: theme.colors.textBody }]}>{record.date}</Text>
           </View>
-
-          {/* Conditional Status Icon */}
-          {isPaid ? (
-            <View style={[styles.statusIconCircle, { backgroundColor: theme.colors.successSubtle }]}>
-              <Icon name="check" size={24} color={theme.colors.successStrong} />
-            </View>
-          ) : (
-            <View style={[styles.statusIconCircle, { backgroundColor: theme.colors.pendingChipBg }]}>
-              <Icon name="dollar-sign" size={24} color={theme.colors.pendingChipText} />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.amountBottom}>
-          <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-          <Text style={styles.dateText}>{isPaid ? record.date : record.date}</Text>
-        </View>
+        </HeroCard>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -195,37 +207,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
-  amountCard: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 16,
-    padding: 24,
-    marginTop: -30,
-    marginHorizontal: 16,
-    marginBottom: 10, // Reduced slightly to flow better with the new card below
-  },
-  amountTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: theme.colors.textMuted,
-    marginBottom: 4,
-  },
-  amountValue: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: theme.colors.textHeading,
-  },
-  statusIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   amountBottom: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -233,6 +214,21 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.surfaceSubtle,
     paddingTop: 16,
   },
+  statusIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+    iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
   dateText: {
     fontSize: 14,
     color: theme.colors.textBody,

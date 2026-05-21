@@ -6,12 +6,13 @@ import {
     ScrollView,
     StatusBar,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
 import { useAuthStore } from '../../store/AuthStore';
+
+// Adjust the import path based on where you saved your HeroCard component
+import HeroCard from '../../components/HeroCard';
 
 export const LEAVE_REQUESTS = [
     {
@@ -68,6 +69,9 @@ export default function LeaveRequests() {
     const user = useAuthStore((state) => state.user);
     const role = user?.role;
 
+    // Helper boolean to keep conditional rendering clean
+    const isManager = role === 'principal' || role === 'coordinator';
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -76,34 +80,17 @@ export default function LeaveRequests() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Main Balance Hero */}
-                <LinearGradient
-                    colors={theme.gradients.blue}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.heroCard, theme.shadow.hero]}
-                >
-                    <View style={styles.heroTop}>
-                        <Icon
-                            name="calendar"
-                            size={20}
-                            color={theme.colors.white}
-                            style={styles.heroIcon}
-                        />
-                        {role === 'principal' || role === 'coordinator' ? (
-                            <Text style={styles.heroLabel}>Pending Requests</Text>
-                        ) : (
-                            <Text style={styles.heroLabel}>Leave Balance</Text>
-                        )}
-                    </View>
-
-                    <Text style={styles.heroValue}>2</Text>
-                    {role === 'principal' || role === 'coordinator' ? (
-                        <Text style={styles.heroSubText}>Days remaining</Text>
-                    ) : (
-                        <Text style={styles.heroSubText}>Remaining</Text>
-                    )}
-                </LinearGradient>
+                {/* Main Balance Hero Replaced with HeroCard */}
+                <View style={styles.heroWrapper}>
+                    <HeroCard
+                        colors={theme.gradients.blue}
+                        topIcon="calendar"
+                        topLabel={isManager ? "Pending Requests" : "Leave Balance"}
+                        title="2"
+                        titleStyle={styles.heroValue}
+                        subtitle={isManager ? "Days remaining" : "Remaining"}
+                    />
+                </View>
 
                 {role === 'staff' && (
                     <View style={styles.sectionCard}>
@@ -160,38 +147,20 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.backgroundLight,
     },
     scrollContent: {
-        paddingHorizontal: 16,
+        // Removed horizontal padding here because HeroCard applies its own paddingHorizontal: 16.
+        // The list items and section cards will span slightly wider now unless they have their own margins,
+        // or you can wrap them in a separate padded container if needed.
         paddingBottom: 40,
     },
-    heroCard: {
-        borderRadius: 16,
-        padding: 24,
-        marginBottom: 20,
+    heroWrapper: {
         marginTop: 20,
     },
-    heroTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    heroIcon: {
-        marginRight: 8,
-    },
-    heroLabel: {
-        color: theme.colors.white90,
-        fontSize: 16,
-        fontWeight: '500',
-    },
     heroValue: {
-        color: theme.colors.white,
         fontSize: 48,
         fontWeight: '800',
         marginBottom: 4,
     },
-    heroSubText: {
-        color: theme.colors.white80,
-        fontSize: 14,
-    },
+    // The rest of the styles remain unchanged
     sectionCard: {
         backgroundColor: theme.colors.white,
         borderRadius: 16,
@@ -199,6 +168,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: theme.colors.borderSubtle,
         marginBottom: 24,
+        marginHorizontal: 16, // Added to align with HeroCard
     },
     sectionTitle: {
         fontSize: 20,
@@ -243,8 +213,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: theme.colors.textStrong,
         marginBottom: 16,
+        marginHorizontal: 16, // Added to align with HeroCard
     },
     listContainer: {
         gap: 12,
+        marginHorizontal: 16, // Added to align with HeroCard
     },
 });

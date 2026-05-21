@@ -12,6 +12,9 @@ export default function HeroCard({
   subtitle,
   rightActionText,
   onRightAction,
+  rightElement, // Added to support custom right-side elements (like the check circle)
+  children,     // Added to support custom bottom elements (like the date row)
+  titleStyle,   // Added to support custom title sizing
 }) {
   return (
     <View style={styles.headerContainer}>
@@ -21,19 +24,32 @@ export default function HeroCard({
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
+        {/* Top Row: Just the Icon and Label now */}
         <View style={styles.topRow}>
           <View style={styles.topLeft}>
             {topIcon && <Icon name={topIcon} size={16} color="rgba(255,255,255,0.8)" style={styles.topIcon} />}
             <Text style={styles.topLabel}>{topLabel}</Text>
           </View>
-          {rightActionText && (
-            <TouchableOpacity style={styles.rightActionBtn} onPress={onRightAction} activeOpacity={0.7}>
-              <Text style={styles.rightActionText}>{rightActionText}</Text>
-            </TouchableOpacity>
+        </View>
+        
+        {/* Title Row: Title on the left, rightElement on the right */}
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, titleStyle]}>{title}</Text>
+          
+          {/* Render custom right element if provided, otherwise fallback to standard text button */}
+          {rightElement ? rightElement : (
+            rightActionText && (
+              <TouchableOpacity style={styles.rightActionBtn} onPress={onRightAction} activeOpacity={0.7}>
+                <Text style={styles.rightActionText}>{rightActionText}</Text>
+              </TouchableOpacity>
+            )
           )}
         </View>
-        <Text style={styles.title}>{title}</Text>
+
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        
+        {/* Render extra custom content at the bottom */}
+        {children}
       </LinearGradient>
     </View>
   );
@@ -52,9 +68,8 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   topLeft: {
     flexDirection: 'row',
@@ -67,12 +82,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center', // Centers the right element with the title vertically
+    marginBottom: 8,
+    marginTop: 4,
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: theme.colors.white,
-    marginBottom: 8,
-    marginTop: 4,
+    flex: 1, // Ensures long titles wrap instead of pushing the right element off screen
+    marginRight: 16, // Adds breathing room between the title and the right element
   },
   subtitle: {
     fontSize: 14,

@@ -2,9 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+
+// Update import path based on your file structure
+import HeroCard from '../../components/HeroCard'; 
 
 export default function MySalary() {
   const insets = useSafeAreaInsets();
@@ -20,43 +22,34 @@ export default function MySalary() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.headerTitle}>My Salary</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Current Month Hero */}
-        <LinearGradient
+      {/* Current Month Hero Using Reusable HeroCard */}
+      <View style={{ marginTop: 10 }}>
+        <HeroCard
           colors={theme.gradients.green}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.heroCard, theme.shadow.hero]}
-        >
-          <View style={styles.heroTop}>
-            <View>
-              <View style={styles.heroLabelRow}>
-                <Icon name="dollar-sign" size={16} color={theme.colors.white90} />
-                <Text style={styles.heroLabel}>Current Month</Text>
-              </View>
-              <Text style={styles.heroAmount}>$3,200</Text>
-              <Text style={styles.heroSubtitle}>April 2026</Text>
-            </View>
+          topLabel="Current Month"
+          topIcon="dollar-sign"
+          title="$3,200"
+          subtitle="April 2026"
+          titleStyle={styles.heroAmount}
+          rightElement={
             <View style={styles.checkCircle}>
               <Icon name="check" size={20} color={theme.colors.white} />
             </View>
-          </View>
-          
+          }
+        >
+          {/* Injected custom bottom row */}
           <View style={styles.heroBottomRow}>
             <Icon name="calendar" size={14} color={theme.colors.white90} style={{ marginRight: 6 }} />
             <Text style={styles.heroDate}>Received on Apr 25, 2026</Text>
           </View>
-        </LinearGradient>
+        </HeroCard>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Salary Breakdown */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Salary Breakdown</Text>
-          
+
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Base Salary</Text>
             <Text style={styles.breakdownValue}>$2,800</Text>
@@ -69,9 +62,9 @@ export default function MySalary() {
             <Text style={styles.breakdownLabel}>Deductions</Text>
             <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>-$0</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalAmount}>$3,200</Text>
@@ -88,7 +81,7 @@ export default function MySalary() {
 
         <View style={styles.sectionCard}>
           {HISTORY_DATA.map((item, index) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={item.id}
               activeOpacity={0.7}
               onPress={() => navigation.navigate('SalaryDetail', { month: item.month })}
@@ -115,7 +108,7 @@ export default function MySalary() {
           <Icon name="download" size={18} color={theme.colors.textHeading} style={{ marginRight: 8 }} />
           <Text style={styles.outlineBtnText}>Download Payslip</Text>
         </TouchableOpacity>
-        
+
       </ScrollView>
     </View>
   );
@@ -126,51 +119,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.backgroundLight,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    backgroundColor: theme.colors.backgroundLight,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: theme.colors.textHeading,
-  },
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  heroCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  heroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  heroLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  heroLabel: {
-    fontSize: 15,
-    color: theme.colors.white90,
-    marginLeft: 6,
-  },
+  // Custom styles specifically for the Salary Hero
   heroAmount: {
     fontSize: 36,
     fontWeight: '800',
-    color: theme.colors.white,
     marginBottom: 2,
-  },
-  heroSubtitle: {
-    fontSize: 15,
-    color: theme.colors.white90,
   },
   checkCircle: {
     width: 44,
@@ -186,11 +143,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.2)',
     paddingTop: 16,
+    marginTop: 8,
   },
   heroDate: {
     fontSize: 14,
     color: theme.colors.white90,
   },
+  // Standard screen styles below
   sectionCard: {
     backgroundColor: theme.colors.white,
     borderRadius: 16,
