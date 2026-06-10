@@ -1,25 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-
-const DUMMY_STAFF_HISTORY = [
-    { id: '1', date: 'Apr 29, 2026', present: 30, absent: 1, late: 1, percent: 94 },
-    { id: '2', date: 'Apr 28, 2026', present: 31, absent: 1, late: 0, percent: 97 },
-    { id: '3', date: 'Apr 27, 2026', present: 32, absent: 0, late: 0, percent: 100 },
-    { id: '4', date: 'Apr 26, 2026', present: 29, absent: 2, late: 1, percent: 91 },
-    { id: '5', date: 'Apr 25, 2026', present: 30, absent: 1, late: 1, percent: 94 },
-];
-
-const DUMMY_STUDENT_HISTORY = [
-    { id: '1', date: 'Apr 29, 2026', subtitle: 'Grade 10-A', present: 43, absent: 1, late: 1, percent: 96 },
-    { id: '2', date: 'Apr 28, 2026', subtitle: 'Grade 10-B', present: 40, absent: 2, late: 0, percent: 95 },
-    { id: '3', date: 'Apr 27, 2026', subtitle: 'Grade 11-A', present: 38, absent: 0, late: 2, percent: 95 },
-    { id: '4', date: 'Apr 26, 2026', subtitle: 'Grade 10-A', present: 44, absent: 1, late: 0, percent: 98 },
-    { id: '5', date: 'Apr 25, 2026', subtitle: 'Grade 10-B', present: 41, absent: 1, late: 0, percent: 98 },
-];
+import { getAttendanceHistory } from '../../utils/db';
 
 const StatChip = ({ value, label, type }) => {
     let textColor = theme.colors.black;
@@ -48,22 +33,68 @@ export default function AttendanceHistory() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
+    const isFocused = useIsFocused();
 
     const type = route.params?.type || 'staff';
     const isStudent = type === 'student';
 
-    const historyData = isStudent ? DUMMY_STUDENT_HISTORY : DUMMY_STAFF_HISTORY;
+    const [historyData, setHistoryData] = useState([]);
+    
+    useEffect(() => {
+        if (isFocused) {
+            loadHistory();
+        }
+    }, [isFocused, type]);
+
+    const loadHistory = async () => {
+        const data = await getAttendanceHistory(type);
+        // Transform the DB format into what the UI expects
+        const formattedData = data.map((item, index) => {
+            const dateObj = new Date(item.date);
+            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // calculate percent based on total count
+            // present + late could be considered as attended classes
+            // here just present / (present + absent + late)
+            let percent = 0;
+            const total = item.present + item.absent + item.late;
+            if (total > 0) {
+               percent = Math.round((item.present / total) * 100);
+            }
+
+            return {
+                id: item.date, // unique id 
+                date: dateStr,
+                present: item.present,
+                absent: item.absent,
+                late: item.late,
+                percent: percent,
+                subtitle: isStudent ? 'All Grades' : '' // just dummy substitution if any
+            };
+        });
+        setHistoryData(formattedData);
+    };
+
+    // calculate totals for the summary card
+    const totalPresent = historyData.reduce((acc, curr) => acc + curr.present, 0);
+    const totalAbsent = historyData.reduce((acc, curr) => acc + curr.absent, 0);
+    const totalLate = historyData.reduce((acc, curr) => acc + curr.late, 0);
+    const totalClasses = historyData.length;
+    
+    const weeklyAverage = historyData.length > 0 
+        ? Math.round(historyData.reduce((acc, curr) => acc + curr.percent, 0) / historyData.length)
+        : 0;
 
     const topStats = isStudent
         ? [
-            { value: '15', label: 'Classes', color: theme.colors.linkPrimary },
-            { value: '206', label: 'Present', color: theme.colors.success },
-            { value: '5', label: 'Absent', color: theme.colors.danger }
+            { value: totalClasses.toString(), label: 'Classes', color: theme.colors.linkPrimary },
+            { value: totalPresent.toString(), label: 'Present', color: theme.colors.success },
+            { value: totalAbsent.toString(), label: 'Absent', color: theme.colors.danger }
         ]
         : [
-            { value: '152', label: 'Present', color: theme.colors.success },
-            { value: '5', label: 'Absent', color: theme.colors.danger },
-            { value: '3', label: 'Late', color: theme.colors.warning }
+            { value: totalPresent.toString(), label: 'Present', color: theme.colors.success },
+            { value: totalAbsent.toString(), label: 'Absent', color: theme.colors.danger },
+            { value: totalLate.toString(), label: 'Late', color: theme.colors.warning }
         ];
 
     const getPercentStyle = (percent) => {
@@ -97,7 +128,7 @@ export default function AttendanceHistory() {
                     </View>
                     <View style={styles.averageInfo}>
                         <Text style={styles.averageLabel}>Weekly Average</Text>
-                        <Text style={styles.averageValue}>{isStudent ? '96%' : '95%'}</Text>
+                        <Text style={styles.averageValue}>{weeklyAverage}%</Text>
                     </View>
                 </View>
 
