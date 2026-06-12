@@ -8,44 +8,52 @@ export const db = open({
 // Initialize database tables
 export const initDB = async () => {
   try {
+    // Student Attendance Table
     await db.executeAsync(`
-      CREATE TABLE IF NOT EXISTS attendance (
+      CREATE TABLE IF NOT EXISTS student_attendance (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        target_id TEXT NOT NULL,
-        target_name TEXT,
-        target_subtitle TEXT,
-        class_name TEXT,
-        type TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        student_name TEXT,
+        roll_no TEXT,
+        class_name TEXT NOT NULL,
         date TEXT NOT NULL,
         status TEXT NOT NULL,
         synced INTEGER DEFAULT 0,
-        UNIQUE(target_id, date, type)
+        UNIQUE(student_id, date)
       )
     `);
 
-    // Attempt to add class_name if missing
-    try {
-        await db.executeAsync('ALTER TABLE attendance ADD COLUMN class_name TEXT;');
-    } catch(e) {}
+    // Staff Attendance Table
+    await db.executeAsync(`
+      CREATE TABLE IF NOT EXISTS staff_attendance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        staff_id TEXT NOT NULL,
+        staff_name TEXT,
+        date TEXT NOT NULL,
+        status TEXT NOT NULL,
+        synced INTEGER DEFAULT 0,
+        UNIQUE(staff_id, date)
+      )
+    `);
 
-    console.log('Database initialized');
+    console.log('Database tables initialized');
   } catch (error) {
     console.error('Error initializing DB:', error);
   }
 };
 
-// Save attendance records
-export const saveAttendance = async (records) => {
+// Save student attendance records
+export const saveStudentAttendance = async (records) => {
   try {
     await db.executeAsync('BEGIN TRANSACTION');
     const query = `
-      INSERT INTO attendance (target_id, target_name, target_subtitle, class_name, type, date, status, synced)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-      ON CONFLICT(target_id, date, type) DO UPDATE SET 
+      INSERT INTO student_attendance (student_id, student_name, roll_no, class_name, date, status, synced)
+      VALUES (?, ?, ?, ?, ?, ?, 0)
+      ON CONFLICT(student_id, date) DO UPDATE SET 
         status=excluded.status, 
         synced=0,
-        target_name=excluded.target_name,
-        target_subtitle=excluded.target_subtitle,
+        student_name=excluded.student_name,
+        roll_no=excluded.roll_no,
         class_name=excluded.class_name
     `;
     for (const record of records) {
@@ -53,44 +61,116 @@ export const saveAttendance = async (records) => {
         await db.executeAsync(query, [
           record.target_id,
           record.target_name,
-          record.target_subtitle,
-          record.class_name || null,
-          record.type,
+          record.target_subtitle, // roll_no
+          record.class_name,
           record.date,
           record.status,
         ]);
       }
     }
     await db.executeAsync('COMMIT');
-    console.log('Attendance saved locally');
+    console.log('Student attendance saved locally');
     return true;
   } catch (error) {
     await db.executeAsync('ROLLBACK');
-    console.error('Error saving attendance:', error);
+    console.error('Error saving student attendance:', error);
     return false;
   }
 };
 
-// Get today's attendance for a type
-export const getTodaysAttendance = async (date, type, className) => {
+// Save staff attendance records
+export const saveStaffAttendance = async (records) => {
   try {
-    let query = 'SELECT * FROM attendance WHERE date = ? AND type = ?';
-    const params = [date, type];
-
-    if (className) {
-      query += ' AND class_name = ?';
-      params.push(className);
+    await db.executeAsync('BEGIN TRANSACTION');
+    const query = `
+      INSERT INTO staff_attendance (staff_id, staff_name, date, status, synced)
+      VALUES (?, ?, ?, ?, 0)
+      ON CONFLICT(staff_id, date) DO UPDATE SET 
+        status=excluded.status, 
+        synced=0,
+        staff_name=excluded.staff_name
+    `;
+    for (const record of records) {
+      if (record.status !== null) {
+        await db.executeAsync(query, [
+          record.target_id,
+          record.target_name,
+          record.date,
+          record.status,
+        ]);
+      }
     }
-    const res = await db.executeAsync(query, params);
-    return res.rows || [];
+    await db.executeAsync('COMMIT');
+    console.log('Staff attendance saved locally');
+    return true;
   } catch (error) {
-    console.error('Error getting todays attendance:', error);
+    await db.executeAsync('ROLLBACK');
+    console.error('Error saving staff attendance:', error);
+    return false;
+  }
+};
+
+// Get today's student attendance
+export const getTodaysStudentAttendance = async (date, className) => {
+  try {
+    const res = await db.executeAsync(
+      'SELECT * FROM student_attendance WHERE date = ? AND class_name = ?',
+      [date, className]
+    );
+    // Map back to generic field names for the UI component
+    return (res.rows || []).map(row => ({
+      ...row,
+      target_id: row.student_id,
+    }));
+  } catch (error) {
+    console.error('Error getting todays student attendance:', error);
     return [];
   }
 };
 
-// Get attendance history summary
-export const getAttendanceHistory = async (type) => {
+// Get today's staff attendance
+export const getTodaysStaffAttendance = async (date) => {
+  try {
+    const res = await db.executeAsync(
+      'SELECT * FROM staff_attendance WHERE date = ?',
+      [date]
+    );
+    // Map back to generic field names for the UI component
+    return (res.rows || []).map(row => ({
+      ...row,
+      target_id: row.staff_id,
+    }));
+  } catch (error) {
+    console.error('Error getting todays staff attendance:', error);
+    return [];
+  }
+};
+
+// Get student attendance history summary
+export const getStudentAttendanceHistory = async () => {
+  try {
+    const res = await db.executeAsync(`
+      SELECT 
+        date, 
+        class_name,
+        count(*) as total, 
+        sum(case when status='Present' then 1 else 0 end) as present, 
+        sum(case when status='Absent' then 1 else 0 end) as absent, 
+        sum(case when status='Late' then 1 else 0 end) as late 
+      FROM student_attendance 
+      GROUP BY date, class_name
+      ORDER BY date DESC 
+      LIMIT 15
+    `);
+    return res.rows || [];
+  } catch (error) {
+    console.error('Error getting student history:', error);
+    return [];
+  }
+};
+
+// Get staff attendance history summary
+export const getStaffAttendanceHistory = async () => {
   try {
     const res = await db.executeAsync(`
       SELECT 
@@ -99,15 +179,14 @@ export const getAttendanceHistory = async (type) => {
         sum(case when status='Present' then 1 else 0 end) as present, 
         sum(case when status='Absent' then 1 else 0 end) as absent, 
         sum(case when status='Late' then 1 else 0 end) as late 
-      FROM attendance 
-      WHERE type=? 
+      FROM staff_attendance 
       GROUP BY date 
       ORDER BY date DESC 
       LIMIT 7
-    `, [type]);
+    `);
     return res.rows || [];
   } catch (error) {
-    console.error('Error getting history:', error);
+    console.error('Error getting staff history:', error);
     return [];
   }
 };

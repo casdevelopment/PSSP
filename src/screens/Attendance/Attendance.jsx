@@ -7,7 +7,7 @@ import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import AttendanceCard from '../../components/AttendanceCard';
 import { useAuthStore } from '../../store/AuthStore';
-import { saveAttendance, getTodaysAttendance } from '../../utils/db';
+import { saveStudentAttendance, saveStaffAttendance, getTodaysStudentAttendance, getTodaysStaffAttendance } from '../../utils/db';
 
 const DUMMY_CLASSES = ['Grade 10-A', 'Grade 10-B', 'Grade 11-A', 'Grade 11-B', 'Grade 12-A'];
 
@@ -61,7 +61,10 @@ export default function Attendance() {
   }, [type, selectedClass]);
 
   const loadTodaysAttendance = async () => {
-    const savedRecords = await getTodaysAttendance(currentDateFormatted, type, isStudent ? selectedClass : null);
+    const savedRecords = isStudent 
+      ? await getTodaysStudentAttendance(currentDateFormatted, selectedClass)
+      : await getTodaysStaffAttendance(currentDateFormatted);
+
     if (savedRecords && savedRecords.length > 0) {
       setData(prev => prev.map(person => {
         const savedMatch = savedRecords.find(record => record.target_id === person.id);
@@ -89,12 +92,14 @@ export default function Attendance() {
       target_name: person.name,
       target_subtitle: person.subtitle || '',
       class_name: isStudent ? selectedClass : null,
-      type: type,
       date: currentDateFormatted,
       status: person.status
     })).filter(r => r.status !== null); // only save those marked
 
-    const success = await saveAttendance(records);
+    const success = isStudent 
+      ? await saveStudentAttendance(records)
+      : await saveStaffAttendance(records);
+
     if (success) {
       Alert.alert('Success', 'Attendance saved locally. It will be synced when online.');
     } else {
@@ -106,7 +111,7 @@ export default function Attendance() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
         showsVerticalScrollIndicator={false}
       >
         <HeroCard

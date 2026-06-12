@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-import { getAttendanceHistory } from '../../utils/db';
+import { getStudentAttendanceHistory, getStaffAttendanceHistory } from '../../utils/db';
 
 const StatChip = ({ value, label, type }) => {
     let textColor = theme.colors.black;
@@ -47,7 +47,10 @@ export default function AttendanceHistory() {
     }, [isFocused, type]);
 
     const loadHistory = async () => {
-        const data = await getAttendanceHistory(type);
+        const data = isStudent 
+            ? await getStudentAttendanceHistory() 
+            : await getStaffAttendanceHistory();
+        
         // Transform the DB format into what the UI expects
         const formattedData = data.map((item, index) => {
             const dateObj = new Date(item.date);
@@ -63,13 +66,13 @@ export default function AttendanceHistory() {
             }
 
             return {
-                id: item.date, // unique id 
+                id: item.date + (item.class_name || ''), // unique id 
                 date: dateStr,
                 present: item.present,
                 absent: item.absent,
                 late: item.late,
                 percent: percent,
-                subtitle: isStudent ? 'All Grades' : '' // just dummy substitution if any
+                subtitle: item.class_name || (isStudent ? 'All Grades' : '')
             };
         });
         setHistoryData(formattedData);
