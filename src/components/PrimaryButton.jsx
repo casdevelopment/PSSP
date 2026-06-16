@@ -1,16 +1,18 @@
 import React from 'react'
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native'
+import { TouchableOpacity, Text, StyleSheet, View, ActivityIndicator } from 'react-native'
 import LinearGradient from 'react-native-linear-gradient'
 import { theme } from '../theme/theme'
 
-export default function PrimaryButton({ title, onPress, style, disabled, showChevron = true }) {
+export default function PrimaryButton({ title, onPress, style, disabled, loading = false, showChevron = true }) {
+  const isDisabled = disabled || loading
+
   return (
     <TouchableOpacity
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.buttonWrap, disabled && styles.disabled, style]}
+      style={[styles.buttonWrap, isDisabled && styles.disabled, style]}
       activeOpacity={0.9}
-      disabled={disabled}
+      disabled={isDisabled}
     >
       <LinearGradient
         colors={theme.gradients.button}
@@ -18,11 +20,17 @@ export default function PrimaryButton({ title, onPress, style, disabled, showChe
         end={{ x: 1, y: 0 }}
         style={styles.button}
       >
-        <Text style={styles.text}>{title}</Text>
-        {showChevron && (
-          <View style={styles.chevWrap}>
-            <Text style={styles.chev}>›</Text>
-          </View>
+        {loading ? (
+          <ActivityIndicator color={theme.colors.white} />
+        ) : (
+          <>
+            <Text style={styles.text}>{title}</Text>
+            {showChevron && (
+              <View style={styles.chevWrap}>
+                <Text style={styles.chev}>›</Text>
+              </View>
+            )}
+          </>
         )}
       </LinearGradient>
     </TouchableOpacity>

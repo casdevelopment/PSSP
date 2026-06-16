@@ -1,48 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     StatusBar,
+    ActivityIndicator,
+    RefreshControl,
+    TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
 import { useAuthStore } from '../../store/AuthStore';
+import { getEmpLeaveBalanceList, getEmpAllLeaveListHistory } from '../../network/apis';
 
 // Adjust the import path based on where you saved your HeroCard component
 import HeroCard from '../../components/HeroCard';
 
-export const LEAVE_REQUESTS = [
-    {
-        id: '1',
-        type: 'Sick Leave',
-        status: 'Pending',
-        appliedDate: 'Apr 28, 2026',
-        duration: '2 days',
-        period: 'May 1 - May 2',
-    },
-    {
-        id: '2',
-        type: 'Casual Leave',
-        status: 'Approved',
-        appliedDate: 'Apr 18, 2026',
-        duration: '1 day',
-        period: 'Apr 20 - Apr 20',
-    },
-    {
-        id: '3',
-        type: 'Personal Leave',
-        status: 'Approved',
-        appliedDate: 'Apr 1, 2026',
-        duration: '3 days',
-        period: 'Apr 5 - Apr 7',
-    },
-];
+export const LEAVE_REQUESTS = [];
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+};
 
 const ProgressBar = ({ label, used, total, color }) => {
-    const percentage = (used / total) * 100;
+    const percentage = total > 0 ? (used / total) * 100 : 0;
 
     return (
         <View style={styles.progressContainer}>
@@ -67,10 +58,126 @@ const ProgressBar = ({ label, used, total, color }) => {
 export default function LeaveRequests() {
     const navigation = useNavigation();
     const user = useAuthStore((state) => state.user);
+    const empId = useAuthStore((state) => state.empId);
     const role = user?.role;
 
     // Helper boolean to keep conditional rendering clean
     const isManager = role === 'principal' || role === 'coordinator';
+
+    const [leaveBalances, setLeaveBalances] = useState([]);
+    const [leaveRequests, setLeaveRequests] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchLeaveData = useCallback(async (showLoader = true) => {
+        if (!empId) return;
+        try {
+            if (showLoader) setIsLoading(true);
+            setError(null);
+
+            const [balanceRes, historyRes] = await Promise.all([
+                getEmpLeaveBalanceList(empId).catch(err => {
+                    console.error('Error fetching balances:', err);
+                    return null;
+                }),
+                getEmpAllLeaveListHistory(empId).catch(err => {
+                    console.error('Error fetching history:', err);
+                    return null;
+                })
+            ]);
+
+            if (balanceRes && balanceRes.success) {
+                setLeaveBalances(balanceRes.data || []);
+            }
+
+            if (historyRes && historyRes.success) {
+                const mapped = (historyRes.data || []).map(item => {
+                    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Rejected' : 'Pending';
+                    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'rejected' : 'pending';
+                    const days = item.days || 1;
+                    const durationStr = `${days} day${days > 1 ? 's' : ''}`;
+
+                    const fromDateFormatted = formatDate(item.fromDate);
+                    const toDateFormatted = formatDate(item.toDate);
+                    const periodStr = fromDateFormatted === toDateFormatted ? fromDateFormatted : `${fromDateFormatted} - ${toDateFormatted}`;
+
+                    return {
+                        id: String(item.id),
+                        type: item.entityLeaveType || 'Leave',
+                        status: status,
+                        statusTone: statusTone,
+                        appliedDate: formatDate(item.fromDate), // Fallback
+                        duration: durationStr,
+                        period: periodStr,
+                        days: days,
+                        dateRange: periodStr,
+                        reason: item.reason || 'No reason provided',
+                        leaveType: item.entityLeaveType || 'Leave',
+                        appliedOn: formatDate(item.fromDate),
+                        entityLeaveTypeId: item.entityLeaveTypeId,
+                    };
+                });
+                setLeaveRequests(mapped);
+            }
+
+            if ((!balanceRes || !balanceRes.success) && (!historyRes || !historyRes.success)) {
+                setError('Failed to load leave data');
+            }
+        } catch (err) {
+            console.error('Error fetching leave data:', err);
+            setError(err.message || 'An error occurred while fetching leave data');
+        } finally {
+            setIsLoading(false);
+            setIsRefreshing(false);
+        }
+    }, [empId]);
+
+    useEffect(() => {
+        if (role === 'staff' && empId) {
+            fetchLeaveData(true);
+        }
+    }, [fetchLeaveData, role, empId]);
+
+    const handleRefresh = () => {
+        setIsRefreshing(true);
+        fetchLeaveData(false);
+    };
+
+    // Calculate total balance for staff
+    const totalBalance = leaveBalances.reduce((sum, item) => sum + (item.balance || 0), 0);
+
+    // Dynamic colors for leave progress bars
+    const progressColors = [
+        theme.colors.linkPrimary,
+        theme.colors.success,
+        theme.colors.accentPurple,
+        theme.colors.warning,
+        theme.colors.danger,
+        theme.colors.purple,
+    ];
+
+    if (role === 'staff' && isLoading && !isRefreshing && leaveBalances.length === 0 && leaveRequests.length === 0) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.purple} />
+                <Text style={styles.loadingText}>Loading leave information...</Text>
+            </View>
+        );
+    }
+
+    if (role === 'staff' && error && leaveBalances.length === 0 && leaveRequests.length === 0) {
+        return (
+            <View style={styles.errorContainer}>
+                <Icon name="alert-triangle" size={48} color={theme.colors.danger} />
+                <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+                <Text style={styles.errorSubTitle}>{error}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={() => fetchLeaveData(true)}>
+                    <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -79,6 +186,16 @@ export default function LeaveRequests() {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    role === 'staff' && empId ? (
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            colors={[theme.colors.purple]}
+                            tintColor={theme.colors.purple}
+                        />
+                    ) : undefined
+                }
             >
                 {/* Main Balance Hero Replaced with HeroCard */}
                 <View style={styles.heroWrapper}>
@@ -86,53 +203,46 @@ export default function LeaveRequests() {
                         colors={theme.gradients.blue}
                         topIcon="calendar"
                         topLabel={isManager ? "Pending Requests" : "Leave Balance"}
-                        title="2"
+                        title={isManager ? "2" : String(totalBalance)}
                         titleStyle={styles.heroValue}
                         subtitle={isManager ? "Days remaining" : "Remaining"}
                     />
                 </View>
 
-                {role === 'staff' && (
+                {role === 'staff' && leaveBalances.length > 0 && (
                     <View style={styles.sectionCard}>
                         <Text style={styles.sectionTitle}>Leave Balances</Text>
-                        <ProgressBar
-                            label="Sick Leave"
-                            used={2}
-                            total={10}
-                            color={theme.colors.linkPrimary}
-                        />
+                        {leaveBalances.map((item, index) => {
+                            const total = Math.max(item.allowLeavePerMonth || 0, item.balance || 0);
+                            const used = Math.max(0, total - (item.balance || 0));
+                            const barColor = progressColors[index % progressColors.length];
 
-                        <View style={styles.divider} />
-
-                        <ProgressBar
-                            label="Casual Leave"
-                            used={4}
-                            total={12}
-                            color={theme.colors.success}
-                        />
-
-                        <View style={styles.divider} />
-
-                        <ProgressBar
-                            label="Personal Leave"
-                            used={3}
-                            total={8}
-                            color={theme.colors.accentPurple}
-                        />
+                            return (
+                                <View key={item.empLeaveBalanceID || String(index)}>
+                                    {index > 0 && <View style={styles.divider} />}
+                                    <ProgressBar
+                                        label={item.leaveTypeName || 'Leave'}
+                                        used={used}
+                                        total={total}
+                                        color={barColor}
+                                    />
+                                </View>
+                            );
+                        })}
                     </View>
                 )}
-                
+
                 {role === 'staff' && (
                     <Text style={styles.listTitle}>My Requests</Text>
                 )}
 
                 {/* Requests List */}
                 <View style={styles.listContainer}>
-                    {LEAVE_REQUESTS.map((request) => (
+                    {leaveRequests.map((request) => (
                         <LeaveRequestCard
                             key={request.id}
                             request={request}
-                            onPress={() => navigation.navigate('LeaveDetail', { id: request.id })}
+                            onPress={() => navigation.navigate('LeaveDetail', { id: request.id, request })}
                         />
                     ))}
                 </View>
@@ -218,5 +328,49 @@ const styles = StyleSheet.create({
     listContainer: {
         gap: 12,
         marginHorizontal: 16, // Added to align with HeroCard
+    },
+    loadingContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.backgroundLight,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        fontWeight: '500',
+        color: theme.colors.textMuted,
+    },
+    errorContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+        backgroundColor: theme.colors.backgroundLight,
+    },
+    errorTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: theme.colors.textHeading,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    errorSubTitle: {
+        fontSize: 14,
+        color: theme.colors.textMuted,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    retryButton: {
+        backgroundColor: theme.colors.purple,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        ...theme.shadow.card,
+    },
+    retryButtonText: {
+        color: theme.colors.white,
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

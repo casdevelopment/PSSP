@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -6,49 +6,65 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
+import { getEmpAllLeaveListHistory } from '../../network/apis';
 // Make sure to adjust this import path to match your folder structure
 import { SectionCard, DetailRow } from '../../components/SectionCard';
 
-const LEAVE_DETAILS = {
-    '1': {
-        title: 'Sick Leave',
-        status: 'Pending',
-        statusTone: 'pending',
-        duration: '3',
-        durationLabel: 'days',
-        dateRange: 'May 1, 2026 - May 3, 2026',
-        employeeRole: 'Teacher',
-        employeeName: 'John Smith',
-        school: 'Greenwood High School',
-        subject: 'Mathematics',
-        leaveType: 'Sick Leave',
-        reason: 'Medical appointment and recovery. Need to attend scheduled medical procedure and follow-up care.',
-        appliedOn: 'Apr 28, 2026',
-        substituteTeacher: 'Emma Wilson',
-        timeline: null,
-    },
-    '2': {
-        title: 'Casual Leave',
-        status: 'Approved',
-        statusTone: 'approved',
-        duration: '1',
-        durationLabel: 'day',
-        dateRange: 'Apr 20, 2026 - Apr 20, 2026',
-        leaveType: 'Casual Leave',
-        reason: 'Personal work',
-        appliedOn: 'Apr 18, 2026',
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+};
+
+const formatRequestObj = (item) => {
+    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Rejected' : 'Pending';
+    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'rejected' : 'pending';
+    const days = item.days || 1;
+    
+    const fromDateFormatted = formatDate(item.fromDate);
+    const toDateFormatted = formatDate(item.toDate);
+    const periodStr = fromDateFormatted === toDateFormatted ? fromDateFormatted : `${fromDateFormatted} - ${toDateFormatted}`;
+
+    return {
+        id: String(item.id),
+        type: item.entityLeaveType || 'Leave',
+        title: item.entityLeaveType || 'Leave',
+        status: status,
+        statusTone: statusTone,
+        duration: String(days),
+        durationLabel: days > 1 ? 'days' : 'day',
+        dateRange: periodStr,
+        employeeRole: 'Staff',
+        employeeName: '',
+        school: '',
+        subject: 'N/A',
+        leaveType: item.entityLeaveType || 'Leave',
+        reason: item.reason || 'No reason provided',
+        appliedOn: formatDate(item.fromDate),
         timeline: [
-            { label: 'Applied On', date: 'Apr 18, 2026', icon: 'clock', color: '#2563EB' },
-            { label: 'Approved On', date: 'Apr 19, 2026', by: 'Sarah Johnson', icon: 'check', color: '#16A34A' },
-        ],
-        approvedMessage: 'Your leave request has been approved',
-    },
+            { label: 'Applied On', date: formatDate(item.fromDate), icon: 'clock', color: '#2B7FFF' },
+            ...(item.approved !== null && item.approved !== undefined ? [
+                {
+                    label: item.approved === true ? 'Approved On' : 'Rejected On',
+                    date: formatDate(item.toDate || item.fromDate),
+                    icon: item.approved === true ? 'check' : 'x',
+                    color: item.approved === true ? '#10B981' : '#E11D48'
+                }
+            ] : [])
+        ]
+    };
 };
 
 const STATUS_THEME = {
@@ -70,6 +86,15 @@ const STATUS_THEME = {
         bannerTitle: '#9A3412',
         bannerText: '#C2410C',
     },
+    rejected: {
+        pillBg: '#FEE2E2',
+        pillText: '#B91C1C',
+        bannerBg: '#FEF2F2',
+        bannerIconBg: '#FEE2E2',
+        bannerIcon: '#EF4444',
+        bannerTitle: '#991B1B',
+        bannerText: '#B91C1C',
+    },
 };
 
 export default function LeaveDetail() {
@@ -77,12 +102,93 @@ export default function LeaveDetail() {
     const navigation = useNavigation();
     const route = useRoute();
     const user = useAuthStore((state) => state.user);
+    const empId = useAuthStore((state) => state.empId);
+
     const requestId = route.params?.id || '1';
-    const detail = LEAVE_DETAILS[requestId] || LEAVE_DETAILS['1'];
-    const stylesByStatus = STATUS_THEME[detail.statusTone] || STATUS_THEME.pending;
+    const initialRequest = route.params?.request;
+
+    const [detail, setDetail] = useState(initialRequest || null);
+    const [isLoading, setIsLoading] = useState(!initialRequest);
+    const [error, setError] = useState(null);
 
     const role = user?.role || 'staff'; 
     const isReviewer = role === 'principal' || role === 'coordinator';
+
+    const fetchLeaveDetail = useCallback(async () => {
+        if (initialRequest) return;
+        if (!empId) {
+            setError('Missing employee ID');
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await getEmpAllLeaveListHistory(empId);
+            if (response && response.success) {
+                const rawItem = (response.data || []).find(item => String(item.id) === String(requestId));
+                if (rawItem) {
+                    const formatted = formatRequestObj(rawItem);
+                    formatted.employeeName = user?.name || user?.userName || 'Employee';
+                    formatted.school = user?.schoolName || 'Greenwood High School';
+                    formatted.employeeRole = role === 'staff' ? 'Staff' : role === 'principal' ? 'Principal' : 'Coordinator';
+                    setDetail(formatted);
+                } else {
+                    setError('Leave request details not found');
+                }
+            } else {
+                setError(response?.message || 'Failed to load details');
+            }
+        } catch (err) {
+            console.error('Error loading leave detail:', err);
+            setError(err.message || 'An error occurred while fetching details');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [empId, requestId, initialRequest, user, role]);
+
+    useEffect(() => {
+        if (initialRequest) {
+            setDetail(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    employeeName: prev.employeeName || user?.name || user?.userName || 'Employee',
+                    school: prev.school || user?.schoolName || 'Greenwood High School',
+                    employeeRole: prev.employeeRole || (role === 'staff' ? 'Staff' : role === 'principal' ? 'Principal' : 'Coordinator'),
+                };
+            });
+        } else {
+            fetchLeaveDetail();
+        }
+    }, [fetchLeaveDetail, initialRequest, user, role]);
+
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <StatusBar barStyle="light-content" backgroundColor={theme.colors.linkPrimary} />
+                <ActivityIndicator size="large" color={theme.colors.purple} />
+                <Text style={styles.loadingText}>Loading details...</Text>
+            </View>
+        );
+    }
+
+    if (error || !detail) {
+        return (
+            <View style={styles.errorContainer}>
+                <StatusBar barStyle="light-content" backgroundColor={theme.colors.linkPrimary} />
+                <Icon name="alert-triangle" size={48} color={theme.colors.danger} />
+                <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+                <Text style={styles.errorSubTitle}>{error || 'Request detail is unavailable'}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={fetchLeaveDetail}>
+                    <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    const stylesByStatus = STATUS_THEME[detail.statusTone] || STATUS_THEME.pending;
 
     return (
         <View style={styles.container}>
@@ -411,5 +517,49 @@ const styles = StyleSheet.create({
         color: theme.colors.white,
         fontSize: 15,
         fontWeight: '500',
+    },
+    loadingContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.appBackground,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        fontWeight: '500',
+        color: theme.colors.textMuted,
+    },
+    errorContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+        backgroundColor: theme.colors.appBackground,
+    },
+    errorTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: theme.colors.textHeading,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    errorSubTitle: {
+        fontSize: 14,
+        color: theme.colors.textMuted,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    retryButton: {
+        backgroundColor: theme.colors.purple,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        ...theme.shadow.card,
+    },
+    retryButtonText: {
+        color: theme.colors.white,
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

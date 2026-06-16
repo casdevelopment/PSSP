@@ -5,13 +5,69 @@ import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
 import CustomInput from '../../components/CustomInput';
 import PrimaryButton from '../../components/PrimaryButton';
+import { loginUser } from '../../network/apis';
+import { useAuthStore } from '../../store/AuthStore';
 
-export default function Login({ navigation }) {
-  const [email, setEmail] = useState('');
+export default function Login() {
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-  const handleSignIn = () => {
-    navigation.replace('Role');
+  const handleSignIn = async () => {
+    const trimmedUserName = userName.trim();
+
+    if (!trimmedUserName || !password) {
+      setErrorMessage('Please enter both username and password.');
+      return;
+    }
+
+    setErrorMessage('');
+
+    try {
+      setIsSubmitting(true);
+      const response = await loginUser({
+        userName: trimmedUserName,
+        password,
+        fcmToken: 'string',
+      });
+
+      if (response?.success === false) {
+        throw new Error(response?.message || 'Login failed.');
+      }
+
+      const authData = response?.data ?? {};
+      const role = String(authData.userType ?? '').trim().toLowerCase();
+      const accessToken = authData.token ?? authData.accessToken ?? null;
+      const schoolId = authData.schoolId ?? null;
+      setAuth(
+        {
+          id: authData.userId ?? authData.empId ?? trimmedUserName,
+          userName: trimmedUserName,
+          userType: authData.userType ?? null,
+          role,
+          schoolId,
+          empId: authData.empId ?? null,
+        },
+        role,
+        accessToken,
+        schoolId,
+        authData.empId ?? null,
+        authData.userId ?? null,
+      );
+    }
+    catch (error) {
+      console.error('Login error:', error);
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Please try again!';
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -36,13 +92,12 @@ export default function Login({ navigation }) {
         {/* Form */}
         <View style={styles.formContainer}>
           <CustomInput
-            label="Email Address"
+            label="Username"
             iconName="mail"
-            placeholder="principal@school.com"
-            keyboardType="email-address"
+            placeholder="sa"
             autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
+            value={userName}
+            onChangeText={setUserName}
           />
 
           <CustomInput
@@ -59,12 +114,18 @@ export default function Login({ navigation }) {
           </TouchableOpacity>
         </View>
 
+
+        {!!errorMessage && (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        )}
+
         {/* Action Buttons */}
-        <PrimaryButton 
-          title="Sign In" 
-          onPress={handleSignIn} 
-          showChevron={false} 
-          style={styles.signInBtnWrapper} 
+        <PrimaryButton
+          title="Sign In"
+          onPress={handleSignIn}
+          showChevron={false}
+          style={styles.signInBtnWrapper}
+          loading={isSubmitting}
         />
 
         {/* Divider */}
@@ -176,6 +237,13 @@ const styles = StyleSheet.create({
   signInBtnWrapper: {
     marginBottom: 24,
     width: '100%',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: -8,
+    marginBottom: 16,
   },
   dividerContainer: {
     flexDirection: 'row',
