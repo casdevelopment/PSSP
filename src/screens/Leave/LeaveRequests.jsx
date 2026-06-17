@@ -59,8 +59,6 @@ export default function LeaveRequests() {
     const navigation = useNavigation();
     const empId = useAuthStore((state) => state.empId);
     const role = useAuthStore((state) => state.userType);
-
-    // Helper boolean to keep conditional rendering clean
     const isManager = role === 'principal' || role === 'coordinator';
 
     const [leaveBalances, setLeaveBalances] = useState([]);
@@ -115,6 +113,7 @@ export default function LeaveRequests() {
                         leaveType: item.entityLeaveType || 'Leave',
                         appliedOn: formatDate(item.fromDate),
                         entityLeaveTypeId: item.entityLeaveTypeId,
+                        rawItem: item,
                     };
                 });
                 setLeaveRequests(mapped);

@@ -17,8 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
-import { getEmpLeaveBalanceList, applyLeave } from '../network/apis';
+import { applyLeave } from '../network/apis';
 import CalendarPickerModal from './CalendarPickerModal';
+import { useLeaveStore } from '../store/LeaveStore';
 
 export default function RequestLeaveModel({ visible, onClose }) {
     const insets = useSafeAreaInsets();
@@ -28,12 +29,14 @@ export default function RequestLeaveModel({ visible, onClose }) {
     const empId = useAuthStore((state) => state.empId);
     const schoolId = useAuthStore((state) => state.schoolId);
 
-    const [balances, setBalances] = useState([]);
+    const balances = useLeaveStore((state) => state.leaveBalances);
+    const isLoadingBalances = useLeaveStore((state) => state.isLoadingBalances);
+    const fetchLeaveBalances = useLeaveStore((state) => state.fetchLeaveBalances);
+
     const [selectedBalance, setSelectedBalance] = useState(null);
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
     const [reason, setReason] = useState('');
-    const [isLoadingBalances, setIsLoadingBalances] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showTypePicker, setShowTypePicker] = useState(false);
     const [showFromDatePicker, setShowFromDatePicker] = useState(false);
@@ -59,22 +62,19 @@ export default function RequestLeaveModel({ visible, onClose }) {
         }
         setIsSubmitting(true);
         try {
-            const fromDateIso = fromDate + 'T00:00:00.000Z';
-            const toDateIso = toDate + 'T23:59:59.000Z';
-
-            const activeLeaveTypeId = selectedBalance.leaveTypeId 
-                || selectedBalance.entityLeaveTypeId 
-                || selectedBalance.leaveTypeID 
-                || selectedBalance.entityLeaveTypeID 
-                || selectedBalance.empLeaveBalanceID 
+            const activeLeaveTypeId = selectedBalance.leaveTypeId
+                || selectedBalance.entityLeaveTypeId
+                || selectedBalance.leaveTypeID
+                || selectedBalance.entityLeaveTypeID
+                || selectedBalance.empLeaveBalanceID
                 || 0;
 
             const payload = {
                 userId: userId || 0,
                 empId: empId || 0,
                 leaveTypeId: activeLeaveTypeId,
-                fromDate: fromDateIso,
-                toDate: toDateIso,
+                fromDate: fromDate,
+                toDate: toDate,
                 reason: reason || '',
                 schoolId: schoolId || 0
             };
@@ -88,8 +88,8 @@ export default function RequestLeaveModel({ visible, onClose }) {
             }
         } catch (error) {
             console.error('Submit leave error:', error);
-            const errorMsg = error.response?.data?.message 
-                || error.message 
+            const errorMsg = error.response?.data?.message
+                || error.message
                 || 'Failed to submit leave request';
             const details = `\nDebug Info: leaveTypeId=${selectedBalance?.leaveTypeId || 'undefined'}, entityLeaveTypeId=${selectedBalance?.entityLeaveTypeId || 'undefined'}, empLeaveBalanceID=${selectedBalance?.empLeaveBalanceID || 'undefined'}`;
             Alert.alert('Error', errorMsg + details);
@@ -100,21 +100,9 @@ export default function RequestLeaveModel({ visible, onClose }) {
 
     useEffect(() => {
         if (visible && empId) {
-            const fetchBalances = async () => {
-                setIsLoadingBalances(true);
-                try {
-                    const res = await getEmpLeaveBalanceList(empId);
-                    setBalances(res?.data || []);
-                } catch (error) {
-                    console.error('Fetch balances error:', error);
-                    setBalances([]);
-                } finally {
-                    setIsLoadingBalances(false);
-                }
-            };
-            fetchBalances();
+            fetchLeaveBalances(empId);
         }
-    }, [visible, empId]);
+    }, [visible, empId, fetchLeaveBalances]);
 
     return (
         <>

@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
 import { getEmpAllLeaveListHistory } from '../../network/apis';
+import { useProfileDetailsStore } from '../../store/ProfileDetailsStore';
 // Make sure to adjust this import path to match your folder structure
 import { SectionCard, DetailRow } from '../../components/SectionCard';
 
@@ -103,6 +104,8 @@ export default function LeaveDetail() {
     const route = useRoute();
     const empId = useAuthStore((state) => state.empId);
     const userType = useAuthStore((state) => state.userType);
+    const profileDetails = useProfileDetailsStore((state) => state.profileDetails);
+
 
     const requestId = route.params?.id || '1';
     const initialRequest = route.params?.request;
@@ -130,8 +133,8 @@ export default function LeaveDetail() {
                 const rawItem = (response.data || []).find(item => String(item.id) === String(requestId));
                 if (rawItem) {
                     const formatted = formatRequestObj(rawItem);
-                    formatted.employeeName = user?.name || user?.userName || 'Employee';
-                    formatted.school = user?.schoolName || 'Greenwood High School';
+                    formatted.employeeName = profileDetails?.employeeName || username || 'Employee';
+                    formatted.school = profileDetails?.schoolName || 'Greenwood High School';
                     formatted.employeeRole = role === 'staff' ? 'Staff' : role === 'principal' ? 'Principal' : 'Coordinator';
                     setDetail(formatted);
                 } else {
