@@ -14,8 +14,9 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
 import { useAuthStore } from '../../store/AuthStore';
-import { getEmpLeaveBalanceList, getEmpAllLeaveListHistory } from '../../network/apis';
-
+import { getEmpAllLeaveListHistory } from '../../network/apis';
+import { useLeaveStore } from '../../store/LeaveStore';
+import LeaveBalances from '../../components/LeaveBalances';
 // Adjust the import path based on where you saved your HeroCard component
 import HeroCard from '../../components/HeroCard';
 
@@ -32,36 +33,13 @@ const formatDate = (dateStr) => {
     }
 };
 
-const ProgressBar = ({ label, used, total, color }) => {
-    const percentage = total > 0 ? (used / total) * 100 : 0;
-
-    return (
-        <View style={styles.progressContainer}>
-            <View style={styles.progressHeader}>
-                <Text style={styles.progressLabel}>{label}</Text>
-                <Text style={styles.progressValue}>
-                    {used}/{total} used
-                </Text>
-            </View>
-            <View style={styles.progressTrack}>
-                <View
-                    style={[
-                        styles.progressFill,
-                        { width: `${percentage}%`, backgroundColor: color },
-                    ]}
-                />
-            </View>
-        </View>
-    );
-};
-
 export default function LeaveRequests() {
     const navigation = useNavigation();
     const empId = useAuthStore((state) => state.empId);
     const role = useAuthStore((state) => state.userType);
-    const isManager = role === 'principal' || role === 'coordinator';
 
-    const [leaveBalances, setLeaveBalances] = useState([]);
+    const leaveBalances = useLeaveStore((state) => state.leaveBalances);
+
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -73,25 +51,15 @@ export default function LeaveRequests() {
             if (showLoader) setIsLoading(true);
             setError(null);
 
-            const [balanceRes, historyRes] = await Promise.all([
-                getEmpLeaveBalanceList(empId).catch(err => {
-                    console.error('Error fetching balances:', err);
-                    return null;
-                }),
-                getEmpAllLeaveListHistory(empId).catch(err => {
-                    console.error('Error fetching history:', err);
-                    return null;
-                })
-            ]);
-
-            if (balanceRes && balanceRes.success) {
-                setLeaveBalances(balanceRes.data || []);
-            }
+            const historyRes = await getEmpAllLeaveListHistory(empId).catch(err => {
+                console.error('Error fetching history:', err);
+                return null;
+            });
 
             if (historyRes && historyRes.success) {
                 const mapped = (historyRes.data || []).map(item => {
-                    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Rejected' : 'Pending';
-                    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'rejected' : 'pending';
+                    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Pending' : 'Pending';
+                    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'pending' : 'pending';
                     const days = item.days || 1;
                     const durationStr = `${days} day${days > 1 ? 's' : ''}`;
 
@@ -119,7 +87,7 @@ export default function LeaveRequests() {
                 setLeaveRequests(mapped);
             }
 
-            if ((!balanceRes || !balanceRes.success) && (!historyRes || !historyRes.success)) {
+            if (!historyRes || !historyRes.success) {
                 setError('Failed to load leave data');
             }
         } catch (err) {
@@ -132,10 +100,10 @@ export default function LeaveRequests() {
     }, [empId]);
 
     useEffect(() => {
-        if (role === 'staff' && empId) {
+        if (empId) {
             fetchLeaveData(true);
         }
-    }, [fetchLeaveData, role, empId]);
+    }, [fetchLeaveData, empId]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -145,17 +113,7 @@ export default function LeaveRequests() {
     // Calculate total balance for staff
     const totalBalance = leaveBalances.reduce((sum, item) => sum + (item.balance || 0), 0);
 
-    // Dynamic colors for leave progress bars
-    const progressColors = [
-        theme.colors.linkPrimary,
-        theme.colors.success,
-        theme.colors.accentPurple,
-        theme.colors.warning,
-        theme.colors.danger,
-        theme.colors.purple,
-    ];
-
-    if (role === 'staff' && isLoading && !isRefreshing && leaveBalances.length === 0 && leaveRequests.length === 0) {
+    if (isLoading && !isRefreshing && leaveBalances.length === 0 && leaveRequests.length === 0) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.purple} />
@@ -164,7 +122,7 @@ export default function LeaveRequests() {
         );
     }
 
-    if (role === 'staff' && error && leaveBalances.length === 0 && leaveRequests.length === 0) {
+    if (error && leaveBalances.length === 0 && leaveRequests.length === 0) {
         return (
             <View style={styles.errorContainer}>
                 <Icon name="alert-triangle" size={48} color={theme.colors.danger} />
@@ -185,7 +143,7 @@ export default function LeaveRequests() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    role === 'staff' && empId ? (
+                    empId ? (
                         <RefreshControl
                             refreshing={isRefreshing}
                             onRefresh={handleRefresh}
@@ -200,39 +158,16 @@ export default function LeaveRequests() {
                     <HeroCard
                         colors={theme.gradients.blue}
                         topIcon="calendar"
-                        topLabel={isManager ? "Pending Requests" : "Leave Balance"}
-                        title={isManager ? "2" : String(totalBalance)}
+                        topLabel="Leave Balance"
+                        title={String(totalBalance)}
                         titleStyle={styles.heroValue}
-                        subtitle={isManager ? "Days remaining" : "Remaining"}
+                        subtitle="Remaining"
                     />
                 </View>
 
-                {role === 'staff' && leaveBalances.length > 0 && (
-                    <View style={styles.sectionCard}>
-                        <Text style={styles.sectionTitle}>Leave Balances</Text>
-                        {leaveBalances.map((item, index) => {
-                            const total = Math.max(item.allowLeavePerMonth || 0, item.balance || 0);
-                            const used = Math.max(0, total - (item.balance || 0));
-                            const barColor = progressColors[index % progressColors.length];
+                <LeaveBalances />
 
-                            return (
-                                <View key={item.empLeaveBalanceID || String(index)}>
-                                    {index > 0 && <View style={styles.divider} />}
-                                    <ProgressBar
-                                        label={item.leaveTypeName || 'Leave'}
-                                        used={used}
-                                        total={total}
-                                        color={barColor}
-                                    />
-                                </View>
-                            );
-                        })}
-                    </View>
-                )}
-
-                {role === 'staff' && (
-                    <Text style={styles.listTitle}>My Requests</Text>
-                )}
+                <Text style={styles.listTitle}>My Requests</Text>
 
                 {/* Requests List */}
                 <View style={styles.listContainer}>
@@ -285,33 +220,6 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: theme.colors.surfaceSubtle,
         marginVertical: 16,
-    },
-    progressContainer: {
-        width: '100%',
-    },
-    progressHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    progressLabel: {
-        fontSize: 15,
-        color: theme.colors.textBody,
-    },
-    progressValue: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: theme.colors.textStrong,
-    },
-    progressTrack: {
-        height: 8,
-        backgroundColor: theme.colors.surfaceSubtle,
-        borderRadius: 4,
-        overflow: 'hidden',
-    },
-    progressFill: {
-        height: '100%',
-        borderRadius: 4,
     },
     listTitle: {
         fontSize: 20,

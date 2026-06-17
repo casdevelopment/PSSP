@@ -149,7 +149,7 @@ export default function LeaveDetail() {
         } finally {
             setIsLoading(false);
         }
-    }, [empId, requestId, initialRequest, user, role]);
+    }, [empId, requestId, initialRequest, role]);
 
     useEffect(() => {
         if (initialRequest) {
@@ -157,15 +157,12 @@ export default function LeaveDetail() {
                 if (!prev) return prev;
                 return {
                     ...prev,
-                    employeeName: prev.employeeName || user?.name || user?.userName || 'Employee',
-                    school: prev.school || user?.schoolName || 'Greenwood High School',
-                    employeeRole: prev.employeeRole || (role === 'staff' ? 'Staff' : role === 'principal' ? 'Principal' : 'Coordinator'),
                 };
             });
         } else {
             fetchLeaveDetail();
         }
-    }, [fetchLeaveDetail, initialRequest, user, role]);
+    }, [fetchLeaveDetail, initialRequest, role]);
 
     if (isLoading) {
         return (

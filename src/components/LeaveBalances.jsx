@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         borderWidth: 1,
         borderColor: theme.colors.borderSubtle,
-        ...theme.shadow.card,
+        margin: 16,
     },
     sectionTitle: {
         fontSize: 18,
