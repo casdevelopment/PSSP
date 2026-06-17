@@ -6,35 +6,33 @@ import { useProfileDetailsStore } from './ProfileDetailsStore'
 export const useAuthStore = create(
   persist(
     (set) => ({
-      user: null,
-      role: null,   // 'coordinator', 'principal', 'staff'
+      username: null,
       accessToken: null,
       isAuthenticated: false,
       schoolId: null,
       empId: null,
       userId: null,
-      userType: null,
+      userType: null, // 'coordinator', 'principal', 'staff'
       image: null,
       schoolCount: null,
       phoneNo: null,
       email: null,
 
-      setAuth: (user, role, accessToken, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email) => {
-        set({ user, role, accessToken, isAuthenticated: true, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email })
+      setAuth: (username, accessToken, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email) => {
+        set({ username, accessToken, isAuthenticated: true, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email })
       },
 
       updateUser: (updates) =>
-        set((state) => ({ user: { ...state.user, ...updates } })),
+        set((state) => ({ username: { ...state.username, ...updates } })),
 
       logout: async () => {
         useProfileDetailsStore.getState().clearProfileDetails();
-        set({ 
-          user: null, 
-          role: null, 
-          accessToken: null, 
-          isAuthenticated: false, 
-          schoolId: null, 
-          empId: null, 
+        set({
+          username: null,
+          accessToken: null,
+          isAuthenticated: false,
+          schoolId: null,
+          empId: null,
           userId: null,
           userType: null,
           image: null,
@@ -48,8 +46,7 @@ export const useAuthStore = create(
       name: 'UserAuth', // name of the item in storage
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
-        user: state.user,
-        role: state.role,
+        username: state.username,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
         schoolId: state.schoolId,

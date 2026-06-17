@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -7,15 +7,20 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
 import CustomInput from '../../components/CustomInput';
+import { changePassword } from '../../network/apis';
 
 export default function ChangePassword() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const role = useAuthStore((state) => state.role);
+    const empId = useAuthStore((state) => state.empId);
+    const userId = useAuthStore((state) => state.userId);
+    const username = useAuthStore((state) => state.username);
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const getHeaderGradient = () => {
         if (role === 'coordinator') return theme.gradients.purple;
@@ -35,46 +40,51 @@ export default function ChangePassword() {
         return theme.colors.blueSurface;
     };
 
-    // Note: We create a custom input card that wraps exactly like the image UI
-    const PasswordInputCard = ({ label, placeholder, value, onChangeText }) => {
-        const [isSecure, setIsSecure] = useState(true);
-        return (
-            <View style={styles.inputCardWrapper}>
-                <Text style={styles.inputLabel}>{label}</Text>
-                <View style={styles.inputBorderBox}>
-                    <CustomInput
-                        style={styles.innerRawInput}
-                        placeholder={placeholder}
-                        value={value}
-                        onChangeText={onChangeText}
-                        secureTextEntry={isSecure}
-                    />
-                </View>
-            </View>
-        );
-    }
+    const handleUpdatePassword = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            Alert.alert('Error', 'Please fill in all fields.');
+            return;
+        }
 
-    const CustomLocalInput = ({ label, placeholder, value, onChangeText }) => {
-        const [isSecure, setIsSecure] = useState(true);
-        return (
-            <View style={styles.localInputContainer}>
-                <Text style={styles.localLabel}>{label}</Text>
-                <View style={styles.localInputBox}>
-                    <TextInput
-                        style={styles.localInputText}
-                        placeholder={placeholder}
-                        value={value}
-                        onChangeText={onChangeText}
-                        secureTextEntry={isSecure}
-                        placeholderTextColor={theme.colors.textMuted}
-                    />
-                    <TouchableOpacity onPress={() => setIsSecure(!isSecure)} style={styles.localEyeBtn}>
-                        <Icon name={isSecure ? "eye-off" : "eye"} size={20} color={theme.colors.textMuted} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    }
+        if (newPassword !== confirmPassword) {
+            Alert.alert('Error', 'New password and confirm password do not match.');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            Alert.alert('Error', 'Password must be at least 8 characters long.');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            const payload = {
+                empId: empId || 0,
+                userId: userId || 0,
+                userName: user?.userName || 'sa',
+                password: currentPassword,
+                newPassword: newPassword,
+                fcmToken: 'string',
+            };
+
+            const response = await changePassword(payload);
+            if (response && response.success !== false) {
+                Alert.alert('Success', 'Password changed successfully.', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            } else {
+                Alert.alert('Error', response?.message || 'Failed to change password.');
+            }
+        } catch (error) {
+            console.error('Update password error:', error);
+            Alert.alert(
+                'Error',
+                error.response?.data?.message || error.message || 'An error occurred.'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -153,8 +163,17 @@ export default function ChangePassword() {
                     ))}
                 </View>
 
-                <TouchableOpacity style={[styles.updateBtn, { backgroundColor: getRoleColor() }]} activeOpacity={0.8}>
-                    <Text style={styles.updateBtnText}>Update Password</Text>
+                <TouchableOpacity
+                    style={[styles.updateBtn, { backgroundColor: getRoleColor() }, isSubmitting && { opacity: 0.7 }]}
+                    activeOpacity={0.8}
+                    onPress={handleUpdatePassword}
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                        <Text style={styles.updateBtnText}>Update Password</Text>
+                    )}
                 </TouchableOpacity>
 
                 <View style={{ height: 40 }} />
@@ -203,7 +222,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 16,
-                    paddingBottom: theme.spacing.xxl,
+        paddingBottom: theme.spacing.xxl,
     },
     scrollView: {
         marginTop: -30,

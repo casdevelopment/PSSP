@@ -18,9 +18,8 @@ import { useProfileDetailsStore } from '../../store/ProfileDetailsStore';
 
 const Dashboard = () => {
   const navigation = useNavigation();
-  const user = useAuthStore((state) => state.user);
   const empId = useAuthStore((state) => state.empId);
-  const role = user?.role;
+  const role = useAuthStore((state) => state.userType);
   const insets = useSafeAreaInsets();
 
   const dashboardData = useProfileDetailsStore((state) => state.profileDetails);
@@ -209,8 +208,8 @@ const Dashboard = () => {
               {(!role || role === 'principal' || role === 'staff') && (
                 <HeroCard
                   colors={theme.gradients.blue}
-                  topLabel={dashboardData?.schoolName || user?.schoolName || 'Greenwood High School'}
-                  title={`Welcome, ${dashboardData?.employeeName || user?.name || user?.userName || 'User'}!`}
+                  topLabel={dashboardData?.schoolName || 'Greenwood High School'}
+                  title={`Welcome, ${dashboardData?.employeeName || 'User'}!`}
                   subtitle={dashboardData?.currentDate || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
                 />
               )}

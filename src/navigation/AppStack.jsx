@@ -30,8 +30,7 @@ import ClassDetails from '../screens/Timetable/ClassDetails';
 const Stack = createNativeStackNavigator();
 
 export default function AppStack() {
-    const user = useAuthStore((state) => state.user);
-    const role = user?.role;
+    const role = useAuthStore((state) => state.userType);
 
     const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
 

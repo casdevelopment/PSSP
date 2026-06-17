@@ -16,7 +16,7 @@ export default function Login() {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSignIn = async () => {
-    const trimmedUserName = userName.trim();
+    const trimmedUserName = userName.trim().toLowerCase();
 
     if (!trimmedUserName || !password) {
       setErrorMessage('Please enter both username and password.');
@@ -43,20 +43,12 @@ export default function Login() {
       const accessToken = authData.token ?? authData.accessToken ?? null;
       const schoolId = authData.schoolId ?? null;
       setAuth(
-        {
-          id: authData.userId ?? authData.empId ?? trimmedUserName,
-          userName: trimmedUserName,
-          userType: authData.userType ?? null,
-          role,
-          schoolId,
-          empId: authData.empId ?? null,
-        },
-        role,
+        trimmedUserName,
         accessToken,
         schoolId,
         authData.empId ?? null,
         authData.userId ?? null,
-        authData.userType ?? null,
+        authData.userType.trim().toLowerCase() ?? null,
         authData.image ?? null,
         authData.schoolCount ?? null,
         authData.phoneNo ?? null,

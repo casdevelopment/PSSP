@@ -32,7 +32,7 @@ const formatRequestObj = (item) => {
     const status = item.approved === true ? 'Approved' : item.approved === false ? 'Rejected' : 'Pending';
     const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'rejected' : 'pending';
     const days = item.days || 1;
-    
+
     const fromDateFormatted = formatDate(item.fromDate);
     const toDateFormatted = formatDate(item.toDate);
     const periodStr = fromDateFormatted === toDateFormatted ? fromDateFormatted : `${fromDateFormatted} - ${toDateFormatted}`;
@@ -101,8 +101,8 @@ export default function LeaveDetail() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
-    const user = useAuthStore((state) => state.user);
     const empId = useAuthStore((state) => state.empId);
+    const userType = useAuthStore((state) => state.userType);
 
     const requestId = route.params?.id || '1';
     const initialRequest = route.params?.request;
@@ -111,7 +111,7 @@ export default function LeaveDetail() {
     const [isLoading, setIsLoading] = useState(!initialRequest);
     const [error, setError] = useState(null);
 
-    const role = user?.role || 'staff'; 
+    const role = userType || 'staff';
     const isReviewer = role === 'principal' || role === 'coordinator';
 
     const fetchLeaveDetail = useCallback(async () => {
@@ -298,10 +298,10 @@ export default function LeaveDetail() {
                 {!isReviewer && (
                     <View style={[styles.approvedBanner, { backgroundColor: stylesByStatus.bannerBg }]}>
                         <View style={[styles.bannerIconWrap, { backgroundColor: stylesByStatus.bannerIconBg }]}>
-                            <Icon 
-                                name={detail.status === 'Pending' ? 'clock' : 'check'} 
-                                size={22} 
-                                color={stylesByStatus.bannerIcon} 
+                            <Icon
+                                name={detail.status === 'Pending' ? 'clock' : 'check'}
+                                size={22}
+                                color={stylesByStatus.bannerIcon}
                             />
                         </View>
                         <View style={styles.bannerTextWrap}>

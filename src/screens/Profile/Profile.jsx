@@ -6,26 +6,30 @@ import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
 import { useNavigation } from '@react-navigation/native';
+import { useProfileDetailsStore } from '../../store/ProfileDetailsStore'
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
-  const role = useAuthStore((state) => state.role);
-  const user = useAuthStore((state) => state.user);
   const email = useAuthStore((state) => state.email);
   const phoneNo = useAuthStore((state) => state.phoneNo);
   const userType = useAuthStore((state) => state.userType);
+  const role = userType.toLowerCase();
   const image = useAuthStore((state) => state.image);
+  const username = useAuthStore((state) => state.username);
   const schoolCount = useAuthStore((state) => state.schoolCount);
+
+  const profileDetails = useProfileDetailsStore((state) => state.profileDetails);
+  console.log(profileDetails, 'profileDetails')
   const logout = useAuthStore((state) => state.logout);
   const navigation = useNavigation();
   console.log(image, 'image')
 
 
   const getProfileData = () => {
-    const displayName = user?.name || user?.userName || 'User Name';
-    const displayEmail = email || user?.email || 'N/A';
-    const displayPhone = phoneNo || user?.phoneNo || 'N/A';
-    const displayUserType = userType || user?.userType || 'User';
+    const displayName = profileDetails?.employeeName || username || 'User Name';
+    const displayEmail = email || 'N/A';
+    const displayPhone = phoneNo || 'N/A';
+    const displayUserType = userType || 'User';
 
     switch (role) {
       case 'coordinator':
@@ -49,11 +53,11 @@ export default function Profile() {
           gradient: theme.gradients.blue,
           name: displayName,
           roleTitle: displayUserType,
-          subtitle: user?.schoolName || 'Greenwood High School',
+          subtitle: profileDetails?.schoolName || 'Greenwood High School',
           email: displayEmail,
           phone: displayPhone,
           thirdLabel: 'School',
-          thirdValue: user?.schoolName || 'Greenwood High School',
+          thirdValue: profileDetails?.schoolName || 'Greenwood High School',
           thirdIcon: 'trello',
           thirdIconBg: theme.colors.blueSurface,
           thirdIconColor: theme.colors.linkPrimary,
@@ -66,7 +70,7 @@ export default function Profile() {
           gradient: theme.gradients.green,
           name: displayName,
           roleTitle: displayUserType || 'Teacher',
-          subtitle: 'Mathematics Department',
+          subtitle: profileDetails?.schoolName || 'Mathematics Department',
           email: displayEmail,
           phone: displayPhone,
           thirdLabel: 'Subject',
@@ -160,15 +164,15 @@ export default function Profile() {
             <Text style={styles.cardTitle}>Teaching Stats</Text>
             <View style={styles.statsRow}>
               <View style={[styles.statBox, { backgroundColor: theme.colors.blueSurface }]}>
-                <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>5</Text>
+                <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{profileDetails?.totalClasses ?? 0}</Text>
                 <Text style={styles.statLabel}>Classes</Text>
               </View>
               <View style={[styles.statBox, { backgroundColor: theme.colors.greenSurface }]}>
-                <Text style={[styles.statValue, { color: theme.colors.success }]}>142</Text>
+                <Text style={[styles.statValue, { color: theme.colors.success }]}>{profileDetails?.totalStudents ?? 0}</Text>
                 <Text style={styles.statLabel}>Students</Text>
               </View>
               <View style={[styles.statBox, { backgroundColor: theme.colors.purpleSubtle }]}>
-                <Text style={[styles.statValue, { color: theme.colors.purple }]}>98%</Text>
+                <Text style={[styles.statValue, { color: theme.colors.purple }]}>{profileDetails?.currentMonthAttendancePercentage ?? 0}%</Text>
                 <Text style={styles.statLabel}>Attendance</Text>
               </View>
             </View>
@@ -225,7 +229,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 10,
     paddingHorizontal: 16,
-    // Removed alternative conflicting hardcoded paddingBottom entry line from here
   },
   heroCard: {
     borderRadius: 20,

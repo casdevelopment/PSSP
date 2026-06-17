@@ -57,9 +57,8 @@ const ProgressBar = ({ label, used, total, color }) => {
 
 export default function LeaveRequests() {
     const navigation = useNavigation();
-    const user = useAuthStore((state) => state.user);
     const empId = useAuthStore((state) => state.empId);
-    const role = user?.role;
+    const role = useAuthStore((state) => state.userType);
 
     // Helper boolean to keep conditional rendering clean
     const isManager = role === 'principal' || role === 'coordinator';
