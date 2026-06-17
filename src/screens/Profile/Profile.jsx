@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
@@ -10,22 +10,35 @@ import { useNavigation } from '@react-navigation/native';
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const role = useAuthStore((state) => state.role);
+  const user = useAuthStore((state) => state.user);
+  const email = useAuthStore((state) => state.email);
+  const phoneNo = useAuthStore((state) => state.phoneNo);
+  const userType = useAuthStore((state) => state.userType);
+  const image = useAuthStore((state) => state.image);
+  const schoolCount = useAuthStore((state) => state.schoolCount);
   const logout = useAuthStore((state) => state.logout);
   const navigation = useNavigation();
+  console.log(image, 'image')
+
 
   const getProfileData = () => {
+    const displayName = user?.name || user?.userName || 'User Name';
+    const displayEmail = email || user?.email || 'N/A';
+    const displayPhone = phoneNo || user?.phoneNo || 'N/A';
+    const displayUserType = userType || user?.userType || 'User';
+
     switch (role) {
       case 'coordinator':
         return {
           gradient: theme.gradients.purple,
-          name: 'Dr. Robert Anderson',
-          roleTitle: 'Coordinator',
+          name: displayName,
+          roleTitle: displayUserType,
           subtitle: 'Super Admin',
-          email: 'robert.anderson@school.edu',
-          phone: '+1 (555) 123-4567',
+          email: displayEmail,
+          phone: displayPhone,
           thirdLabel: 'Assigned Schools',
-          thirdValue: '12 Schools',
-          thirdIcon: 'trello', 
+          thirdValue: schoolCount ? `${schoolCount} Schools` : 'N/A',
+          thirdIcon: 'trello',
           thirdIconBg: theme.colors.purpleSubtle,
           thirdIconColor: theme.colors.purple,
           showEdit: false,
@@ -34,14 +47,14 @@ export default function Profile() {
       case 'principal':
         return {
           gradient: theme.gradients.blue,
-          name: 'Sarah Johnson',
-          roleTitle: 'Principal',
-          subtitle: 'Greenwood High School',
-          email: 'sarah.johnson@greenwood.edu',
-          phone: '+1 (555) 234-5678',
+          name: displayName,
+          roleTitle: displayUserType,
+          subtitle: user?.schoolName || 'Greenwood High School',
+          email: displayEmail,
+          phone: displayPhone,
           thirdLabel: 'School',
-          thirdValue: 'Greenwood High School',
-          thirdIcon: 'trello', 
+          thirdValue: user?.schoolName || 'Greenwood High School',
+          thirdIcon: 'trello',
           thirdIconBg: theme.colors.blueSurface,
           thirdIconColor: theme.colors.linkPrimary,
           showEdit: true,
@@ -51,11 +64,11 @@ export default function Profile() {
       default:
         return {
           gradient: theme.gradients.green,
-          name: 'John Smith',
-          roleTitle: 'Teacher',
+          name: displayName,
+          roleTitle: displayUserType || 'Teacher',
           subtitle: 'Mathematics Department',
-          email: 'john.smith@greenwood.edu',
-          phone: '+1 (555) 345-6789',
+          email: displayEmail,
+          phone: displayPhone,
           thirdLabel: 'Subject',
           thirdValue: 'Mathematics',
           thirdIcon: 'book-open',
@@ -85,7 +98,13 @@ export default function Profile() {
         >
           <View style={styles.heroContent}>
             <View style={styles.avatarCircle}>
-              <Icon name="user" size={32} color={theme.colors.white} />
+              {image ? (
+                <Image
+                  source={{ uri: image }}
+                  style={{ height: 80, width: 80, resizeMode: 'contain' }}
+                />) : (
+                <Icon name="user" size={32} color={theme.colors.white} />
+              )}
             </View>
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroName}>{data.name}</Text>
@@ -226,9 +245,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 16,
   },
+
+  avatarImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+  },
   heroTextContainer: {
     flex: 1,
   },
+
   heroName: {
     fontSize: 22,
     fontWeight: '700',

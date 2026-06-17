@@ -38,6 +38,7 @@ export default function Login() {
       }
 
       const authData = response?.data ?? {};
+      console.log('auth data -> ', authData);
       const role = String(authData.userType ?? '').trim().toLowerCase();
       const accessToken = authData.token ?? authData.accessToken ?? null;
       const schoolId = authData.schoolId ?? null;
@@ -55,6 +56,11 @@ export default function Login() {
         schoolId,
         authData.empId ?? null,
         authData.userId ?? null,
+        authData.userType ?? null,
+        authData.image ?? null,
+        authData.schoolCount ?? null,
+        authData.phoneNo ?? null,
+        authData.email ?? null,
       );
     }
     catch (error) {

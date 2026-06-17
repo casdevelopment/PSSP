@@ -13,31 +13,35 @@ export const useAuthStore = create(
       schoolId: null,
       empId: null,
       userId: null,
+      userType: null,
+      image: null,
+      schoolCount: null,
+      phoneNo: null,
+      email: null,
 
-      setAuth: (user, role, accessToken, schoolId, empId, userId) => {
-        set({ user, role, accessToken, isAuthenticated: true, schoolId, empId, userId })
+      setAuth: (user, role, accessToken, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email) => {
+        set({ user, role, accessToken, isAuthenticated: true, schoolId, empId, userId, userType, image, schoolCount, phoneNo, email })
       },
-
-      // Demo mode - bypass authentication for testing
-      // demoLogin: (role) => {
-      //   const demoUser = {
-      //     id: 'demo-user-123',
-      //     name: 'Demo User',
-      //     role: role,
-      //     email: 'demo@prepmate.com',
-      //     schoolId: 'demo-school-456',
-      //   }
-      //   const demoToken = 'demo-token-' + Date.now()
-      //   set({ user: demoUser, role: demoUser.role, accessToken: demoToken, isAuthenticated: true, schoolId: demoUser.schoolId })
-      // },
 
       updateUser: (updates) =>
         set((state) => ({ user: { ...state.user, ...updates } })),
 
       logout: async () => {
-        // await AsyncStorage.removeItem('hasSeenOnboarding');
         useProfileDetailsStore.getState().clearProfileDetails();
-        set({ user: null, role: null, accessToken: null, isAuthenticated: false, schoolId: null, empId: null, userId: null })
+        set({ 
+          user: null, 
+          role: null, 
+          accessToken: null, 
+          isAuthenticated: false, 
+          schoolId: null, 
+          empId: null, 
+          userId: null,
+          userType: null,
+          image: null,
+          schoolCount: null,
+          phoneNo: null,
+          email: null
+        })
       },
     }),
     {
@@ -51,6 +55,11 @@ export const useAuthStore = create(
         schoolId: state.schoolId,
         empId: state.empId,
         userId: state.userId,
+        userType: state.userType,
+        image: state.image,
+        schoolCount: state.schoolCount,
+        phoneNo: state.phoneNo,
+        email: state.email,
       }),
     },
   ),

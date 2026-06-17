@@ -257,9 +257,6 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.backgroundLight,
     },
     scrollContent: {
-        // Removed horizontal padding here because HeroCard applies its own paddingHorizontal: 16.
-        // The list items and section cards will span slightly wider now unless they have their own margins,
-        // or you can wrap them in a separate padded container if needed.
         paddingBottom: 40,
     },
     heroWrapper: {

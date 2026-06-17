@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -10,124 +10,263 @@ import {
     KeyboardAvoidingView,
     Platform,
     Pressable,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
+import { useAuthStore } from '../store/AuthStore';
+import { getEmpLeaveBalanceList, applyLeave } from '../network/apis';
+import CalendarPickerModal from './CalendarPickerModal';
 
 export default function RequestLeaveModel({ visible, onClose }) {
     const insets = useSafeAreaInsets();
-    
-    // Form states
-    const [leaveType, setLeaveType] = useState('');
+
+
+    const userId = useAuthStore((state) => state.userId);
+    const empId = useAuthStore((state) => state.empId);
+    const schoolId = useAuthStore((state) => state.schoolId);
+
+    const [balances, setBalances] = useState([]);
+    const [selectedBalance, setSelectedBalance] = useState(null);
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
     const [reason, setReason] = useState('');
+    const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showTypePicker, setShowTypePicker] = useState(false);
+    const [showFromDatePicker, setShowFromDatePicker] = useState(false);
+    const [showToDatePicker, setShowToDatePicker] = useState(false);
 
-    const handleSubmit = () => {
-        // Handle your API call here
-        console.log('Submitting Leave:', { leaveType, fromDate, toDate, reason });
-        
-        // Reset form and close
-        setLeaveType('');
+
+
+    const handleClose = () => {
+        setSelectedBalance(null);
         setFromDate('');
         setToDate('');
         setReason('');
+        setShowTypePicker(false);
+        setShowFromDatePicker(false);
+        setShowToDatePicker(false);
         onClose();
     };
 
+    const handleSubmit = async () => {
+        if (!selectedBalance || !fromDate || !toDate) {
+            Alert.alert('Error', 'Please select a leave type and dates');
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const fromDateIso = fromDate + 'T00:00:00.000Z';
+            const toDateIso = toDate + 'T23:59:59.000Z';
+
+            const activeLeaveTypeId = selectedBalance.leaveTypeId 
+                || selectedBalance.entityLeaveTypeId 
+                || selectedBalance.leaveTypeID 
+                || selectedBalance.entityLeaveTypeID 
+                || selectedBalance.empLeaveBalanceID 
+                || 0;
+
+            const payload = {
+                userId: userId || 0,
+                empId: empId || 0,
+                leaveTypeId: activeLeaveTypeId,
+                fromDate: fromDateIso,
+                toDate: toDateIso,
+                reason: reason || '',
+                schoolId: schoolId || 0
+            };
+
+            const res = await applyLeave(payload);
+            if (res && res.success !== false) {
+                Alert.alert('Success', 'Leave requested successfully');
+                handleClose();
+            } else {
+                Alert.alert('Error', res?.message || 'Failed to submit leave request');
+            }
+        } catch (error) {
+            console.error('Submit leave error:', error);
+            const errorMsg = error.response?.data?.message 
+                || error.message 
+                || 'Failed to submit leave request';
+            const details = `\nDebug Info: leaveTypeId=${selectedBalance?.leaveTypeId || 'undefined'}, entityLeaveTypeId=${selectedBalance?.entityLeaveTypeId || 'undefined'}, empLeaveBalanceID=${selectedBalance?.empLeaveBalanceID || 'undefined'}`;
+            Alert.alert('Error', errorMsg + details);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    useEffect(() => {
+        if (visible && empId) {
+            const fetchBalances = async () => {
+                setIsLoadingBalances(true);
+                try {
+                    const res = await getEmpLeaveBalanceList(empId);
+                    setBalances(res?.data || []);
+                } catch (error) {
+                    console.error('Fetch balances error:', error);
+                    setBalances([]);
+                } finally {
+                    setIsLoadingBalances(false);
+                }
+            };
+            fetchBalances();
+        }
+    }, [visible, empId]);
+
     return (
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={visible}
-            onRequestClose={onClose}
-        >
-            <KeyboardAvoidingView
-                style={styles.modelBg}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={visible}
+                onRequestClose={handleClose}
             >
-                <Pressable
-                    style={styles.modelDismiss}
-                    onPress={onClose}
-                />
-
-                <View
-                    style={[
-                        styles.bottomSheet,
-                        { paddingBottom: insets.bottom + 20 },
-                    ]}
+                <KeyboardAvoidingView
+                    style={styles.modelBg}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
-                    <View style={styles.dragIndicator} />
-                    <Text style={styles.modelTitle}>Request Leave</Text>
+                    <Pressable
+                        style={styles.modelDismiss}
+                        onPress={handleClose}
+                    />
 
-                    <ScrollView
-                        contentContainerStyle={styles.formContent}
-                        showsVerticalScrollIndicator={false}
+                    <View
+                        style={[
+                            styles.bottomSheet,
+                            { paddingBottom: insets.bottom + 20 },
+                        ]}
                     >
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Leave Type</Text>
-                            <TextInput
-                                style={styles.inputBox}
-                                placeholder="e.g. Sick, Casual"
-                                value={leaveType}
-                                onChangeText={setLeaveType}
-                            />
-                        </View>
+                        <View style={styles.dragIndicator} />
+                        <Text style={styles.modelTitle}>Request Leave</Text>
 
-                        <View style={styles.rowInputs}>
-                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                                <Text style={styles.inputLabel}>From Date</Text>
-                                <TextInput
+                        <ScrollView
+                            contentContainerStyle={styles.formContent}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Leave Type</Text>
+                                <TouchableOpacity
                                     style={styles.inputBox}
-                                    placeholder="YYYY-MM-DD"
-                                    value={fromDate}
-                                    onChangeText={setFromDate}
-                                />
+                                    onPress={() => setShowTypePicker(!showTypePicker)}
+                                >
+                                    <View style={styles.dropdownHeader}>
+                                        <Text style={[styles.dropdownSelectedText, !selectedBalance && styles.placeholderText]}>
+                                            {selectedBalance ? `${selectedBalance.leaveTypeName} (Bal: ${selectedBalance.balance})` : 'Select Leave Type'}
+                                        </Text>
+                                        <Icon name={showTypePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#6A7282" />
+                                    </View>
+                                </TouchableOpacity>
+
+                                {showTypePicker && (
+                                    <View style={styles.dropdownList}>
+                                        {isLoadingBalances ? (
+                                            <ActivityIndicator size="small" color={theme.colors.purple} style={{ padding: 10 }} />
+                                        ) : balances.length === 0 ? (
+                                            <Text style={styles.dropdownNoData}>No leave types available</Text>
+                                        ) : (
+                                            balances.map((item, index) => (
+                                                <TouchableOpacity
+                                                    key={item.empLeaveBalanceID || item.leaveTypeId || String(index)}
+                                                    style={styles.dropdownItem}
+                                                    onPress={() => {
+                                                        setSelectedBalance(item);
+                                                        setShowTypePicker(false);
+                                                    }}
+                                                >
+                                                    <Text style={styles.dropdownItemText}>{item.leaveTypeName}</Text>
+                                                    <Text style={styles.dropdownItemBal}>Bal: {item.balance}</Text>
+                                                </TouchableOpacity>
+                                            ))
+                                        )}
+                                    </View>
+                                )}
                             </View>
 
-                            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                                <Text style={styles.inputLabel}>To Date</Text>
+                            <View style={styles.rowInputs}>
+                                <TouchableOpacity
+                                    style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}
+                                    onPress={() => setShowFromDatePicker(true)}
+                                >
+                                    <Text style={styles.inputLabel}>From Date</Text>
+                                    <View style={[styles.inputBox, styles.dateInputInner]}>
+                                        <Text style={[styles.dateInputText, !fromDate && styles.placeholderText]}>
+                                            {fromDate ? fromDate : 'YYYY-MM-DD'}
+                                        </Text>
+                                        <Icon name="calendar" size={18} color="#6A7282" />
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}
+                                    onPress={() => setShowToDatePicker(true)}
+                                >
+                                    <Text style={styles.inputLabel}>To Date</Text>
+                                    <View style={[styles.inputBox, styles.dateInputInner]}>
+                                        <Text style={[styles.dateInputText, !toDate && styles.placeholderText]}>
+                                            {toDate ? toDate : 'YYYY-MM-DD'}
+                                        </Text>
+                                        <Icon name="calendar" size={18} color="#6A7282" />
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Reason</Text>
                                 <TextInput
-                                    style={styles.inputBox}
-                                    placeholder="YYYY-MM-DD"
-                                    value={toDate}
-                                    onChangeText={setToDate}
+                                    style={[styles.inputBox, styles.textArea]}
+                                    placeholder="Enter reason for leave"
+                                    placeholderTextColor={theme.colors.textMuted || '#9CA3AF'}
+                                    value={reason}
+                                    onChangeText={setReason}
+                                    multiline
+                                    textAlignVertical="top"
                                 />
                             </View>
+                        </ScrollView>
+
+                        <View style={styles.modelActions}>
+                            <TouchableOpacity
+                                style={styles.cancelBtn}
+                                onPress={handleClose}
+                            >
+                                <Text style={styles.cancelBtnText}>Cancel</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
+                                onPress={handleSubmit}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <ActivityIndicator size="small" color="#FFF" />
+                                ) : (
+                                    <Text style={styles.submitBtnText}>Submit Request</Text>
+                                )}
+                            </TouchableOpacity>
                         </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Reason</Text>
-                            <TextInput
-                                style={[styles.inputBox, styles.textArea]}
-                                placeholder="Enter reason for leave"
-                                placeholderTextColor={theme.colors.textMuted || '#9CA3AF'}
-                                value={reason}
-                                onChangeText={setReason}
-                                multiline
-                                textAlignVertical="top"
-                            />
-                        </View>
-                    </ScrollView>
-
-                    <View style={styles.modelActions}>
-                        <TouchableOpacity
-                            style={styles.cancelBtn}
-                            onPress={onClose}
-                        >
-                            <Text style={styles.cancelBtnText}>Cancel</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.submitBtn}
-                            onPress={handleSubmit}
-                        >
-                            <Text style={styles.submitBtnText}>Submit Request</Text>
-                        </TouchableOpacity>
                     </View>
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            <CalendarPickerModal
+                visible={showFromDatePicker}
+                onClose={() => setShowFromDatePicker(false)}
+                onSelectDate={(date) => setFromDate(date)}
+                selectedDate={fromDate}
+                title="Select From Date"
+            />
+
+            <CalendarPickerModal
+                visible={showToDatePicker}
+                onClose={() => setShowToDatePicker(false)}
+                onSelectDate={(date) => setToDate(date)}
+                selectedDate={toDate}
+                title="Select To Date"
+            />
+        </>
     );
 }
 
@@ -219,5 +358,58 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    dropdownHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    dropdownSelectedText: {
+        fontSize: 16,
+        color: '#0A0A0A',
+    },
+    placeholderText: {
+        color: '#9CA3AF',
+    },
+    dropdownList: {
+        marginTop: 4,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        backgroundColor: '#FFF',
+        overflow: 'hidden',
+        maxHeight: 200,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    dropdownItemText: {
+        fontSize: 15,
+        color: '#0A0A0A',
+    },
+    dropdownItemBal: {
+        fontSize: 14,
+        color: '#6B7280',
+    },
+    dropdownNoData: {
+        padding: 16,
+        textAlign: 'center',
+        color: '#9CA3AF',
+        fontSize: 15,
+    },
+
+    dateInputInner: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    dateInputText: {
+        fontSize: 16,
+        color: '#0A0A0A',
     },
 });
