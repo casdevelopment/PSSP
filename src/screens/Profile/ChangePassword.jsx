@@ -61,7 +61,7 @@ export default function ChangePassword() {
             const payload = {
                 empId: empId || 0,
                 userId: userId || 0,
-                userName: user?.userName || 'sa',
+                userName: username,
                 password: currentPassword,
                 newPassword: newPassword,
                 fcmToken: 'string',
@@ -83,6 +83,7 @@ export default function ChangePassword() {
             );
         } finally {
             setIsSubmitting(false);
+            navigation.navigate("Login")
         }
     };
 

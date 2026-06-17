@@ -7,12 +7,14 @@ import CustomInput from '../../components/CustomInput';
 import PrimaryButton from '../../components/PrimaryButton';
 import { loginUser } from '../../network/apis';
 import { useAuthStore } from '../../store/AuthStore';
+import ForgotPasswordModel from '../../components/ForgotPasswordModel';
 
 export default function Login() {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isForgotVisible, setIsForgotVisible] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSignIn = async () => {
@@ -107,7 +109,7 @@ export default function Login() {
             onChangeText={setPassword}
           />
 
-          <TouchableOpacity style={styles.forgotBtn}>
+          <TouchableOpacity style={styles.forgotBtn} onPress={() => setIsForgotVisible(true)}>
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -146,6 +148,11 @@ export default function Login() {
           <Text style={styles.contactAdminText}>Contact Admin</Text>
         </TouchableOpacity>
       </View>
+
+      <ForgotPasswordModel
+        visible={isForgotVisible}
+        onClose={() => setIsForgotVisible(false)}
+      />
     </SafeAreaView>
   );
 }
