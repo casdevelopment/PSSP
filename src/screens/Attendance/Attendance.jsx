@@ -35,21 +35,21 @@ export default function Attendance() {
   const insets = useSafeAreaInsets();
   const route = useRoute();
   const navigation = useNavigation();
-  const role = useAuthStore((state) => state.role);
-  
+  const role = useAuthStore((state) => state.userType);
+
   let type;
   if (role === 'principal' || role === 'principle') {
     type = 'staff';
-  }else {
+  } else {
     type = 'student';
   }
-  
+
   const isStudent = type === 'student';
 
   const [data, setData] = useState(isStudent ? initialStudentData : initialStaffData);
   const [selectedClass, setSelectedClass] = useState(DUMMY_CLASSES[0]);
   const [showClassModal, setShowClassModal] = useState(false);
-  
+
   // Format current date to YYYY-MM-DD
   const currentDateFormatted = new Date().toISOString().split('T')[0];
   const displayDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -61,7 +61,7 @@ export default function Attendance() {
   }, [type, selectedClass]);
 
   const loadTodaysAttendance = async () => {
-    const savedRecords = isStudent 
+    const savedRecords = isStudent
       ? await getTodaysStudentAttendance(currentDateFormatted, selectedClass)
       : await getTodaysStaffAttendance(currentDateFormatted);
 
@@ -74,7 +74,7 @@ export default function Attendance() {
   };
 
   const handleStatusChange = (id, newStatus) => {
-    setData(prev => prev.map(person => 
+    setData(prev => prev.map(person =>
       person.id === id ? { ...person, status: newStatus } : person
     ));
   };
@@ -85,7 +85,7 @@ export default function Attendance() {
 
   const handleSubmit = async () => {
     if (!isSubmitActive) return;
-    
+
     // Prepare records for DB
     const records = data.map(person => ({
       target_id: person.id,
@@ -96,7 +96,7 @@ export default function Attendance() {
       status: person.status
     })).filter(r => r.status !== null); // only save those marked
 
-    const success = isStudent 
+    const success = isStudent
       ? await saveStudentAttendance(records)
       : await saveStaffAttendance(records);
 
@@ -127,9 +127,9 @@ export default function Attendance() {
         {isStudent && (
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Select Class</Text>
-            <TouchableOpacity 
-              style={styles.inputWrapper} 
-              activeOpacity={0.7} 
+            <TouchableOpacity
+              style={styles.inputWrapper}
+              activeOpacity={0.7}
               onPress={() => setShowClassModal(true)}
             >
               <Text style={styles.inputText}>{selectedClass}</Text>
@@ -144,8 +144,8 @@ export default function Attendance() {
           ))}
         </View>
 
-        <TouchableOpacity 
-          style={[styles.submitBtn, isSubmitActive ? styles.submitBtnActive : styles.submitBtnInactive]} 
+        <TouchableOpacity
+          style={[styles.submitBtn, isSubmitActive ? styles.submitBtnActive : styles.submitBtnInactive]}
           activeOpacity={0.8}
           onPress={handleSubmit}
           disabled={!isSubmitActive}
@@ -158,9 +158,9 @@ export default function Attendance() {
 
       {/* Class Selector Modal */}
       <Modal visible={showClassModal} transparent animationType="fade">
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowClassModal(false)}
         >
           <View style={styles.modalContent}>
@@ -169,7 +169,7 @@ export default function Attendance() {
               data={DUMMY_CLASSES}
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => {
                     setSelectedClass(item);

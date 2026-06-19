@@ -12,7 +12,7 @@ import { changePassword } from '../../network/apis';
 export default function ChangePassword() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const role = useAuthStore((state) => state.role);
+    const role = useAuthStore((state) => state.userType);
     const empId = useAuthStore((state) => state.empId);
     const userId = useAuthStore((state) => state.userId);
     const username = useAuthStore((state) => state.username);

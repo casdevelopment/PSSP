@@ -17,7 +17,6 @@ import { useAuthStore } from '../../store/AuthStore';
 import { getEmpAllLeaveListHistory } from '../../network/apis';
 import { useLeaveStore } from '../../store/LeaveStore';
 import LeaveBalances from '../../components/LeaveBalances';
-// Adjust the import path based on where you saved your HeroCard component
 import HeroCard from '../../components/HeroCard';
 
 export const LEAVE_REQUESTS = [];

@@ -10,7 +10,7 @@ import { useAuthStore } from '../../store/AuthStore';
 export default function Settings() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const role = useAuthStore((state) => state.role);
+  const role = useAuthStore((state) => state.userType);
 
   // Dynamic header background based on role
   const getHeaderGradient = () => {
@@ -45,7 +45,7 @@ export default function Settings() {
 
       {/* Menu Options (Floating overlap layout) */}
       <View style={styles.OptionsContainer}>
-        
+
         {/* Notifications */}
         <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('Notifications')}>
           <View style={styles.menuItemLeft}>

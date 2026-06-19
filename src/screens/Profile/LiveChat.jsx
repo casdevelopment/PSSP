@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   StatusBar,
   TextInput,
   KeyboardAvoidingView,
@@ -20,26 +20,26 @@ import { useAuthStore } from '../../store/AuthStore';
 export default function LiveChat() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const role = useAuthStore((state) => state.role);
-  
+  const role = useAuthStore((state) => state.userType);
+
   const [message, setMessage] = useState('');
 
   // Dynamic header background based on role
   const getHeaderGradient = () => {
     if (role === 'coordinator') return theme.gradients.purple;
     if (role === 'staff') return theme.gradients.green;
-    return theme.gradients.blue; 
+    return theme.gradients.blue;
   };
 
   const getPrimaryColor = () => {
     if (role === 'coordinator') return theme.colors.purple;
     if (role === 'staff') return theme.colors.successStrong;
-    return theme.colors.linkPrimary; 
+    return theme.colors.linkPrimary;
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />

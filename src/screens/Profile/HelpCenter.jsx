@@ -10,7 +10,7 @@ import { useAuthStore } from '../../store/AuthStore';
 export default function HelpCenter() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const role = useAuthStore((state) => state.role);
+    const role = useAuthStore((state) => state.userType);
 
     // Dynamic header background based on role
     const getHeaderGradient = () => {
@@ -96,9 +96,9 @@ export default function HelpCenter() {
                     {/* Browse Topics */}
                     <Text style={styles.sectionTitle}>Browse Topics</Text>
                     {topics.map(t => (
-                        <TouchableOpacity 
-                            key={t.id} 
-                            style={styles.topicCard} 
+                        <TouchableOpacity
+                            key={t.id}
+                            style={styles.topicCard}
                             activeOpacity={0.7}
                             onPress={() => navigation.navigate('ArticleList', { title: t.title, articlesCount: t.articles })}
                         >

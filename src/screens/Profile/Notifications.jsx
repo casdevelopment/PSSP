@@ -20,13 +20,13 @@ const NOTIFICATIONS_DATA = [
 export default function Notifications() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const role = useAuthStore((state) => state.role);
+  const role = useAuthStore((state) => state.userType);
 
   // Dynamic header based on role
   const getHeaderGradient = () => {
     if (role === 'coordinator') return theme.gradients.purple;
     if (role === 'staff') return theme.gradients.green;
-    return theme.gradients.blue; 
+    return theme.gradients.blue;
   };
 
   const getIconProps = (type) => {
@@ -70,20 +70,20 @@ export default function Notifications() {
       </LinearGradient>
 
       {/* List Area */}
-      <ScrollView style={styles.scrollContent}  showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {NOTIFICATIONS_DATA.map((notif) => {
           const iconConfig = getIconProps(notif.type);
-          
+
           return (
             <TouchableOpacity key={notif.id} style={styles.notifCard} activeOpacity={0.7}>
               {/* Unread Dot Indicator */}
               {notif.unread && <View style={styles.unreadDot} />}
-              
+
               <View style={styles.notifContent}>
                 <View style={[styles.iconCircle, { backgroundColor: iconConfig.bg }]}>
                   <Icon name={iconConfig.name} size={18} color={iconConfig.color} />
                 </View>
-                
+
                 <View style={styles.textContainer}>
                   <Text style={styles.notifTitle}>{notif.title}</Text>
                   <Text style={styles.notifDesc}>{notif.desc}</Text>

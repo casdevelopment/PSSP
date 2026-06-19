@@ -11,7 +11,7 @@ export default function ArticleList() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
-    const role = useAuthStore((state) => state.role);
+    const role = useAuthStore((state) => state.userType);
 
     // Retrieve topic info or use fallback
     const { title, articlesCount } = route.params || {
@@ -23,7 +23,7 @@ export default function ArticleList() {
     const getHeaderGradient = () => {
         if (role === 'coordinator') return theme.gradients.purple;
         if (role === 'staff') return theme.gradients.green;
-        return theme.gradients.blue; 
+        return theme.gradients.blue;
     };
 
     const getRoleColor = () => {

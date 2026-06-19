@@ -32,7 +32,7 @@ const PlaceholderScreen = ({ name }) => (
 );
 
 export default function MainTabs() {
-  const role = useAuthStore((state) => state.role);
+  const role = useAuthStore((state) => state.userType);
   const [isAddStudentmodelVisible, setIsAddStudentmodelVisible] = useState(false);
   const [isAddStaffmodelVisible, setIsAddStaffmodelVisible] = useState(false);
   const [isAddScheduleModalVisible, setIsAddScheduleModalVisible] = useState(false);

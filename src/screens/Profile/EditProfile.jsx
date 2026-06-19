@@ -24,7 +24,7 @@ const ProfileInput = ({ label, value, onChangeText }) => (
 export default function EditProfile() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const role = useAuthStore((state) => state.role);
+    const role = useAuthStore((state) => state.userType);
 
     const [name, setName] = useState('Sarah Johnson');
     const [email, setEmail] = useState('sarah.johnson@greenwood.edu');

@@ -10,7 +10,7 @@ import { useAuthStore } from '../../store/AuthStore';
 export default function NotificationSettings() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const role = useAuthStore((state) => state.role);
+  const role = useAuthStore((state) => state.userType);
 
   const [settings, setSettings] = useState({
     salary: true,
@@ -26,7 +26,7 @@ export default function NotificationSettings() {
   const getHeaderGradient = () => {
     if (role === 'coordinator') return theme.gradients.purple;
     if (role === 'staff') return theme.gradients.green;
-    return theme.gradients.blue; 
+    return theme.gradients.blue;
   };
 
   const getRoleColor = () => {
@@ -78,38 +78,38 @@ export default function NotificationSettings() {
       {/* List Area */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.contentWrap}>
-            <SettingItem 
-              title="Salary Notifications" 
-              subtitle="Get notified about salary payments" 
-              value={settings.salary} 
-              onValueChange={() => toggleSetting('salary')} 
-            />
-            <SettingItem 
-              title="Expense Requests" 
-              subtitle="New expense approval requests" 
-              value={settings.expense} 
-              onValueChange={() => toggleSetting('expense')} 
-            />
-            <SettingItem 
-              title="Leave Requests" 
-              subtitle="New leave approval requests" 
-              value={settings.leave} 
-              onValueChange={() => toggleSetting('leave')} 
-            />
-            <SettingItem 
-              title="Monthly Reports" 
-              subtitle="Monthly performance reports" 
-              value={settings.monthly} 
-              onValueChange={() => toggleSetting('monthly')} 
-            />
-            <SettingItem 
-              title="Announcements" 
-              subtitle="Important system announcements" 
-              value={settings.announcements} 
-              onValueChange={() => toggleSetting('announcements')} 
-            />
+          <SettingItem
+            title="Salary Notifications"
+            subtitle="Get notified about salary payments"
+            value={settings.salary}
+            onValueChange={() => toggleSetting('salary')}
+          />
+          <SettingItem
+            title="Expense Requests"
+            subtitle="New expense approval requests"
+            value={settings.expense}
+            onValueChange={() => toggleSetting('expense')}
+          />
+          <SettingItem
+            title="Leave Requests"
+            subtitle="New leave approval requests"
+            value={settings.leave}
+            onValueChange={() => toggleSetting('leave')}
+          />
+          <SettingItem
+            title="Monthly Reports"
+            subtitle="Monthly performance reports"
+            value={settings.monthly}
+            onValueChange={() => toggleSetting('monthly')}
+          />
+          <SettingItem
+            title="Announcements"
+            subtitle="Important system announcements"
+            value={settings.announcements}
+            onValueChange={() => toggleSetting('announcements')}
+          />
         </View>
-        <View style={{height: 40}} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
