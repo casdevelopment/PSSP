@@ -16,18 +16,18 @@ const PendingCard = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pending Leave Requests</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('LeaveRequests')}>
+        <TouchableOpacity onPress={() => navigation.navigate('LeaveRequestsManagement')}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.list}>
         {leaveRequestsData.map((item, index) => (
-          <View 
-            key={item.id} 
+          <View
+            key={item.id}
             style={[
-              styles.itemContainer, 
-              index === leaveRequestsData.length - 1 ? null : styles.itemMargin 
+              styles.itemContainer,
+              index === leaveRequestsData.length - 1 ? null : styles.itemMargin
             ]}
           >
             <View style={styles.details}>

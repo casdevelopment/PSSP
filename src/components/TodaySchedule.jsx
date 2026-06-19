@@ -1,17 +1,52 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { theme } from '../theme/theme';
 import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '../store/AuthStore';
+import { getTeacherDailySchedule } from '../network/apis';
 
-const scheduleData = [
-  { id: '1', time: '9:00 AM', subject: 'Mathematics', teacher: 'John Smith', grade: 'Grade 10-A' },
-  { id: '2', time: '10:30 AM', subject: 'Physics', teacher: 'Emma Wilson', grade: 'Grade 11-B' },
-  { id: '3', time: '1:00 PM', subject: 'English', teacher: 'David Brown', grade: 'Grade 9-C' },
-];
+const getDayName = (dateStr) => {
+  if (!dateStr) return '';
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const date = new Date(dateStr);
+  console.log(date.getDay());
+  return days[date.getDay()];
+};
 
 const TodaySchedule = () => {
-
   const navigation = useNavigation();
+  const empId = useAuthStore((state) => state.empId);
+  const schoolId = useAuthStore((state) => state.schoolId);
+
+  const [schedule, setSchedule] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (empId) {
+      setIsLoading(true);
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayFormatted = `${year}-${month}-${day}`;
+
+      getTeacherDailySchedule(empId, todayFormatted)
+        .then((res) => {
+          if (res && res.success) {
+            setSchedule(res.data || []);
+          } else {
+            setSchedule([]);
+          }
+        })
+        .catch((err) => {
+          console.log('No schedule found or error fetching schedule:', err.message);
+          setSchedule([]);
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [empId]);
+
+  const todayClasses = schedule;
 
   return (
     <View style={styles.container}>
@@ -21,25 +56,37 @@ const TodaySchedule = () => {
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
-      
-      <View style={styles.list}>
-        {scheduleData.map((item, index) => (
-          <View 
-            key={item.id} 
-            style={[
-              styles.itemContainer, 
-              index === scheduleData.length - 1 ? null : styles.itemMargin 
-            ]}
-          >
-            <Text style={styles.time}>{item.time}</Text>
-            <View style={styles.details}>
-              <Text style={styles.subject}>{item.subject}</Text>
-              <Text style={styles.teacher}>{item.teacher}</Text>
-              <Text style={styles.grade}>{item.grade}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
+
+      {isLoading ? (
+        <ActivityIndicator size="small" color={theme.colors.purple} style={{ paddingVertical: 20 }} />
+      ) : todayClasses.length === 0 ? (
+        <Text style={{ color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 10 }}>
+          No classes scheduled for today
+        </Text>
+      ) : (
+        <View style={styles.list}>
+          {todayClasses.map((item, index) => {
+            const timeRange = `${item.startTime} - ${item.endTime}`;
+            const roomInfo = `Room ${item.roomNumber} (Floor ${item.floorNumber})`;
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.itemContainer,
+                  index === todayClasses.length - 1 ? null : styles.itemMargin
+                ]}
+              >
+                <Text style={styles.time}>{item.startTime || timeRange}</Text>
+                <View style={styles.details}>
+                  <Text style={styles.subject}>{item.subjectName}</Text>
+                  <Text style={styles.teacher}>{roomInfo}</Text>
+                  <Text style={styles.grade}>{item.gradeSection}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 };

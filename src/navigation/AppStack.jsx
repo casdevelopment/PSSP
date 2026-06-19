@@ -4,6 +4,7 @@ import MainTabs from './MainTabs';
 import Attendance from '../screens/Attendance/Attendance';
 import AttendanceHistory from '../screens/Attendance/AttendanceHistory';
 import LeaveRequests from '../screens/Leave/LeaveRequests';
+import LeaveRequestsManagement from '../screens/Leave/LeaveRequestsManagement';
 import LeaveDetail from '../screens/Leave/LeaveDetail';
 import { useAuthStore } from '../store/AuthStore';
 import HeaderPlusButton from '../components/HeaderPlusButton';
@@ -54,6 +55,19 @@ export default function AppStack() {
                                 <HeaderPlusButton onPress={() => setIsLeavemodelVisible(true)} />
                             ) : null
                         )
+                    }}
+                />
+
+                <Stack.Screen
+                    name='LeaveRequestsManagement'
+                    component={LeaveRequestsManagement}
+                    options={{
+                        title: 'Leave Management',
+                        headerTitle: 'Leave Management',
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: '600',
+                        },
                     }}
                 />
 

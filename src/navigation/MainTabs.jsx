@@ -100,7 +100,7 @@ export default function MainTabs() {
             <Tab.Screen
               name="Salary Management"
               component={SalaryDistribution}
-              options={{ headerShown: false, title: 'Salary' }}
+              options={{ headerShown: true, title: 'Salary Management' }}
             />
             <Tab.Screen
               name="Expenses"
@@ -152,7 +152,7 @@ export default function MainTabs() {
               component={SalaryDistribution}
               options={{
                 title: 'Salary',
-                headerTitle: 'Salary',
+                headerTitle: 'Salary Management',
               }}
             />
           </>

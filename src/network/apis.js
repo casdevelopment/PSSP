@@ -1,11 +1,11 @@
 import axiosInstance from '../utils/axiosInstance';
 import Server from '../constants/server';
 import axios from 'axios';
- 
+
 // Roles  --> Coordinator, Principal, Staff
- 
+
 // ==================== AUTH APIS ====================
- 
+
 export const loginUser = async payload => {
   try {
     const response = await axiosInstance.post('/EP/login', payload);
@@ -15,7 +15,7 @@ export const loginUser = async payload => {
     throw error;
   }
 };
- 
+
 export const changePassword = async payload => {
   try {
     const response = await axiosInstance.post('/EP/change-password', payload);
@@ -25,7 +25,7 @@ export const changePassword = async payload => {
     throw error;
   }
 };
- 
+
 export const forgotPassword = async payload => {
   try {
     const response = await axiosInstance.post('/EP/forgot-password', payload);
@@ -35,9 +35,9 @@ export const forgotPassword = async payload => {
     throw error;
   }
 };
- 
+
 // ==================== DASHBOARD APIS ====================
- 
+
 export const getUserDashboard = async empId => {
   try {
     const response = await axiosInstance.get('/EP/User-Dashboard', {
@@ -49,9 +49,9 @@ export const getUserDashboard = async empId => {
     throw error;
   }
 };
- 
+
 // ==================== LEAVE APIS ====================
- 
+
 export const getEmpAllLeaveListHistory = async empId => {
   try {
     const response = await axiosInstance.get(
@@ -66,7 +66,7 @@ export const getEmpAllLeaveListHistory = async empId => {
     throw error;
   }
 };
- 
+
 export const getEmpLeaveBalanceList = async empId => {
   try {
     const response = await axiosInstance.get(
@@ -81,7 +81,7 @@ export const getEmpLeaveBalanceList = async empId => {
     throw error;
   }
 };
- 
+
 export const applyLeave = async payload => {
   try {
     const response = await axiosInstance.post('/EP/apply-leave', payload);
@@ -91,9 +91,9 @@ export const applyLeave = async payload => {
     throw error;
   }
 };
- 
+
 // ==================== GRADE & CLASS APIS ====================
- 
+
 export const getEmpAssignGradeList = async empId => {
   try {
     const response = await axiosInstance.get(
@@ -108,7 +108,7 @@ export const getEmpAssignGradeList = async empId => {
     throw error;
   }
 };
- 
+
 export const getGradesByClasses = async () => {
   try {
     const response = await axiosInstance.get('/EP/GetGradesByClasses');
@@ -121,7 +121,7 @@ export const getGradesByClasses = async () => {
     throw error;
   }
 };
- 
+
 export const getClassesBySection = async () => {
   try {
     const response = await axiosInstance.get('/EP/GetClassesBySection');
@@ -134,7 +134,7 @@ export const getClassesBySection = async () => {
     throw error;
   }
 };
- 
+
 export const getEmployeeAssignedClassesStudents = async () => {
   try {
     const response = await axiosInstance.get(
@@ -149,9 +149,9 @@ export const getEmployeeAssignedClassesStudents = async () => {
     throw error;
   }
 };
- 
+
 // ==================== ATTENDANCE APIS ====================
- 
+
 export const getStudentForAttendance = async payload => {
   try {
     const response = await axiosInstance.post(
@@ -167,7 +167,7 @@ export const getStudentForAttendance = async payload => {
     throw error;
   }
 };
- 
+
 export const markStudentsAttendance = async payload => {
   try {
     const response = await axiosInstance.post(
@@ -183,7 +183,7 @@ export const markStudentsAttendance = async payload => {
     throw error;
   }
 };
- 
+
 export const getEmployeeAttendanceSummary = async payload => {
   try {
     const response = await axiosInstance.post(
@@ -199,7 +199,7 @@ export const getEmployeeAttendanceSummary = async payload => {
     throw error;
   }
 };
- 
+
 export const getStudentLast7DaysAttendanceHistory = async () => {
   try {
     const response = await axiosInstance.get(
@@ -214,9 +214,9 @@ export const getStudentLast7DaysAttendanceHistory = async () => {
     throw error;
   }
 };
- 
+
 // ==================== ADMIN/PRINCIPAL APIS ====================
- 
+
 export const getPrincipalPendingRequests = async () => {
   try {
     const response = await axiosInstance.get('/EP/GetPrincipalPendingRequests');
@@ -224,6 +224,40 @@ export const getPrincipalPendingRequests = async () => {
   } catch (error) {
     console.error(
       'Get pending requests error:',
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
+};
+
+export const getUnapprovedStaffLeaveRequest = async schoolId => {
+  try {
+    const response = await axiosInstance.get('/EP/GetUnapprovedStaffLeaveRequest', {
+      params: { schoolId }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error(
+      'Get unapproved staff leave requests error:',
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
+};
+
+export const getTeacherDailySchedule = async (empId, date) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetTeacherDailySchedule', {
+      params: {
+        EmpId: empId,
+        Date: date
+      }
+    });
+    console.log('Date: ', date)
+    return response?.data;
+  } catch (error) {
+    console.error(
+      'Get teacher daily schedule error:',
       error.response?.data || error.message,
     );
     throw error;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,39 +6,81 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
+import { useAuthStore } from '../../store/AuthStore';
+import { getTeacherDailySchedule } from '../../network/apis';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-const SCHEDULE_DUMMY_DATA = {
-  Monday: {
-    countLabel: '3 classes scheduled',
-    items: [
-      { id: 'm1', time: '9:00 AM', subject: 'Mathematics', grade: 'Grade 10-A', room: 'Room 201' },
-      { id: 'm2', time: '10:30 AM', subject: 'Mathematics', grade: 'Grade 10-B', room: 'Room 202' },
-      { id: 'm3', time: '1:00 PM', subject: 'Mathematics', grade: 'Grade 11-A', room: 'Room 301' },
-    ],
-  },
-  Tuesday: {
-    countLabel: '2 classes scheduled',
-    items: [
-      { id: 't1', time: '9:00 AM', subject: 'Physics', grade: 'Grade 11-B', room: 'Room 202' },
-      { id: 't2', time: '1:30 PM', subject: 'English', grade: 'Grade 9-C', room: 'Room 104' },
-    ],
-  },
+const getDayName = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return DAYS_OF_WEEK[date.getDay()];
+};
+
+const getDateForDayName = (dayName) => {
+  const dayIndices = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+  const targetIndex = dayIndices[dayName];
+
+  const today = new Date();
+  const currentDayIndex = today.getDay(); // 0-6
+
+  // Calculate difference from today to target index
+  const diff = targetIndex - currentDayIndex;
+
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + diff);
+
+  // Format to YYYY-MM-DD
+  const year = targetDate.getFullYear();
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const day = String(targetDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export default function MySchedule() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [selectedDay, setSelectedDay] = useState('Monday');
 
-  const currentDayData = SCHEDULE_DUMMY_DATA[selectedDay] || { countLabel: '0 classes scheduled', items: [] };
+  // Get current day name and select it initially if it is Mon-Fri, else default to 'Monday'
+  const initialDay = (() => {
+    const currentDay = getDayName(new Date());
+    return DAYS_OF_WEEK.includes(currentDay) ? currentDay : 'Monday';
+  })();
+
+  const [selectedDay, setSelectedDay] = useState(initialDay);
+  const [schedule, setSchedule] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const empId = useAuthStore((state) => state.empId);
+
+  useEffect(() => {
+    if (empId) {
+      setIsLoading(true);
+      const selectedDate = getDateForDayName(selectedDay);
+      getTeacherDailySchedule(empId, selectedDate)
+        .then((res) => {
+          if (res && res.success) {
+            setSchedule(res.data || []);
+          } else {
+            setSchedule([]);
+          }
+        })
+        .catch((err) => {
+          console.log('No schedule found or error fetching schedule:', err.message);
+          setSchedule([]);
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [empId, selectedDay]);
+
+  const countLabel = `${schedule.length} class${schedule.length !== 1 ? 'es' : ''} scheduled`;
 
   return (
     <View style={styles.container}>
@@ -113,56 +155,66 @@ export default function MySchedule() {
         {/* Main Schedule Card Container */}
         <View style={styles.mainScheduleCard}>
           <Text style={styles.dayHeading}>{selectedDay}</Text>
-          <Text style={styles.classCountLabel}>{currentDayData.countLabel}</Text>
+          <Text style={styles.classCountLabel}>{countLabel}</Text>
 
           {/* Cards List */}
           <View style={styles.itemsListContainer}>
-            {currentDayData.items.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.7}
-                style={[styles.classItemCard, { backgroundColor: theme.colors.blueSurface }]}
-                onPress={() => navigation.navigate('ClassDetails', { grade: item.grade })}
-              >
-                <View style={styles.itemTopRow}>
-                  <View style={styles.timeGroup}>
-                    <Icon name="clock" size={14} color={theme.colors.linkPrimary} style={styles.clockIcon} />
-                    <Text style={styles.itemTimeText}>{item.time}</Text>
-                  </View>
-                  <View style={[styles.roomBadge, { backgroundColor: theme.colors.textOnDarkMuted }]}>
-                    <Text style={styles.roomBadgeText}>{item.room}</Text>
-                  </View>
-                </View>
+            {isLoading ? (
+              <ActivityIndicator size="small" color={theme.colors.purple} style={{ paddingVertical: 20 }} />
+            ) : schedule.length === 0 ? (
+              <Text style={{ color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 20 }}>
+                No classes scheduled for {selectedDay}
+              </Text>
+            ) : (
+              schedule.map((item, index) => {
+                const timeRange = `${item.startTime} - ${item.endTime}`;
+                const roomInfo = `Room ${item.roomNumber || 'N/A'}`;
+                return (
+                  <View
+                    key={index}
+                    activeOpacity={0.7}
+                    style={[styles.classItemCard, { backgroundColor: theme.colors.blueSurface }]}
+                  // onPress={() => navigation.navigate('ClassDetails', { grade: item.gradeSection })}
+                  >
+                    <View style={styles.itemTopRow}>
+                      <View style={styles.timeGroup}>
+                        <Icon name="clock" size={14} color={theme.colors.linkPrimary} style={styles.clockIcon} />
+                        <Text style={styles.itemTimeText}>{item.startTime || timeRange}</Text>
+                      </View>
+                      <View style={[styles.roomBadge, { backgroundColor: theme.colors.textOnDarkMuted }]}>
+                        <Text style={styles.roomBadgeText}>{roomInfo}</Text>
+                      </View>
+                    </View>
 
-                <View style={styles.itemBottomRow}>
-                  <View style={styles.detailsGroup}>
-                    <Text style={styles.subjectTitle}>{item.subject}</Text>
-                    <Text style={styles.gradeSubtitle}>{item.grade}</Text>
+                    <View style={styles.itemBottomRow}>
+                      <View style={styles.detailsGroup}>
+                        <Text style={styles.subjectTitle}>{item.subjectName}</Text>
+                        <Text style={styles.gradeSubtitle}>{item.gradeSection}</Text>
+                      </View>
+                      {/* <Icon name="chevron-right" size={18} color={theme.colors.textMuted} /> */}
+                    </View>
                   </View>
-                  <Icon name="chevron-right" size={18} color={theme.colors.textMuted} />
-                </View>
-              </TouchableOpacity>
-            ))}
+                );
+              })
+            )}
           </View>
         </View>
 
-        {/* Weekly Summary Widget Container */}
-        <View style={styles.summaryContainerCard}>
+        {/* <View style={styles.summaryContainerCard}>
           <Text style={styles.summaryTitle}>Weekly Summary</Text>
           <View style={styles.summaryWidgetsRow}>
-            {/* Total Classes Widget */}
             <View style={[styles.summaryWidgetBox, { backgroundColor: theme.colors.blueSurface }]}>
               <Text style={[styles.widgetLabel, { color: theme.colors.linkPrimary }]}>Total Classes</Text>
               <Text style={[styles.widgetValue, { color: theme.colors.linkPrimary }]}>15</Text>
             </View>
 
-            {/* Total Students Widget */}
             <View style={[styles.summaryWidgetBox, { backgroundColor: theme.colors.greenSurface }]}>
               <Text style={[styles.widgetLabel, { color: theme.colors.successStrong }]}>Total Students</Text>
               <Text style={[styles.widgetValue, { color: theme.colors.successStrong }]}>142</Text>
             </View>
           </View>
-        </View>
+        </View> */}
+
       </ScrollView>
     </View>
   );

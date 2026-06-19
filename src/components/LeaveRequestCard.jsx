@@ -11,13 +11,19 @@ const getStatusColor = (status) => {
 
 export default function LeaveRequestCard({ request, onPress }) {
   const statusStyle = getStatusColor(request.status);
+  const employeeName = request.employeeName || request.name;
+  const hasEmployeeName = !!employeeName;
 
   return (
     <TouchableOpacity style={styles.requestCard} onPress={onPress}>
       <View style={styles.requestHeader}>
-        <View style={styles.typeTag}>
-          <Text style={styles.typeText}>{request.type}</Text>
-        </View>
+        {hasEmployeeName ? (
+          <Text style={styles.employeeName}>{employeeName}</Text>
+        ) : (
+          <View style={styles.typeTag}>
+            <Text style={styles.typeText}>{request.type}</Text>
+          </View>
+        )}
 
         <View style={styles.statusContainer}>
           <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
@@ -28,7 +34,17 @@ export default function LeaveRequestCard({ request, onPress }) {
         </View>
       </View>
 
-      <Text style={styles.appliedDate}>Applied on {request.appliedDate}</Text>
+      {hasEmployeeName && (
+        <View style={styles.typeTagContainer}>
+          <View style={styles.typeTag}>
+            <Text style={styles.typeText}>{request.type}</Text>
+          </View>
+        </View>
+      )}
+
+      {!hasEmployeeName && request.appliedDate && (
+        <Text style={styles.appliedDate}>Applied on {request.appliedDate}</Text>
+      )}
 
       <View style={styles.requestDetails}>
         <View style={styles.detailBox}>
@@ -58,6 +74,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  employeeName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.textStrong || '#0A0A0A',
+  },
+  typeTagContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
   },
   typeTag: {
     backgroundColor: '#EFF6FF',
