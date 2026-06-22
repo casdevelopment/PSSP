@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  model,
+  Modal,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ export default function FullReportmodel({ visible, onClose, student }) {
   const currentStudent = student || { name: 'Student', rollNo: '-', attendance: '-' };
 
   return (
-    <model
+    <Modal
       animationType="fade"
       transparent={true}
       visible={visible}
@@ -43,19 +43,21 @@ export default function FullReportmodel({ visible, onClose, student }) {
               
               <View style={styles.row}>
                 <Text style={styles.label}>Name:</Text>
-                <Text style={styles.value}>{currentStudent.name}</Text>
+                <Text style={styles.value}>{currentStudent.studentName || currentStudent.name || 'Unknown'}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Roll No:</Text>
-                <Text style={styles.value}>{currentStudent.rollNo}</Text>
+                <Text style={styles.value}>{currentStudent.rollNumber || currentStudent.rollNo || 'N/A'}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Class:</Text>
-                <Text style={styles.valueStrong}>Grade 10-A</Text>
+                <Text style={styles.valueStrong}>
+                  {currentStudent.className || 'N/A'}{currentStudent.sectionName ? ` - ${currentStudent.sectionName}` : ''}
+                </Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Overall Attendance:</Text>
-                <Text style={[styles.valueStrong, { color: theme.colors.success }]}>{currentStudent.attendance}</Text>
+                <Text style={[styles.valueStrong, { color: theme.colors.success }]}>{currentStudent.attendance || 'N/A'}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Performance:</Text>
@@ -133,7 +135,7 @@ export default function FullReportmodel({ visible, onClose, student }) {
 
         </View>
       </View>
-    </model>
+    </Modal>
   );
 }
 

@@ -19,16 +19,28 @@ export default function StudentDetail() {
   const route = useRoute();
   const [ismodelVisible, setmodelVisible] = useState(false);
 
-  // Retrieve the passed student data, fallback to Alice if none provided
+  // Retrieve the passed student data, fallback to placeholder if none provided
   const student = route.params?.student || { 
-    name: 'Alice Johnson', 
-    rollNo: '101', 
-    attendance: '96%', 
-    email: 'alice.j@school.edu', 
-    phone: '+1 555-1001' 
+    studentName: 'Alice Johnson', 
+    rollNumber: '101', 
+    fatherName: 'Robert Johnson',
+    guardianPhoneNumber: '+1 555-1001',
+    className: 'Class-10',
+    gradeName: 'Grade-10',
+    sectionName: 'A',
+    dateOfBirth: '2010-08-10T00:00:00',
+    admissionDate: '2020-07-08T00:00:00',
+    bFormNumber: '35202-1234567-1'
   };
 
-  // Mock data mapping
+  const studentName = student.studentName || student.name || 'Unknown';
+  const rollNo = student.rollNumber || student.rollNo || 'N/A';
+  const fatherName = student.fatherName || 'N/A';
+  const phone = student.guardianPhoneNumber || student.phone || 'N/A';
+  const className = student.className || 'N/A';
+  const sectionName = student.sectionName || 'N/A';
+
+  // Mock academic scoring
   const TEST_SCORES = [
     { id: '1', subject: 'Mathematics', date: 'Apr 28, 2026', score: '95%' },
     { id: '2', subject: 'Physics', date: 'Apr 25, 2026', score: '92%' },
@@ -56,56 +68,56 @@ export default function StudentDetail() {
           </TouchableOpacity>
         </View>
         <View style={styles.headerTitles}>
-          <Text style={styles.studentName}>{student.name}</Text>
-          <Text style={styles.rollNo}>Roll No: {student.rollNo}</Text>
+          <Text style={styles.studentName}>{studentName}</Text>
+          <Text style={styles.rollNo}>Roll No: {rollNo}</Text>
         </View>
       </View>
 
-              {/* Top Stats Cards */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard,{ backgroundColor: theme.colors.blueSurface }]}>
-            <View style={styles.statHeader}>
-              <Icon name="calendar" size={16} color={theme.colors.linkPrimary} />
-              <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Attendance</Text>
-            </View>
-            <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{student.attendance}</Text>
+      {/* Top Stats Cards */}
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard,{ backgroundColor: theme.colors.blueSurface }]}>
+          <View style={styles.statHeader}>
+            <Icon name="calendar" size={16} color={theme.colors.linkPrimary} />
+            <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Class</Text>
           </View>
-          
-          <View style={[styles.statCard,{ backgroundColor: theme.colors.purpleSurface }]}>
-            <View style={styles.statHeader}>
-              <Icon name="award" size={16} color={theme.colors.accentPurple} />
-              <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Performance</Text>
-            </View>
-            <Text style={[styles.statValue, { color: theme.colors.accentPurple }]}>94%</Text>
-          </View>
+          <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{className}</Text>
         </View>
+        
+        <View style={[styles.statCard,{ backgroundColor: theme.colors.purpleSurface }]}>
+          <View style={styles.statHeader}>
+            <Icon name="award" size={16} color={theme.colors.accentPurple} />
+            <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Section</Text>
+          </View>
+          <Text style={[styles.statValue, { color: theme.colors.accentPurple }]}>{sectionName}</Text>
+        </View>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
 
-        {/* Contact Information */}
+        {/* Contact & Registration Information */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={styles.sectionTitle}>Contact & Identity</Text>
           
           <View style={[styles.contactRow, { backgroundColor: theme.colors.appBackground }]}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.textOnDarkMuted }]}>
-              <Icon name="mail" size={18} color={theme.colors.linkPrimary} />
+              <Icon name="phone" size={18} color={theme.colors.linkPrimary} />
             </View>
             <View>
-              <Text style={styles.contactLabel}>Email</Text>
-              <Text style={styles.contactValue}>{student.email}</Text>
+              <Text style={styles.contactLabel}>Guardian Phone</Text>
+              <Text style={styles.contactValue}>{phone}</Text>
             </View>
           </View>
           
           <View style={[styles.contactRow, { backgroundColor: theme.colors.appBackground }]}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.successSubtle }]}>
-              <Icon name="phone" size={18} color={theme.colors.successStrong} />
+              <Icon name="file-text" size={18} color={theme.colors.successStrong} />
             </View>
             <View>
-              <Text style={styles.contactLabel}>Phone</Text>
-              <Text style={styles.contactValue}>{student.phone}</Text>
+              <Text style={styles.contactLabel}>B-Form / CNIC</Text>
+              <Text style={styles.contactValue}>{student.bFormNumber || 'N/A'}</Text>
             </View>
           </View>
         </View>
@@ -114,18 +126,35 @@ export default function StudentDetail() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Parent Information</Text>
           <View style={styles.parentRow}>
-            <Text style={styles.parentLabel}>Parent Name</Text>
-            <Text style={styles.parentValue}>Robert Johnson</Text>
+            <Text style={styles.parentLabel}>Father Name</Text>
+            <Text style={styles.parentValue}>{fatherName}</Text>
           </View>
           <View style={[styles.parentRow, { borderBottomWidth: 0, marginBottom: 0 }]}>
-            <Text style={styles.parentLabel}>Contact</Text>
-            <Text style={styles.parentValue}>+1 555-2001</Text>
+            <Text style={styles.parentLabel}>Guardian Phone</Text>
+            <Text style={styles.parentValue}>{phone}</Text>
+          </View>
+        </View>
+
+        {/* Academic Identity Details */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Additional Details</Text>
+          <View style={styles.parentRow}>
+            <Text style={styles.parentLabel}>Date of Birth</Text>
+            <Text style={styles.parentValue}>
+              {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+            </Text>
+          </View>
+          <View style={[styles.parentRow, { borderBottomWidth: 0, marginBottom: 0 }]}>
+            <Text style={styles.parentLabel}>Admission Date</Text>
+            <Text style={styles.parentValue}>
+              {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+            </Text>
           </View>
         </View>
 
         {/* Recent Test Scores */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Recent Test Scores</Text>
+          <Text style={styles.sectionTitle}>Recent Test Scores (Mock)</Text>
           {TEST_SCORES.map((item) => (
             <View key={item.id} style={[styles.scoreRow, { backgroundColor: theme.colors.purpleSurface }]}>
               <View>
@@ -142,7 +171,7 @@ export default function StudentDetail() {
 
         {/* Attendance History */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Attendance History</Text>
+          <Text style={styles.sectionTitle}>Attendance History (Mock)</Text>
           {ATTENDANCE_HISTORY.map((item, index) => {
             const isPresent = item.status === 'Present';
             return (

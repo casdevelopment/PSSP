@@ -146,10 +146,17 @@ export const getClassesBySection = async (schoolId, classId, userId) => {
   }
 };
 
-export const getEmployeeAssignedClassesStudents = async () => {
+export const getEmployeeAssignedClassesStudents = async (schoolId, empId, classId) => {
   try {
     const response = await axiosInstance.get(
       '/EP/GetEmployeeAssignedClassesStudents',
+      {
+        params: {
+          SchoolId: schoolId,
+          Empid: empId,
+          ClassId: classId
+        }
+      }
     );
     return response?.data;
   } catch (error) {
