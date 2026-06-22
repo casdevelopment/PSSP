@@ -2,18 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../theme/theme';
 
-const AttendanceOption = ({ label, type, isSelected, onPress }) => {
+const AttendanceOption = ({ label, type, isSelected, onPress, disabled }) => {
   const getColors = () => {
     switch (type) {
       case 'Present':
         return {
           activeBg: '#10B981', activeText: '#FFF',
           inactiveBg: '#ECFDF5', inactiveText: '#10B981'
-        };
-      case 'Late':
-        return {
-          activeBg: '#EA580C', activeText: '#FFF',
-          inactiveBg: '#FFF7ED', inactiveText: '#EA580C' 
         };
       case 'Absent':
         return {
@@ -29,11 +24,12 @@ const AttendanceOption = ({ label, type, isSelected, onPress }) => {
 
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
+      activeOpacity={disabled ? 1 : 0.7}
+      onPress={disabled ? null : onPress}
       style={[
         styles.optionBtn,
-        { backgroundColor: isSelected ? colors.activeBg : colors.inactiveBg }
+        { backgroundColor: isSelected ? colors.activeBg : colors.inactiveBg },
+        disabled && { opacity: isSelected ? 0.9 : 0.4 }
       ]}
     >
       <Text style={[
@@ -44,7 +40,7 @@ const AttendanceOption = ({ label, type, isSelected, onPress }) => {
   );
 };
 
-export default function AttendanceCard({ person, onStatusChange }) {
+export default function AttendanceCard({ person, onStatusChange, disabled }) {
   return (
     <View style={styles.card}>
       <View style={styles.infoRow}>
@@ -52,23 +48,19 @@ export default function AttendanceCard({ person, onStatusChange }) {
         <Text style={styles.subtitle}>{person.subtitle}</Text>
       </View>
       <View style={styles.optionsRow}>
-        <AttendanceOption 
-          label="Present" 
-          type="Present" 
-          isSelected={person.status === 'Present'} 
-          onPress={() => onStatusChange(person.id, 'Present')} 
+        <AttendanceOption
+          label="Present"
+          type="Present"
+          isSelected={person.status === 'Present'}
+          onPress={() => onStatusChange(person.id, 'Present')}
+          disabled={disabled}
         />
-        <AttendanceOption 
-          label="Late" 
-          type="Late" 
-          isSelected={person.status === 'Late'} 
-          onPress={() => onStatusChange(person.id, 'Late')} 
-        />
-        <AttendanceOption 
-          label="Absent" 
-          type="Absent" 
-          isSelected={person.status === 'Absent'} 
-          onPress={() => onStatusChange(person.id, 'Absent')} 
+        <AttendanceOption
+          label="Absent"
+          type="Absent"
+          isSelected={person.status === 'Absent'}
+          onPress={() => onStatusChange(person.id, 'Absent')}
+          disabled={disabled}
         />
       </View>
     </View>

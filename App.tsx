@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
-import { StatusBar, StyleSheet} from 'react-native'
+import { StatusBar, StyleSheet } from 'react-native'
 import Routes from './src/navigation/Routes'
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { initDB } from './src/utils/db';
+// import { initDB } from './src/utils/db';
 
 const App = () => {
-  useEffect(() => {
-    initDB();
-  }, []);
+  // useEffect(() => {
+  //   initDB();
+  // }, []);
 
   return (
     <SafeAreaProvider>

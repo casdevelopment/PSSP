@@ -109,9 +109,14 @@ export const getEmpAssignGradeList = async empId => {
   }
 };
 
-export const getGradesByClasses = async () => {
+export const getGradesByClasses = async (schoolId, gradeId) => {
   try {
-    const response = await axiosInstance.get('/EP/GetGradesByClasses');
+    const response = await axiosInstance.get('/EP/GetGradesByClasses', {
+      params: {
+        SchoolID: schoolId,
+        GradeID: gradeId
+      }
+    });
     return response?.data;
   } catch (error) {
     console.error(
@@ -122,9 +127,15 @@ export const getGradesByClasses = async () => {
   }
 };
 
-export const getClassesBySection = async () => {
+export const getClassesBySection = async (schoolId, classId, userId) => {
   try {
-    const response = await axiosInstance.get('/EP/GetClassesBySection');
+    const response = await axiosInstance.get('/EP/GetClassesBySection', {
+      params: {
+        SchoolID: schoolId,
+        ClassID: classId,
+        UserID: userId
+      }
+    });
     return response?.data;
   } catch (error) {
     console.error(
@@ -260,6 +271,54 @@ export const getTeacherDailySchedule = async (empId, date) => {
       'Get teacher daily schedule error:',
       error.response?.data || error.message,
     );
+    throw error;
+  }
+};
+
+export const getHRShift = async () => {
+  try {
+    const response = await axiosInstance.get('/EP/GetHRShift');
+    return response?.data;
+  } catch (error) {
+    console.error('Get HR shift error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeesShift = async (date, shiftId, schoolId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeesShift', {
+      params: {
+        Date: date,
+        ShiftId: Number(shiftId) || 0,
+        SchoolID: Number(schoolId) || 0
+      }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employees shift error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const markEmployeeAttendance = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/MarkEmployeeAttendance', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Mark employee attendance error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeesAttendanceLast7Days = async (schoolId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeesAttendanceLast7Days', {
+      params: { schoolId }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employees attendance last 7 days error:', error.response?.data || error.message);
     throw error;
   }
 };

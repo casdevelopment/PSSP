@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, TextInput, Alert, Modal, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, TextInput, Alert, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -7,35 +7,17 @@ import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import AttendanceCard from '../../components/AttendanceCard';
 import { useAuthStore } from '../../store/AuthStore';
-import { saveStudentAttendance, saveStaffAttendance, getTodaysStudentAttendance, getTodaysStaffAttendance } from '../../utils/db';
 
-const DUMMY_CLASSES = ['Grade 10-A', 'Grade 10-B', 'Grade 11-A', 'Grade 11-B', 'Grade 12-A'];
-
-const initialStaffData = [
-  { id: '1', name: 'John Smith', subtitle: 'Mathematics', status: null },
-  { id: '2', name: 'Emma Wilson', subtitle: 'Physics', status: null },
-  { id: '3', name: 'David Brown', subtitle: 'English', status: null },
-  { id: '4', name: 'Sarah Lee', subtitle: 'Chemistry', status: null },
-  { id: '5', name: 'Michael Chen', subtitle: 'Biology', status: null },
-  { id: '6', name: 'Lisa Anderson', subtitle: 'History', status: null },
-];
-
-const initialStudentData = [
-  { id: '101', name: 'Alice Johnson', subtitle: 'Roll No: 101', status: null },
-  { id: '102', name: 'Bob Smith', subtitle: 'Roll No: 102', status: null },
-  { id: '103', name: 'Charlie Davis', subtitle: 'Roll No: 103', status: null },
-  { id: '104', name: 'Diana Wilson', subtitle: 'Roll No: 104', status: null },
-  { id: '105', name: 'Ethan Brown', subtitle: 'Roll No: 105', status: null },
-  { id: '106', name: 'Fiona Miller', subtitle: 'Roll No: 106', status: null },
-  { id: '107', name: 'George Lee', subtitle: 'Roll No: 107', status: null },
-  { id: '108', name: 'Hannah Taylor', subtitle: 'Roll No: 108', status: null },
-];
+import { getEmpAssignGradeList, getGradesByClasses, getClassesBySection, getStudentForAttendance, markStudentsAttendance, getHRShift, getEmployeesShift, markEmployeeAttendance } from '../../network/apis';
 
 export default function Attendance() {
   const insets = useSafeAreaInsets();
   const route = useRoute();
   const navigation = useNavigation();
   const role = useAuthStore((state) => state.userType);
+  const empId = useAuthStore((state) => state.empId);
+  const schoolId = useAuthStore((state) => state.schoolId);
+  const userId = useAuthStore((state) => state.userId);
 
   let type;
   if (role === 'principal' || role === 'principle') {
@@ -46,32 +28,202 @@ export default function Attendance() {
 
   const isStudent = type === 'student';
 
-  const [data, setData] = useState(isStudent ? initialStudentData : initialStaffData);
-  const [selectedClass, setSelectedClass] = useState(DUMMY_CLASSES[0]);
+  const [data, setData] = useState([]);
+
+  // Dropdown lists and selections
+  const [gradesList, setGradesList] = useState([]);
+  const [classesList, setClassesList] = useState([]);
+  const [sectionsList, setSectionsList] = useState([]);
+  const [shiftsList, setShiftsList] = useState([]);
+
+  const [selectedGrade, setSelectedGrade] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [selectedShift, setSelectedShift] = useState(null);
+
+  // Modals visibility
+  const [showGradeModal, setShowGradeModal] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
+  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [showShiftModal, setShowShiftModal] = useState(false);
+
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Format current date to YYYY-MM-DD
   const currentDateFormatted = new Date().toISOString().split('T')[0];
   const displayDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
+  // 1. Fetch Grades on mount
   useEffect(() => {
-    // Reset data state before loading new attendance
-    setData(isStudent ? initialStudentData : initialStaffData);
-    loadTodaysAttendance();
-  }, [type, selectedClass]);
-
-  const loadTodaysAttendance = async () => {
-    const savedRecords = isStudent
-      ? await getTodaysStudentAttendance(currentDateFormatted, selectedClass)
-      : await getTodaysStaffAttendance(currentDateFormatted);
-
-    if (savedRecords && savedRecords.length > 0) {
-      setData(prev => prev.map(person => {
-        const savedMatch = savedRecords.find(record => record.target_id === person.id);
-        return savedMatch ? { ...person, status: savedMatch.status } : person;
-      }));
+    if (isStudent && empId) {
+      getEmpAssignGradeList(empId)
+        .then((res) => {
+          if (res && res.success) {
+            setGradesList(res.data || []);
+            // if (res.data && res.data.length > 0) {
+            //   setSelectedGrade(res.data[0]);
+            // }
+          }
+        })
+        .catch(err => console.error("Error fetching grades list:", err));
     }
-  };
+  }, [isStudent, empId]);
+
+  // 2. Fetch Classes when selectedGrade changes
+  useEffect(() => {
+    if (isStudent && schoolId && selectedGrade) {
+      setClassesList([]);
+      setSelectedClass(null);
+      setSectionsList([]);
+      setSelectedSection(null);
+
+      getGradesByClasses(schoolId, selectedGrade.gradeId)
+        .then((res) => {
+          if (res && res.success) {
+            setClassesList(res.data || []);
+            // if (res.data && res.data.length > 0) {
+            //   setSelectedClass(res.data[0]);
+            // }
+          }
+        })
+        .catch(err => console.error("Error fetching classes list:", err));
+    }
+  }, [isStudent, schoolId, selectedGrade]);
+
+  // 3. Fetch Sections when selectedClass changes
+  useEffect(() => {
+    if (isStudent && schoolId && selectedClass && userId) {
+      setSectionsList([]);
+      setSelectedSection(null);
+
+      getClassesBySection(schoolId, selectedClass.classId, userId)
+        .then((res) => {
+          if (res && res.success) {
+            setSectionsList(res.data || []);
+            // if (res.data && res.data.length > 0) {
+            //   setSelectedSection(res.data[0]);
+            // }
+          }
+        })
+        .catch(err => Alert.alert("No Section found!"));
+    }
+  }, [isStudent, schoolId, selectedClass, userId]);
+
+  // 4. Fetch Students list when selectedSection changes
+  useEffect(() => {
+    if (isStudent && schoolId && selectedClass && selectedSection) {
+      setIsLoadingStudents(true);
+      setIsSubmitted(false);
+      const payload = {
+        schoolId: Number(schoolId) || 0,
+        sectionId: Number(selectedSection.sectionId) || 0,
+        classId: Number(selectedClass.classId) || 0,
+        attendanceDate: new Date().toISOString(),
+        isOnRollStudents: false
+      };
+
+      getStudentForAttendance(payload)
+        .then((res) => {
+          if (res && res.success) {
+            const apiStudents = res.data || [];
+
+            const mapped = apiStudents.map(student => {
+              const studentIdStr = String(student.studentId);
+
+              return {
+                id: studentIdStr,
+                name: student.studentName || 'Unknown Student',
+                subtitle: `Father: ${student.fatherName || 'N/A'} | Roll No: ${student.rollNumber || 'N/A'}`,
+                status: student.attendanceStatusIdFk === '1' ? 'Present' : student.attendanceStatusIdFk === '2' ? 'Absent' : null,
+                rawItem: student
+              };
+            });
+            setData(mapped);
+
+            // Check if all loaded students have a saved status
+            const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
+            setIsSubmitted(allSaved);
+          } else {
+            setData([]);
+            setIsSubmitted(false);
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching students for attendance:", err);
+          setData([]);
+          setIsSubmitted(false);
+        })
+        .finally(() => setIsLoadingStudents(false));
+    } else if (isStudent) {
+      setData([]);
+      setIsSubmitted(false);
+    }
+  }, [isStudent, schoolId, selectedClass, selectedSection, currentDateFormatted]);
+
+  // 5. Fetch shifts on mount if isStudent is false
+  useEffect(() => {
+    if (!isStudent) {
+      setIsLoadingStaff(true);
+      getHRShift()
+        .then((res) => {
+          if (res && res.success) {
+            setShiftsList(res.data || []);
+            if (res.data && res.data.length > 0) {
+              setSelectedShift(res.data[0]);
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching shifts:", err))
+        .finally(() => setIsLoadingStaff(false));
+    }
+  }, [isStudent]);
+
+  // 6. Fetch employees when selectedShift changes (if !isStudent)
+  useEffect(() => {
+    if (!isStudent && schoolId && selectedShift) {
+      setIsLoadingStaff(true);
+      setIsSubmitted(false);
+      console.log('Calling getEmployeesShift with:', {
+        Date: currentDateFormatted,
+        ShiftId: selectedShift.id,
+        SchoolID: schoolId
+      });
+      getEmployeesShift(currentDateFormatted, selectedShift.id, schoolId)
+        .then((res) => {
+          if (res && res.success) {
+            const apiEmployees = res.data || [];
+
+            const mapped = apiEmployees.map(emp => {
+              const empIdStr = String(emp.employeeId);
+
+              return {
+                id: empIdStr,
+                name: emp.fullName || 'Unknown Staff',
+                subtitle: `Code: ${emp.empCode || 'N/A'} | ${emp.departmentName || 'N/A'}`,
+                status: null,
+                rawItem: emp
+              };
+            });
+            setData(mapped);
+            setIsSubmitted(false);
+          } else {
+            setData([]);
+            setIsSubmitted(false);
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching employees shift:", err);
+          setData([]);
+          setIsSubmitted(false);
+        })
+        .finally(() => setIsLoadingStaff(false));
+    } else if (!isStudent && !selectedShift) {
+      setData([]);
+      setIsSubmitted(false);
+    }
+  }, [isStudent, schoolId, selectedShift, currentDateFormatted]);
 
   const handleStatusChange = (id, newStatus) => {
     setData(prev => prev.map(person =>
@@ -80,30 +232,94 @@ export default function Attendance() {
   };
 
   const markedCount = data.filter(s => s.status !== null).length;
-  // User can only submit when ALL students or teachers are marked
   const isSubmitActive = markedCount === data.length && data.length > 0;
 
+  const submitStudentAttendance = async () => {
+    // Build API Request Body
+    const getStatusId = (statusName) => {
+      if (statusName === 'Present') return 1;
+      if (statusName === 'Absent') return 2;
+      return 0;
+    };
+
+    const apiPayload = {
+      attendance: {
+        userId: Number(userId) || 0,
+        classId: Number(selectedClass?.classId) || 0,
+        schoolId: Number(schoolId) || 0,
+        sectionId: Number(selectedSection?.sectionId) || 0,
+        attendanceDate: new Date().toISOString()
+      },
+      attendanceList: data.map(person => {
+        const studentIdNum = Number(person.id) || Number(person.rawItem?.studentId) || 0;
+        return {
+          attendanceStatusId: getStatusId(person.status),
+          studentId: studentIdNum
+        };
+      })
+    };
+
+    console.log('Submitting Student Attendance Payload', apiPayload);
+
+    try {
+      const apiRes = await markStudentsAttendance(apiPayload);
+      if (apiRes && apiRes.success !== false) {
+        setIsSubmitted(true);
+        Alert.alert('Success', 'Student attendance submitted successfully.');
+      } else {
+        Alert.alert('Error', apiRes?.message || 'Failed to submit student attendance.');
+      }
+    } catch (error) {
+      console.log('Failed to submit student attendance online:', error.message);
+      Alert.alert('Submission Error', error.message || 'Failed to submit student attendance.');
+    }
+  };
+
+  const submitStaffAttendance = async () => {
+    // Build API Request payload only for present employees
+    const presentEmployees = data
+      .filter(person => person.status === 'Present')
+      .map(person => ({
+        employeeId: Number(person.id) || Number(person.rawItem?.employeeId) || Number(person.rawItem?.id) || 0,
+        shiftId: Number(selectedShift?.id) || 0
+      }));
+
+    let payload = null;
+
+    if (presentEmployees.length > 0) {
+      payload = {
+        userId: Number(userId) || 0,
+        schoolId: Number(schoolId) || 0,
+        attendanceDate: new Date().toISOString(),
+        attendanceStatus: 1,
+        employeeAttendance: presentEmployees
+      };
+    }
+
+    console.log('Direct Submitting Staff Attendance Payload (Present Only):', JSON.stringify(payload, null, 2));
+
+    try {
+      if (payload) {
+        const apiRes = await markEmployeeAttendance(payload);
+        if (!apiRes || apiRes.success === false) {
+          throw new Error(apiRes?.message || 'Failed to submit staff attendance.');
+        }
+      }
+      setIsSubmitted(true);
+      Alert.alert('Success', 'Staff attendance submitted successfully.');
+    } catch (error) {
+      console.log('Failed to submit staff attendance online:', error.message);
+      Alert.alert('Submission Error', error.message || 'Failed to submit staff attendance.');
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!isSubmitActive) return;
+    if (!isSubmitActive || isSubmitted) return;
 
-    // Prepare records for DB
-    const records = data.map(person => ({
-      target_id: person.id,
-      target_name: person.name,
-      target_subtitle: person.subtitle || '',
-      class_name: isStudent ? selectedClass : null,
-      date: currentDateFormatted,
-      status: person.status
-    })).filter(r => r.status !== null); // only save those marked
-
-    const success = isStudent
-      ? await saveStudentAttendance(records)
-      : await saveStaffAttendance(records);
-
-    if (success) {
-      Alert.alert('Success', 'Attendance saved locally. It will be synced when online.');
+    if (isStudent) {
+      await submitStudentAttendance();
     } else {
-      Alert.alert('Error', 'Failed to save attendance.');
+      await submitStaffAttendance();
     }
   };
 
@@ -125,36 +341,143 @@ export default function Attendance() {
         />
 
         {isStudent && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Select Class</Text>
-            <TouchableOpacity
-              style={styles.inputWrapper}
-              activeOpacity={0.7}
-              onPress={() => setShowClassModal(true)}
-            >
-              <Text style={styles.inputText}>{selectedClass}</Text>
-              <Icon name="chevron-down" size={20} color={theme.colors.textMuted} />
-            </TouchableOpacity>
+          <View style={styles.rowDropdownContainer}>
+            {/* Grade Selector */}
+            <View style={styles.dropdownCol}>
+              <Text style={styles.inputLabel}>Grade</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                activeOpacity={0.7}
+                onPress={() => setShowGradeModal(true)}
+              >
+                <Text style={styles.dropdownButtonText} numberOfLines={1}>
+                  {selectedGrade ? selectedGrade.gradeName : 'Select'}
+                </Text>
+                <Icon name="chevron-down" size={16} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Class Selector */}
+            <View style={styles.dropdownCol}>
+              <Text style={styles.inputLabel}>Class</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (classesList.length > 0) setShowClassModal(true);
+                  else Alert.alert('Notice', 'No classes available.');
+                }}
+              >
+                <Text style={styles.dropdownButtonText} numberOfLines={1}>
+                  {selectedClass ? selectedClass.className : 'Select'}
+                </Text>
+                <Icon name="chevron-down" size={16} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Section Selector */}
+            <View style={styles.dropdownCol}>
+              <Text style={styles.inputLabel}>Section</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (sectionsList.length > 0) setShowSectionModal(true);
+                  else Alert.alert('Notice', 'No sections available.');
+                }}
+              >
+                <Text style={styles.dropdownButtonText} numberOfLines={1}>
+                  {selectedSection ? selectedSection.sectionName : 'Select'}
+                </Text>
+                <Icon name="chevron-down" size={16} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
-        <View style={styles.listContainer}>
-          {data.map((person) => (
-            <AttendanceCard key={person.id} person={person} onStatusChange={handleStatusChange} />
-          ))}
-        </View>
+        {!isStudent && (
+          <View style={styles.rowDropdownContainer}>
+            {/* Shift Selector */}
+            <View style={styles.dropdownCol}>
+              <Text style={styles.inputLabel}>Select Shift</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (shiftsList.length > 0) setShowShiftModal(true);
+                  else Alert.alert('Notice', 'No shifts available.');
+                }}
+              >
+                <Text style={styles.dropdownButtonText} numberOfLines={1}>
+                  {selectedShift ? selectedShift.name : 'Select'}
+                </Text>
+                <Icon name="chevron-down" size={16} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
-        <TouchableOpacity
-          style={[styles.submitBtn, isSubmitActive ? styles.submitBtnActive : styles.submitBtnInactive]}
-          activeOpacity={0.8}
-          onPress={handleSubmit}
-          disabled={!isSubmitActive}
-        >
-          <Text style={[styles.submitBtnText, isSubmitActive ? styles.submitBtnTextActive : styles.submitBtnTextInactive]}>
-            Submit Attendance
-          </Text>
-        </TouchableOpacity>
+        {(isLoadingStudents || isLoadingStaff) ? (
+          <ActivityIndicator size="large" color={theme.colors.purple} style={{ marginTop: 40 }} />
+        ) : (
+          <View style={styles.listContainer}>
+            {data.map((person) => (
+              <AttendanceCard key={person.id} person={person} onStatusChange={handleStatusChange} disabled={isSubmitted} />
+            ))}
+          </View>
+        )}
+
+        {isSubmitted && (
+          <View style={styles.submittedBadge}>
+            <Icon name="check-circle" size={18} color="#10B981" />
+            <Text style={styles.submittedBadgeText}>Attendance is Submitted for Today</Text>
+          </View>
+        )}
+
+        {!isSubmitted && !(isLoadingStudents || isLoadingStaff) && data.length > 0 && (
+          <TouchableOpacity
+            style={[styles.submitBtn, isSubmitActive ? styles.submitBtnActive : styles.submitBtnInactive]}
+            activeOpacity={0.8}
+            onPress={handleSubmit}
+            disabled={!isSubmitActive}
+          >
+            <Text style={[styles.submitBtnText, isSubmitActive ? styles.submitBtnTextActive : styles.submitBtnTextInactive]}>
+              Submit Attendance
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
+
+      {/* Grade Selector Modal */}
+      <Modal visible={showGradeModal} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowGradeModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Grade</Text>
+            <FlatList
+              data={gradesList}
+              keyExtractor={(item) => String(item.gradeId)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedGrade(item);
+                    setShowGradeModal(false);
+                  }}
+                >
+                  <Text style={[styles.modalItemText, selectedGrade?.gradeId === item.gradeId && styles.modalItemTextSelected]}>
+                    {item.gradeName}
+                  </Text>
+                  {selectedGrade?.gradeId === item.gradeId && <Icon name="check" size={20} color={theme.colors.linkPrimary} />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Class Selector Modal */}
       <Modal visible={showClassModal} transparent animationType="fade">
@@ -166,8 +489,8 @@ export default function Attendance() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Class</Text>
             <FlatList
-              data={DUMMY_CLASSES}
-              keyExtractor={(item) => item}
+              data={classesList}
+              keyExtractor={(item) => String(item.classId)}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.modalItem}
@@ -176,10 +499,72 @@ export default function Attendance() {
                     setShowClassModal(false);
                   }}
                 >
-                  <Text style={[styles.modalItemText, selectedClass === item && styles.modalItemTextSelected]}>
-                    {item}
+                  <Text style={[styles.modalItemText, selectedClass?.classId === item.classId && styles.modalItemTextSelected]}>
+                    {item.className}
                   </Text>
-                  {selectedClass === item && <Icon name="check" size={20} color={theme.colors.linkPrimary} />}
+                  {selectedClass?.classId === item.classId && <Icon name="check" size={20} color={theme.colors.linkPrimary} />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Section Selector Modal */}
+      <Modal visible={showSectionModal} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSectionModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Section</Text>
+            <FlatList
+              data={sectionsList}
+              keyExtractor={(item) => String(item.sectionId)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedSection(item);
+                    setShowSectionModal(false);
+                  }}
+                >
+                  <Text style={[styles.modalItemText, selectedSection?.sectionId === item.sectionId && styles.modalItemTextSelected]}>
+                    {item.sectionName}
+                  </Text>
+                  {selectedSection?.sectionId === item.sectionId && <Icon name="check" size={20} color={theme.colors.linkPrimary} />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Shift Selector Modal */}
+      <Modal visible={showShiftModal} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowShiftModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Shift</Text>
+            <FlatList
+              data={shiftsList}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedShift(item);
+                    setShowShiftModal(false);
+                  }}
+                >
+                  <Text style={[styles.modalItemText, selectedShift?.id === item.id && styles.modalItemTextSelected]}>
+                    {item.name}
+                  </Text>
+                  {selectedShift?.id === item.id && <Icon name="check" size={20} color={theme.colors.linkPrimary} />}
                 </TouchableOpacity>
               )}
             />
@@ -197,6 +582,32 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 10,
+  },
+  rowDropdownContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 16,
+  },
+  dropdownCol: {
+    flex: 1,
+  },
+  dropdownButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.borderSubtle,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+  },
+  dropdownButtonText: {
+    fontSize: 14,
+    color: theme.colors.textHeading,
+    flex: 1,
+    marginRight: 4,
   },
   inputContainer: {
     paddingHorizontal: 16,
@@ -280,5 +691,23 @@ const styles = StyleSheet.create({
   modalItemTextSelected: {
     color: theme.colors.linkPrimary,
     fontWeight: 'bold',
+  },
+  submittedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    gap: 8,
+  },
+  submittedBadgeText: {
+    color: '#065F46',
+    fontSize: 16,
+    fontWeight: '600',
   }
 });

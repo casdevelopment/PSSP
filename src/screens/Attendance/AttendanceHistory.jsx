@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-import { getStudentAttendanceHistory, getStaffAttendanceHistory } from '../../utils/db';
+import { useAuthStore } from '../../store/AuthStore';
+import { getEmployeeAttendanceSummary, getEmployeesAttendanceLast7Days } from '../../network/apis';
+import CalendarPickerModal from '../../components/CalendarPickerModal';
 
 const StatChip = ({ value, label, type }) => {
     let textColor = theme.colors.black;
@@ -16,9 +18,12 @@ const StatChip = ({ value, label, type }) => {
     } else if (type === 'absent') {
         textColor = theme.colors.danger;
         bgColor = theme.colors.dangerSubtle;
-    } else if (type === 'late') {
+    } else if (type === 'late' || type === 'leave') {
         textColor = theme.colors.warning;
         bgColor = theme.colors.warningSubtle;
+    } else if (type === 'total') {
+        textColor = theme.colors.linkPrimary;
+        bgColor = theme.colors.purpleSubtle;
     }
 
     return (
@@ -35,69 +40,129 @@ export default function AttendanceHistory() {
     const route = useRoute();
     const isFocused = useIsFocused();
 
+    const role = useAuthStore((state) => state.userType);
+    const empId = useAuthStore((state) => state.empId);
+    const schoolId = useAuthStore((state) => state.schoolId);
+
     const type = route.params?.type || 'staff';
     const isStudent = type === 'student';
 
+    const [fromDate, setFromDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        return d.toISOString().split('T')[0];
+    });
+    const [toDate, setToDate] = useState(() => {
+        return new Date().toISOString().split('T')[0];
+    });
+    const [activeDatePicker, setActiveDatePicker] = useState(null); // 'from' | 'to' | null
+    const [isLoading, setIsLoading] = useState(false);
+    const [summaryData, setSummaryData] = useState(null);
     const [historyData, setHistoryData] = useState([]);
     
     useEffect(() => {
         if (isFocused) {
             loadHistory();
         }
-    }, [isFocused, type]);
+    }, [isFocused, type, fromDate, toDate]);
 
     const loadHistory = async () => {
-        const data = isStudent 
-            ? await getStudentAttendanceHistory() 
-            : await getStaffAttendanceHistory();
-        
-        // Transform the DB format into what the UI expects
-        const formattedData = data.map((item, index) => {
-            const dateObj = new Date(item.date);
-            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
-            // calculate percent based on total count
-            // present + late could be considered as attended classes
-            // here just present / (present + absent + late)
-            let percent = 0;
-            const total = item.present + item.absent + item.late;
-            if (total > 0) {
-               percent = Math.round((item.present / total) * 100);
-            }
+        setIsLoading(true);
+        try {
+            if (isStudent) {
+                // For Staff viewing Student attendance
+                const payload = {
+                    employeeId: Number(empId) || 0,
+                    schoolId: Number(schoolId) || 0,
+                    fromDate: new Date(fromDate + 'T00:00:00').toISOString(),
+                    toDate: new Date(toDate + 'T23:59:59').toISOString()
+                };
+                const res = await getEmployeeAttendanceSummary(payload);
+                if (res && res.success && res.data) {
+                    const { summary, attendList } = res.data;
+                    
+                    const formattedData = (attendList || []).map((item, index) => {
+                        const dateObj = new Date(item.attendanceDate);
+                        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        return {
+                            id: `${item.attendanceDate}-${item.classId}-${item.sectionId}-${index}`,
+                            date: dateStr,
+                            present: item.totalPresent || 0,
+                            absent: item.totalAbsent || 0,
+                            leave: item.totalLeave || 0,
+                            percent: item.dailyAttendancePct || 0,
+                            subtitle: `${item.gradeName} - ${item.className} (${item.sectionName})`
+                        };
+                    });
+                    
+                    setSummaryData({
+                        overallAttendancePct: summary?.overallAttendancePct || 0,
+                        totalClasses: summary?.totalClasses || 0,
+                        overallPresent: summary?.overallPresent || 0,
+                        overallAbsent: summary?.overallAbsent || 0,
+                    });
+                    setHistoryData(formattedData);
+                } else {
+                    setSummaryData(null);
+                    setHistoryData([]);
+                }
+            } else {
+                // For Principal viewing Staff attendance
+                const res = await getEmployeesAttendanceLast7Days(schoolId);
+                if (res && res.success && res.data) {
+                    const dataList = res.data || [];
+                    
+                    const formattedData = dataList.map((item, index) => {
+                        const dateObj = new Date(item.attendanceDate);
+                        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        return {
+                            id: `${item.attendanceDate}-${index}`,
+                            date: dateStr,
+                            present: item.presentCount || 0,
+                            absent: item.absentCount || 0,
+                            total: item.totalEmployees || 0,
+                            percent: item.dailyPercentage || 0,
+                            subtitle: `Total Staff: ${item.totalEmployees}`
+                        };
+                    });
 
-            return {
-                id: item.date + (item.class_name || ''), // unique id 
-                date: dateStr,
-                present: item.present,
-                absent: item.absent,
-                late: item.late,
-                percent: percent,
-                subtitle: item.class_name || (isStudent ? 'All Grades' : '')
-            };
-        });
-        setHistoryData(formattedData);
+                    const firstRecord = dataList[0];
+                    setSummaryData({
+                        overallAttendancePct: firstRecord?.weeklyAvgPercentage || 0,
+                        totalPresent: firstRecord?.overAllLast7DaysPresentSum || 0,
+                        totalAbsent: firstRecord?.overAllLast7DaysAbsentSum || 0,
+                        totalEmployees: firstRecord?.totalEmployees || 0
+                    });
+                    setHistoryData(formattedData);
+                } else {
+                    setSummaryData(null);
+                    setHistoryData([]);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load attendance history:', error);
+            Alert.alert('Error', 'Failed to load attendance history.');
+            setSummaryData(null);
+            setHistoryData([]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // calculate totals for the summary card
-    const totalPresent = historyData.reduce((acc, curr) => acc + curr.present, 0);
-    const totalAbsent = historyData.reduce((acc, curr) => acc + curr.absent, 0);
-    const totalLate = historyData.reduce((acc, curr) => acc + curr.late, 0);
-    const totalClasses = historyData.length;
-    
-    const weeklyAverage = historyData.length > 0 
-        ? Math.round(historyData.reduce((acc, curr) => acc + curr.percent, 0) / historyData.length)
-        : 0;
+    const weeklyAverage = summaryData?.overallAttendancePct || 0;
 
     const topStats = isStudent
         ? [
-            { value: totalClasses.toString(), label: 'Classes', color: theme.colors.linkPrimary },
-            { value: totalPresent.toString(), label: 'Present', color: theme.colors.success },
-            { value: totalAbsent.toString(), label: 'Absent', color: theme.colors.danger }
+            { value: (summaryData?.totalClasses || 0).toString(), label: 'Classes', color: theme.colors.linkPrimary },
+            { value: (summaryData?.overallPresent || 0).toString(), label: 'Present', color: theme.colors.success },
+            { value: (summaryData?.overallAbsent || 0).toString(), label: 'Absent', color: theme.colors.danger }
         ]
         : [
-            { value: totalPresent.toString(), label: 'Present', color: theme.colors.success },
-            { value: totalAbsent.toString(), label: 'Absent', color: theme.colors.danger },
-            { value: totalLate.toString(), label: 'Late', color: theme.colors.warning }
+            { value: (summaryData?.totalPresent || 0).toString(), label: 'Present', color: theme.colors.success },
+            { value: (summaryData?.totalAbsent || 0).toString(), label: 'Absent', color: theme.colors.danger },
+            { value: (summaryData?.totalEmployees || 0).toString(), label: 'Total Staff', color: theme.colors.linkPrimary }
         ];
 
     const getPercentStyle = (percent) => {
@@ -105,6 +170,12 @@ export default function AttendanceHistory() {
             return { bg: theme.colors.successSubtle, text: theme.colors.success };
         }
         return { bg: theme.colors.warningSubtle, text: theme.colors.warning };
+    };
+
+    const formatDateForDisplay = (dateStr) => {
+        if (!dateStr) return '';
+        const dateObj = new Date(dateStr);
+        return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     return (
@@ -120,7 +191,27 @@ export default function AttendanceHistory() {
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.headerTitle}>Attendance History</Text>
-                <Text style={styles.headerSubtitle}>Last 7 days</Text>
+                {isStudent ? (
+                    <View style={styles.datePickerRow}>
+                        <TouchableOpacity 
+                            style={styles.dateInput} 
+                            onPress={() => setActiveDatePicker('from')}
+                        >
+                            <Icon name="calendar" size={16} color={theme.colors.white80} />
+                            <Text style={styles.dateInputText}>{formatDateForDisplay(fromDate)}</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.dateRangeSeparator}>to</Text>
+                        <TouchableOpacity 
+                            style={styles.dateInput} 
+                            onPress={() => setActiveDatePicker('to')}
+                        >
+                            <Icon name="calendar" size={16} color={theme.colors.white80} />
+                            <Text style={styles.dateInputText}>{formatDateForDisplay(toDate)}</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <Text style={styles.headerSubtitle}>Last 7 days</Text>
+                )}
             </View>
 
             {/* Summary Card */}
@@ -151,37 +242,81 @@ export default function AttendanceHistory() {
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* History List */}
-                <View style={styles.listContainer}>
-                    {historyData.map((item) => {
-                        const percentStyle = getPercentStyle(item.percent);
-                        return (
-                            <View key={item.id} style={styles.historyCard}>
-                                <View style={styles.historyCardTop}>
-                                    <View style={styles.dateContainer}>
-                                        <Icon name="calendar" size={18} color={theme.colors.linkPrimary} />
-                                        <View style={styles.dateTextContainer}>
-                                            <Text style={styles.dateText}>{item.date}</Text>
-                                            {item.subtitle && <Text style={styles.dateSubtitle}>{item.subtitle}</Text>}
+                {isLoading ? (
+                    <View style={styles.centered}>
+                        <ActivityIndicator size="large" color={theme.colors.purple} />
+                        <Text style={styles.loadingText}>Fetching attendance history...</Text>
+                    </View>
+                ) : historyData.length === 0 ? (
+                    <View style={styles.centered}>
+                        <Icon name="calendar" size={48} color={theme.colors.textMuted} style={styles.emptyIcon} />
+                        <Text style={styles.emptyText}>No attendance records found</Text>
+                        <Text style={styles.emptySubtitle}>Try adjusting your date range filter</Text>
+                    </View>
+                ) : (
+                    <View style={styles.listContainer}>
+                        {historyData.map((item) => {
+                            const percentStyle = getPercentStyle(item.percent);
+                            return (
+                                <View key={item.id} style={styles.historyCard}>
+                                    <View style={styles.historyCardTop}>
+                                        <View style={styles.dateContainer}>
+                                            <Icon name="calendar" size={18} color={theme.colors.linkPrimary} />
+                                            <View style={styles.dateTextContainer}>
+                                                <Text style={styles.dateText}>{item.date}</Text>
+                                                {item.subtitle && <Text style={styles.dateSubtitle}>{item.subtitle}</Text>}
+                                            </View>
+                                        </View>
+                                        <View style={[styles.percentBadge, { backgroundColor: percentStyle.bg }]}>
+                                            <Text style={[styles.percentText, { color: percentStyle.text }]}>
+                                                {item.percent}%
+                                            </Text>
                                         </View>
                                     </View>
-                                    <View style={[styles.percentBadge, { backgroundColor: percentStyle.bg }]}>
-                                        <Text style={[styles.percentText, { color: percentStyle.text }]}>
-                                            {item.percent}%
-                                        </Text>
+
+                                    <View style={styles.historyChipsRow}>
+                                        <StatChip value={item.present} label="Present" type="present" />
+                                        <StatChip value={item.absent} label="Absent" type="absent" />
+                                        {isStudent ? (
+                                            <StatChip value={item.leave} label="Leave" type="leave" />
+                                        ) : (
+                                            <StatChip value={item.total} label="Total" type="total" />
+                                        )}
                                     </View>
                                 </View>
-
-                                <View style={styles.historyChipsRow}>
-                                    <StatChip value={item.present} label="Present" type="present" />
-                                    <StatChip value={item.absent} label="Absent" type="absent" />
-                                    <StatChip value={item.late} label="Late" type="late" />
-                                </View>
-                            </View>
-                        );
-                    })}
-                </View>
+                            );
+                        })}
+                    </View>
+                )}
             </ScrollView>
+
+            {/* Calendar Pickers */}
+            <CalendarPickerModal
+                visible={activeDatePicker === 'from'}
+                onClose={() => setActiveDatePicker(null)}
+                selectedDate={fromDate}
+                onSelectDate={(date) => {
+                    if (date > toDate) {
+                        Alert.alert('Invalid Date', 'From date cannot be after to date.');
+                        return;
+                    }
+                    setFromDate(date);
+                }}
+                title="Select From Date"
+            />
+            <CalendarPickerModal
+                visible={activeDatePicker === 'to'}
+                onClose={() => setActiveDatePicker(null)}
+                selectedDate={toDate}
+                onSelectDate={(date) => {
+                    if (date < fromDate) {
+                        Alert.alert('Invalid Date', 'To date cannot be before from date.');
+                        return;
+                    }
+                    setToDate(date);
+                }}
+                title="Select To Date"
+            />
         </View>
     );
 }
@@ -194,7 +329,7 @@ const styles = StyleSheet.create({
     headerBg: {
         backgroundColor: theme.colors.purple,
         paddingHorizontal: 20,
-        paddingBottom: 60,
+        paddingBottom: 70,
     },
     headerTop: {
         flexDirection: 'row',
@@ -345,5 +480,60 @@ const styles = StyleSheet.create({
     statLabelCentered: {
         fontSize: 12,
         fontWeight: '500',
+    },
+    datePickerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        gap: 8,
+    },
+    dateInput: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        gap: 8,
+    },
+    dateInputText: {
+        color: theme.colors.white,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    dateRangeSeparator: {
+        color: theme.colors.white80,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 40,
+        paddingHorizontal: 20,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 15,
+        color: theme.colors.textMuted,
+        fontWeight: '500',
+    },
+    emptyIcon: {
+        marginBottom: 12,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.colors.textHeading,
+        marginBottom: 4,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: theme.colors.textMuted,
+        textAlign: 'center',
     },
 });
