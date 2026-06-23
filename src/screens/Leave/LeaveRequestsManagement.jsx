@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
 import { useAuthStore } from '../../store/AuthStore';
-import { getUnapprovedStaffLeaveRequest } from '../../network/apis';
+import { getUnapprovedStaffLeaveRequest, getUnapprovedPrincipalLeaveRequest } from '../../network/apis';
 import HeroCard from '../../components/HeroCard';
 
 const formatDate = (dateStr) => {
@@ -31,6 +31,8 @@ const formatDate = (dateStr) => {
 export default function LeaveRequestsManagement() {
     const navigation = useNavigation();
     const schoolId = useAuthStore((state) => state.schoolId);
+    const empId = useAuthStore((state) => state.empId);
+    const userType = useAuthStore((state) => state.userType);
 
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -42,10 +44,28 @@ export default function LeaveRequestsManagement() {
             if (showLoader) setIsLoading(true);
             setError(null);
 
-            const response = await getUnapprovedStaffLeaveRequest(schoolId).catch(err => {
-                console.error('Error fetching pending requests:', err);
-                return null;
-            });
+            let response;
+            if (userType === 'coordinator') {
+                response = await getUnapprovedPrincipalLeaveRequest(empId).catch(err => {
+                    if (err.response?.status === 404 || err.message?.includes('404')) {
+                        return { success: true, data: [] };
+                    }
+                    console.error('Error fetching unapproved principal leave requests:', err);
+                    return null;
+                });
+            } else if (userType === 'principal') {
+                response = await getUnapprovedStaffLeaveRequest(schoolId).catch(err => {
+                    if (err.response?.status === 404 || err.message?.includes('404')) {
+                        return { success: true, data: [] };
+                    }
+                    console.error('Error fetching pending requests:', err);
+                    return null;
+                });
+            } else {
+                setLeaveRequests([]);
+                setIsLoading(false);
+                return;
+            }
 
             if (response && response.success) {
                 const mapped = (response.data || []).map(item => {
@@ -88,7 +108,7 @@ export default function LeaveRequestsManagement() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, [schoolId]);
+    }, [schoolId, empId, userType]);
 
     useEffect(() => {
         fetchLeaveData(true);

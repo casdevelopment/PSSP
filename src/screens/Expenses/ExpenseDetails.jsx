@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+import { useAuthStore } from '../../store/AuthStore';
+import { getExpenseDetailsWithSchool, postExpense } from '../../network/apis';
 
 // Components
 import HeroCard from '../../components/HeroCard';
@@ -12,20 +14,113 @@ export default function ExpenseDetails() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
+  const userId = useAuthStore((state) => state.userId);
 
-  // Retrieve passed record or use fallback
-  const record = route.params?.record || {
-    title: 'Lab Equipment',
-    school: 'Greenwood High School',
-    amount: '$2,400',
-    date: 'Apr 28, 2026',
-    status: 'Pending',
-    category: 'Academic',
-    description: 'Chemistry lab equipment including beakers, test tubes, microscopes, and safety equipment for student experiments.',
+  const record = route.params?.record;
+  const expId = record?.id || '0';
+
+  const [detail, setDetail] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isOperating, setIsOperating] = useState(false);
+
+  const fetchDetails = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getExpenseDetailsWithSchool(expId);
+      if (response && response.success) {
+        const dataArr = response.data || [];
+        if (dataArr.length > 0) {
+          setDetail(dataArr[0]);
+        } else {
+          setError('No expense details found.');
+        }
+      } else {
+        setError(response?.message || 'Failed to load expense details.');
+      }
+    } catch (err) {
+      console.error('Error fetching expense details:', err);
+      setError(err.message || 'An error occurred while loading details.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [expId]);
+
+  useEffect(() => {
+    if (expId && expId !== '0') {
+      fetchDetails();
+    } else {
+      setError('Invalid expense request ID.');
+      setIsLoading(false);
+    }
+  }, [expId, fetchDetails]);
+
+  const handleAction = async (saveMode) => {
+    if (!detail) return;
+    try {
+      setIsOperating(true);
+      const payload = {
+        userId: Number(userId) || 0,
+        schoolId: Number(detail.schoolID) || 0,
+        saveMode: String(saveMode),
+        expenses: [
+          {
+            expenseId: Number(detail.expID) || 0
+          }
+        ]
+      };
+
+      const response = await postExpense(payload);
+      if (response && response.success) {
+        Alert.alert(
+          'Success',
+          saveMode === 'Insert' ? 'Expense successfully approved.' : 'Expense successfully rejected.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack()
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', response?.message || 'Failed to process expense request.');
+      }
+    } catch (err) {
+      console.error('Error processing expense action:', err);
+      Alert.alert('Error', err.message || 'An error occurred while processing action.');
+    } finally {
+      setIsOperating(false);
+    }
   };
 
-  const isApproved = record.status === 'Approved';
-  const isPending = record.status === 'Pending';
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#FF7F00" />
+        <ActivityIndicator size="large" color={theme.colors.purple} />
+        <Text style={styles.loadingText}>Loading details...</Text>
+      </View>
+    );
+  }
+
+  if (error || !detail) {
+    return (
+      <View style={styles.errorContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#FF7F00" />
+        <Icon name="alert-triangle" size={48} color={theme.colors.danger} />
+        <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+        <Text style={styles.errorSubTitle}>{error || 'Request detail is unavailable'}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchDetails}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const isApproved = detail.isPosted === true;
+  const isPending = detail.isPosted === false;
+  const formattedAmount = `PKR ${Number(detail.amount).toLocaleString()}`;
 
   return (
     <View style={styles.container}>
@@ -41,37 +136,36 @@ export default function ExpenseDetails() {
         </View>
         <View style={styles.headerTitles}>
           <Text style={styles.pageTitle}>Expense Request</Text>
-          <Text style={styles.pageSubtitle}>{record.title}</Text>
+          <Text style={styles.pageSubtitle}>{`Request #${detail.expID}`}</Text>
         </View>
       </View>
 
-      {/* Refactored using HeroCard Component */}
+      {/* HeroCard Component */}
       <View style={styles.floatingHeroContainer}>
         <HeroCard
           colors={[theme.colors.white, theme.colors.white]} // Solid white background override
           topLabel="Total Amount"
-          topLabelStyle={{ color: theme.colors.textMuted }} // FIXED: Passes the gray theme color prop seamlessly
-          topIcon="" 
-          title={record.amount}
+          topLabelStyle={{ color: theme.colors.textMuted }}
+          topIcon=""
+          title={formattedAmount}
           titleStyle={styles.customHeroTitle}
           rightElement={
             <View style={[
-              styles.statusBadge, 
+              styles.statusBadge,
               { backgroundColor: isApproved ? theme.colors.successSubtle : theme.colors.pendingChipBg }
             ]}>
               <Text style={[
-                styles.statusBadgeText, 
+                styles.statusBadgeText,
                 { color: isApproved ? theme.colors.successStrong : theme.colors.pendingChipText }
               ]}>
-                {record.status}
+                {isApproved ? 'Approved' : 'Pending'}
               </Text>
             </View>
           }
         >
-          {/* Calendar Date Footer injected as children */}
           <View style={styles.amountBottom}>
-            <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-            <Text style={styles.dateText}>Requested on {record.date}</Text>
+            <Icon name="info" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
+            <Text style={styles.dateText}>{isApproved ? 'Status: Approved' : 'Status: Pending Review'}</Text>
           </View>
         </HeroCard>
       </View>
@@ -86,9 +180,9 @@ export default function ExpenseDetails() {
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
               <Icon name="trello" size={18} color={theme.colors.linkPrimary} />
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.infoLabel}>School</Text>
-              <Text style={styles.infoValue}>{record.school}</Text>
+              <Text style={styles.infoValue} numberOfLines={2}>{detail.schoolName}</Text>
             </View>
           </View>
 
@@ -96,9 +190,9 @@ export default function ExpenseDetails() {
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.purpleSurface }]}>
               <Icon name="file-text" size={18} color={theme.colors.accentPurple} />
             </View>
-            <View>
-              <Text style={styles.infoLabel}>Category</Text>
-              <Text style={styles.infoValue}>{record.category || 'Academic'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.infoLabel}>Category Name</Text>
+              <Text style={styles.infoValue} numberOfLines={2}>{detail.expName || 'N/A'}</Text>
             </View>
           </View>
         </View>
@@ -106,51 +200,44 @@ export default function ExpenseDetails() {
         {/* Description */}
         <View style={styles.infoCard}>
           <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.descText}>{record.description}</Text>
-        </View>
-
-        {/* Item Breakdown */}
-        <View style={styles.breakdownCard}>
-          <Text style={styles.sectionTitle}>Item Breakdown</Text>
-          
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Microscopes (5x)</Text>
-            <Text style={styles.breakdownValue}>$1,200</Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Lab Safety Equipment</Text>
-            <Text style={styles.breakdownValue}>$600</Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Glassware Set</Text>
-            <Text style={styles.breakdownValue}>$400</Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Chemical Supplies</Text>
-            <Text style={styles.breakdownValue}>$200</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{record.amount}</Text>
-          </View>
+          <Text style={styles.descText}>{detail.expDesc || 'No description provided'}</Text>
         </View>
 
       </ScrollView>
 
-      {/* FIXED: Bottom Action Bar (Approve/Reject) wrapped in conditional rendering */}
+      {/* Bottom Action Bar (Approve/Reject) */}
       {isPending && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity style={styles.rejectBtn} activeOpacity={0.8}>
-            <Icon name="x" size={18} color={theme.colors.dangerStrong} style={{ marginRight: 6 }} />
-            <Text style={styles.rejectBtnText}>Reject</Text>
+          <TouchableOpacity
+            style={[styles.rejectBtn, isOperating && { opacity: 0.6 }]}
+            activeOpacity={0.8}
+            onPress={() => handleAction('delete')}
+            disabled={isOperating}
+          >
+            {isOperating ? (
+              <ActivityIndicator color={theme.colors.dangerStrong} size="small" />
+            ) : (
+              <>
+                <Icon name="x" size={18} color={theme.colors.dangerStrong} style={{ marginRight: 6 }} />
+                <Text style={styles.rejectBtnText}>Reject</Text>
+              </>
+            )}
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.approveBtn} activeOpacity={0.8}>
-            <Icon name="check" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
-            <Text style={styles.approveBtnText}>Approve</Text>
+
+          <TouchableOpacity
+            style={[styles.approveBtn, isOperating && { opacity: 0.6 }]}
+            activeOpacity={0.8}
+            onPress={() => handleAction('Insert')}
+            disabled={isOperating}
+          >
+            {isOperating ? (
+              <ActivityIndicator color={theme.colors.white} size="small" />
+            ) : (
+              <>
+                <Icon name="check" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
+                <Text style={styles.approveBtnText}>Approve</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -164,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundLight,
   },
   headerBg: {
-    backgroundColor: '#FF7F00', 
+    backgroundColor: '#FF7F00',
     paddingBottom: 60,
   },
   headerTopRow: {
@@ -201,12 +288,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   floatingHeroContainer: {
-    marginTop: -45, 
+    marginTop: -45,
   },
   customHeroTitle: {
     fontSize: 36,
     fontWeight: '800',
-    color: theme.colors.textHeading, 
+    color: theme.colors.textHeading,
   },
   statusBadge: {
     paddingHorizontal: 16,
@@ -273,50 +360,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: theme.colors.textBody,
   },
-  breakdownCard: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSubtle,
-  },
-  breakdownRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  breakdownLabel: {
-    fontSize: 15,
-    color: theme.colors.textBody,
-  },
-  breakdownValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: theme.colors.textHeading,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.borderSubtle,
-    marginVertical: 12,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.colors.textHeading,
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FF7F00',
-  },
   bottomBar: {
     flexDirection: 'row',
     backgroundColor: theme.colors.white,
@@ -353,5 +396,49 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: 16,
     fontWeight: '700',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.backgroundLight,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.textMuted,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: theme.colors.backgroundLight,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: theme.colors.textHeading,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorSubTitle: {
+    fontSize: 14,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.purple,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    ...theme.shadow.card,
+  },
+  retryButtonText: {
+    color: theme.colors.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -84,15 +84,16 @@ export default function RequestLeaveModel({ visible, onClose }) {
                 Alert.alert('Success', 'Leave requested successfully');
                 handleClose();
             } else {
-                Alert.alert('Error', res?.message || 'Failed to submit leave request');
+                Alert.alert('Request Failed', 'You have exceeded allowed leaves per month.');
             }
         } catch (error) {
-            console.error('Submit leave error:', error);
+            console.log('Submit leave error:', error);
             const errorMsg = error.response?.data?.message
                 || error.message
                 || 'Failed to submit leave request';
             const details = `\nDebug Info: leaveTypeId=${selectedBalance?.leaveTypeId || 'undefined'}, entityLeaveTypeId=${selectedBalance?.entityLeaveTypeId || 'undefined'}, empLeaveBalanceID=${selectedBalance?.empLeaveBalanceID || 'undefined'}`;
-            Alert.alert('Error', errorMsg + details);
+            console.log('error', errorMsg + details);
+            Alert.alert('Request Failed', 'You have exceeded allowed leaves per month.');
         } finally {
             setIsSubmitting(false);
         }

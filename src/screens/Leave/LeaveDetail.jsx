@@ -7,16 +7,18 @@ import {
     TouchableOpacity,
     StatusBar,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
-import { getEmpAllLeaveListHistory } from '../../network/apis';
+import { getEmpAllLeaveListHistory, approveStaffAndPrincipalLeaveRequest } from '../../network/apis';
 import { useProfileDetailsStore } from '../../store/ProfileDetailsStore';
 // Make sure to adjust this import path to match your folder structure
 import { SectionCard, DetailRow } from '../../components/SectionCard';
+import PrimaryButton from '../../components/PrimaryButton';
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -103,9 +105,9 @@ export default function LeaveDetail() {
     const navigation = useNavigation();
     const route = useRoute();
     const empId = useAuthStore((state) => state.empId);
+    const username = useAuthStore((state) => state.username);
     const userType = useAuthStore((state) => state.userType);
     const profileDetails = useProfileDetailsStore((state) => state.profileDetails);
-
 
     const requestId = route.params?.id || '1';
     const initialRequest = route.params?.request;
@@ -113,9 +115,35 @@ export default function LeaveDetail() {
     const [detail, setDetail] = useState(initialRequest || null);
     const [isLoading, setIsLoading] = useState(!initialRequest);
     const [error, setError] = useState(null);
+    const [isApproving, setIsApproving] = useState(false);
 
     const role = userType || 'staff';
     const isReviewer = role === 'principal' || role === 'coordinator';
+
+    const handleApprove = async () => {
+        try {
+            setIsApproving(true);
+            const response = await approveStaffAndPrincipalLeaveRequest(requestId);
+            if (response && response.success) {
+                setDetail(prev => prev ? {
+                    ...prev,
+                    status: 'Approved',
+                    statusTone: 'approved'
+                } : null);
+                Alert.alert('Success', response.message || 'Leave successfully approved.', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            } else {
+                Alert.alert('Error', response?.message || 'Failed to approve leave request.');
+            }
+        } catch (err) {
+            console.error('Error approving leave:', err);
+            Alert.alert('Error', err.message || 'An error occurred while approving leave request.');
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
 
     const fetchLeaveDetail = useCallback(async () => {
         if (initialRequest) return;
@@ -149,7 +177,7 @@ export default function LeaveDetail() {
         } finally {
             setIsLoading(false);
         }
-    }, [empId, requestId, initialRequest, role]);
+    }, [empId, requestId, initialRequest, role, profileDetails?.employeeName, profileDetails?.schoolName, username]);
 
     useEffect(() => {
         if (initialRequest) {
@@ -317,15 +345,13 @@ export default function LeaveDetail() {
 
                 {isReviewer && detail.status === 'Pending' && (
                     <View style={styles.actionBar}>
-                        <TouchableOpacity style={styles.rejectButton} activeOpacity={0.85} onPress={() => { }}>
-                            <Icon name="x" size={20} color="#B91C1C" />
-                            <Text style={styles.rejectText}>Reject</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.approveButton} activeOpacity={0.85} onPress={() => { }}>
-                            <Icon name="check" size={20} color={theme.colors.white} />
-                            <Text style={styles.approveText}>Approve</Text>
-                        </TouchableOpacity>
+                        <PrimaryButton
+                            title="Approve"
+                            onPress={handleApprove}
+                            loading={isApproving}
+                            showChevron={false}
+                            style={styles.primaryApproveButton}
+                        />
                     </View>
                 )}
             </ScrollView>
@@ -488,35 +514,8 @@ const styles = StyleSheet.create({
         marginTop: 4,
         backgroundColor: 'transparent',
     },
-    rejectButton: {
+    primaryApproveButton: {
         flex: 1,
-        height: 50,
-        borderRadius: 12,
-        backgroundColor: '#FFF1F2',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        gap: 8,
-    },
-    rejectText: {
-        color: '#9F1239',
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    approveButton: {
-        flex: 1,
-        height: 50,
-        borderRadius: 12,
-        backgroundColor: '#059669',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        gap: 8,
-    },
-    approveText: {
-        color: theme.colors.white,
-        fontSize: 15,
-        fontWeight: '500',
     },
     loadingContainer: {
         flex: 1,

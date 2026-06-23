@@ -367,4 +367,70 @@ export const getEmployeeSchoolDashboardDetails = async (empId) => {
     console.error('Error fetching employee school dashboard details:', error.response?.data || error.message);
     throw error;
   }
-}
+};
+
+export const getUnapprovedPrincipalLeaveRequest = async (empId) => {
+  try {
+    const response = await axiosInstance.get(`/EP/GetUnapprovedPrincipalLeaveRequest${empId}`);
+    console.log('Principle Leave Request: ', response?.data)
+    return response?.data;
+  } catch (error) {
+    console.error('Get unapproved principal leave requests error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const approveStaffAndPrincipalLeaveRequest = async (leaveId) => {
+  try {
+    const payload = {
+      LeaveId: Number(leaveId),
+    };
+    const response = await axiosInstance.post(
+      '/EP/ApproveStaffAndPrincipalLeaveRequest',
+      payload,
+      {
+        params: payload
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.error('Approve staff and principal leave request error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getExpensePendingListSchool = async (empId, fromDate, toDate) => {
+  try {
+    const response = await axiosInstance.get(`/EP/GetExpensePendingListSchool${empId}`, {
+      params: {
+        FromDate: fromDate,
+        ToDate: toDate
+      }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get expense pending list error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getExpenseDetailsWithSchool = async (expId) => {
+  try {
+    const response = await axiosInstance.get(`/EP/GetExpenseDetailsWithSchool${expId}`);
+    return response?.data;
+  } catch (error) {
+    console.error('Get expense details error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const postExpense = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/PostExpense', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Post expense error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+

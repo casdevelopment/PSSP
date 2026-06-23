@@ -1,16 +1,76 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { theme } from '../theme/theme';
 import { useNavigation } from '@react-navigation/native';
-
-const leaveRequestsData = [
-  { id: '1', name: 'John Smith', type: 'Sick Leave', duration: '2 days' },
-  { id: '2', name: 'Emma Wilson', type: 'Personal', duration: '1 day' },
-  { id: '3', name: 'Sarah Lee', type: 'Casual', duration: '1 day' },
-];
+import { useAuthStore } from '../store/AuthStore';
+import { getUnapprovedStaffLeaveRequest, getUnapprovedPrincipalLeaveRequest } from '../network/apis';
 
 const PendingCard = () => {
   const navigation = useNavigation();
+  const schoolId = useAuthStore((state) => state.schoolId);
+  const empId = useAuthStore((state) => state.empId);
+  const userType = useAuthStore((state) => state.userType);
+
+  const [leaveRequestsData, setLeaveRequestsData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchPendingLeaves = async () => {
+      try {
+        setIsLoading(true);
+        let response = null;
+        if (userType === 'coordinator') {
+          response = await getUnapprovedPrincipalLeaveRequest(empId).catch(err => {
+            if (err.response?.status === 404 || err.message?.includes('404')) {
+              return { success: true, data: [] };
+            }
+            throw err;
+          });
+        } else if (userType === 'principal') {
+          response = await getUnapprovedStaffLeaveRequest(schoolId).catch(err => {
+            if (err.response?.status === 404 || err.message?.includes('404')) {
+              return { success: true, data: [] };
+            }
+            throw err;
+          });
+        }
+
+        if (isMounted) {
+          if (response && response.success) {
+            const rawData = response.data || [];
+            const mapped = rawData.map(item => {
+              const days = item.days || 1;
+              return {
+                id: String(item.id),
+                name: item.firstName || item.employeeName || item.empName || item.name || 'Staff Member',
+                type: item.leaveTypeName || item.entityLeaveType || item.leaveType || 'Leave',
+                duration: `${days} day${days > 1 ? 's' : ''}`,
+              };
+            });
+            setLeaveRequestsData(mapped);
+          } else {
+            setLeaveRequestsData([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching pending leaves in PendingCard:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchPendingLeaves();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userType, schoolId, empId]);
+
+  const displayedRequests = leaveRequestsData.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -22,24 +82,32 @@ const PendingCard = () => {
       </View>
 
       <View style={styles.list}>
-        {leaveRequestsData.map((item, index) => (
-          <View
-            key={item.id}
-            style={[
-              styles.itemContainer,
-              index === leaveRequestsData.length - 1 ? null : styles.itemMargin
-            ]}
-          >
-            <View style={styles.details}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.type}>{item.type}</Text>
-              <Text style={styles.duration}>{item.duration}</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={theme.colors.purple} style={styles.loader} />
+        ) : displayedRequests.length > 0 ? (
+          displayedRequests.map((item, index) => (
+            <View
+              key={item.id}
+              style={[
+                styles.itemContainer,
+                index === displayedRequests.length - 1 ? null : styles.itemMargin
+              ]}
+            >
+              <View style={styles.details}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.type}>{item.type}</Text>
+                <Text style={styles.duration}>{item.duration}</Text>
+              </View>
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>Pending</Text>
+              </View>
             </View>
-            <View style={styles.badgeContainer}>
-              <Text style={styles.badgeText}>Pending</Text>
-            </View>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No pending leave requests</Text>
           </View>
-        ))}
+        )}
       </View>
     </View>
   );
@@ -113,6 +181,18 @@ const styles = StyleSheet.create({
     color: theme.colors.pendingChipText,
     fontSize: 14,
     fontWeight: '600',
+  },
+  loader: {
+    paddingVertical: 20,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    color: theme.colors.textMuted,
+    fontSize: 15,
   }
 });
 
