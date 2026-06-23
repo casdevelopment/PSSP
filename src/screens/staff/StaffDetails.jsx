@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    StatusBar
+    StatusBar,
+    ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+import { getEmployeeDetailsWithStudentCount } from '../../network/apis';
 
 export default function StaffDetail() {
     const insets = useSafeAreaInsets();
@@ -19,20 +21,59 @@ export default function StaffDetail() {
 
     // Retrieve data passed from the list, with fallbacks
     const staff = route.params?.staff || {
+        id: 2,
         name: 'John Smith',
-        subject: 'Mathematics',
         email: 'john.smith@school.edu',
-        phone: '+1 555-0101',
+        phoneNo: '+1 555-0101',
         status: 'Active',
         joinDate: 'Jan 15, 2020',
         students: '142'
     };
 
-    const CLASSES = ['Grade 10-A', 'Grade 10-B', 'Grade 11-A'];
+    const [details, setDetails] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const employeeId = staff.id;
+        if (employeeId) {
+            setIsLoading(true);
+            getEmployeeDetailsWithStudentCount(employeeId)
+                .then((res) => {
+                    if (res && res.success) {
+                        setDetails(res.data || []);
+                    } else {
+                        setDetails([]);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error fetching employee details:', err);
+                    setDetails([]);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }
+    }, [staff.id]);
+
+    const firstRecord = details[0] || {};
+    const name = firstRecord.name || staff.name || 'Unknown';
+    const email = firstRecord.email || staff.email || 'N/A';
+    const phone = firstRecord.phoneNo || staff.phoneNo || 'N/A';
+    const rawJoinDate = firstRecord.joiningDate || staff.joinDate;
+    const joinDate = rawJoinDate
+        ? new Date(rawJoinDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'N/A';
+    const students = firstRecord.totalStudents !== undefined ? String(firstRecord.totalStudents) : (staff.students || '0');
+
+    const classes = details.map((item) => {
+        const grade = item.gradeName || 'Unknown Grade';
+        const section = item.sectionName ? ` - ${item.sectionName}` : '';
+        return `${grade}${section}`;
+    });
 
     const RECENT_ACTIVITY = [
-        { id: '1', title: 'Marked attendance for Grade 10-A', time: '2 hours ago' },
-        { id: '2', title: `Conducted ${staff.subject} class`, time: '4 hours ago' },
+        { id: '1', title: `Marked attendance for ${classes[0] || 'assigned class'}`, time: '2 hours ago' },
+        { id: '2', title: `Conducted class`, time: '4 hours ago' },
         { id: '3', title: 'Salary received for April', time: '2 days ago' },
     ];
 
@@ -49,8 +90,8 @@ export default function StaffDetail() {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.headerTitles}>
-                    <Text style={styles.staffName}>{staff.name}</Text>
-                    <Text style={styles.staffSubjectHeader}>{staff.subject}</Text>
+                    <Text style={styles.staffName}>{name}</Text>
+                    <Text style={styles.staffSubjectHeader}>Staff ID: {staff.id}</Text>
                 </View>
             </View>
 
@@ -59,12 +100,12 @@ export default function StaffDetail() {
                 <View style={styles.floatCol}>
                     <Text style={styles.floatLabel}>Status</Text>
                     <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>{staff.status}</Text>
+                        <Text style={styles.statusText}>Active</Text>
                     </View>
                 </View>
                 <View style={[styles.floatCol, { alignItems: 'flex-end' }]}>
                     <Text style={styles.floatLabel}>Joining Date</Text>
-                    <Text style={styles.joinDateText}>{staff.joinDate}</Text>
+                    <Text style={styles.joinDateText}>{joinDate}</Text>
                 </View>
             </View>
 
@@ -72,98 +113,113 @@ export default function StaffDetail() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Contact Information */}
-                <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Contact Information</Text>
-
-                    <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
-                            <Icon name="mail" size={18} color={theme.colors.linkPrimary} />
-                        </View>
-                        <View>
-                            <Text style={styles.infoLabel}>Email</Text>
-                            <Text style={styles.infoValue}>{staff.email}</Text>
-                        </View>
+                {isLoading ? (
+                    <View style={styles.centered}>
+                        <ActivityIndicator size="large" color={theme.colors.linkPrimary} />
                     </View>
+                ) : (
+                    <>
+                        {/* Contact Information */}
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Contact Information</Text>
 
-                    <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: theme.colors.greenSurface }]}>
-                            <Icon name="phone" size={18} color={theme.colors.successStrong} />
-                        </View>
-                        <View>
-                            <Text style={styles.infoLabel}>Phone</Text>
-                            <Text style={styles.infoValue}>{staff.phone}</Text>
-                        </View>
-                    </View>
-
-                    <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground, marginBottom: 0 }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: theme.colors.purpleSurface }]}>
-                            <Icon name="book-open" size={18} color={theme.colors.accentPurple} />
-                        </View>
-                        <View>
-                            <Text style={styles.infoLabel}>Subject</Text>
-                            <Text style={styles.infoValue}>{staff.subject}</Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Performance Stats */}
-                <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitleOutside}>Performance</Text>
-                    <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: theme.colors.blueSurface }]}>
-                            <View style={styles.statHeader}>
-                                <Icon name="calendar" size={16} color={theme.colors.linkPrimary} />
-                                <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Attendance</Text>
+                            <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground }]}>
+                                <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
+                                    <Icon name="mail" size={18} color={theme.colors.linkPrimary} />
+                                </View>
+                                <View>
+                                    <Text style={styles.infoLabel}>Email</Text>
+                                    <Text style={styles.infoValue}>{email}</Text>
+                                </View>
                             </View>
-                            <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>98%</Text>
-                        </View>
 
-                        <View style={[styles.statCard, { backgroundColor: theme.colors.purpleSurface }]}>
-                            <View style={styles.statHeader}>
-                                <Icon name="award" size={16} color={theme.colors.accentPurple} />
-                                <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Performance</Text>
+                            <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground }]}>
+                                <View style={[styles.iconCircle, { backgroundColor: theme.colors.greenSurface }]}>
+                                    <Icon name="phone" size={18} color={theme.colors.successStrong} />
+                                </View>
+                                <View>
+                                    <Text style={styles.infoLabel}>Phone</Text>
+                                    <Text style={styles.infoValue}>{phone}</Text>
+                                </View>
                             </View>
-                            <Text style={[styles.statValue, { color: theme.colors.accentPurple }]}>95%</Text>
-                        </View>
-                    </View>
-                </View>
-                {/* Assigned Classes */}
-                <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Assigned Classes</Text>
-                    {CLASSES.map((className, index) => (
-                        <View key={index} style={styles.classPill}>
-                            <Text style={styles.classPillText}>{className}</Text>
-                        </View>
-                    ))}
 
-                    <View style={styles.totalStudentsRow}>
-                        <Text style={styles.totalStudentsLabel}>Total Students</Text>
-                        <Text style={styles.totalStudentsValue}>{staff.students}</Text>
-                    </View>
-                </View>
-
-                {/* Recent Activity */}
-                <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Recent Activity</Text>
-                    {RECENT_ACTIVITY.map((activity, index) => (
-                        <View
-                            key={activity.id}
-                            style={[
-                                styles.activityRow,
-                                index === RECENT_ACTIVITY.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }
-                            ]}
-                        >
-                            <View style={styles.activityIconCircle}>
-                                <Icon name="trending-up" size={16} color={theme.colors.successStrong} />
-                            </View>
-                            <View style={styles.activityDetails}>
-                                <Text style={styles.activityTitle}>{activity.title}</Text>
-                                <Text style={styles.activityTime}>{activity.time}</Text>
+                            <View style={[styles.infoRow, { backgroundColor: theme.colors.appBackground, marginBottom: 0 }]}>
+                                <View style={[styles.iconCircle, { backgroundColor: theme.colors.purpleSurface }]}>
+                                    <Icon name="info" size={18} color={theme.colors.accentPurple} />
+                                </View>
+                                <View>
+                                    <Text style={styles.infoLabel}>Employee ID</Text>
+                                    <Text style={styles.infoValue}>{staff.id}</Text>
+                                </View>
                             </View>
                         </View>
-                    ))}
-                </View>
+
+                        {/* Performance Stats */}
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitleOutside}>Performance</Text>
+                            <View style={styles.statsRow}>
+                                <View style={[styles.statCard, { backgroundColor: theme.colors.blueSurface }]}>
+                                    <View style={styles.statHeader}>
+                                        <Icon name="calendar" size={16} color={theme.colors.linkPrimary} />
+                                        <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Attendance</Text>
+                                    </View>
+                                    <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>98%</Text>
+                                </View>
+
+                                <View style={[styles.statCard, { backgroundColor: theme.colors.purpleSurface }]}>
+                                    <View style={styles.statHeader}>
+                                        <Icon name="award" size={16} color={theme.colors.accentPurple} />
+                                        <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Performance</Text>
+                                    </View>
+                                    <Text style={[styles.statValue, { color: theme.colors.accentPurple }]}>95%</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Assigned Classes */}
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Assigned Classes</Text>
+                            {classes.length === 0 ? (
+                                <View style={styles.classPill}>
+                                    <Text style={styles.classPillText}>No assigned classes</Text>
+                                </View>
+                            ) : (
+                                classes.map((className, index) => (
+                                    <View key={index} style={styles.classPill}>
+                                        <Text style={styles.classPillText}>{className}</Text>
+                                    </View>
+                                ))
+                            )}
+
+                            <View style={styles.totalStudentsRow}>
+                                <Text style={styles.totalStudentsLabel}>Total Students</Text>
+                                <Text style={styles.totalStudentsValue}>{students}</Text>
+                            </View>
+                        </View>
+
+                        {/* Recent Activity */}
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Recent Activity</Text>
+                            {RECENT_ACTIVITY.map((activity, index) => (
+                                <View
+                                    key={activity.id}
+                                    style={[
+                                        styles.activityRow,
+                                        index === RECENT_ACTIVITY.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }
+                                    ]}
+                                >
+                                    <View style={styles.activityIconCircle}>
+                                        <Icon name="trending-up" size={16} color={theme.colors.successStrong} />
+                                    </View>
+                                    <View style={styles.activityDetails}>
+                                        <Text style={styles.activityTitle}>{activity.title}</Text>
+                                        <Text style={styles.activityTime}>{activity.time}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                )}
             </ScrollView>
 
             {/* Bottom Action Bar */}
@@ -426,5 +482,10 @@ const styles = StyleSheet.create({
         color: theme.colors.textBody,
         fontSize: 15,
         fontWeight: '600',
+    },
+    centered: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 80,
     },
 });

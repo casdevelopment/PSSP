@@ -1,31 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    StatusBar
+    StatusBar,
+    ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+import { useAuthStore } from '../../store/AuthStore';
+import { getStaffList } from '../../network/apis';
 
 // Adjust the import path based on where you saved your HeroCard component
 import HeroCard from '../../components/HeroCard';
 
-const STAFF_DATA = [
-    { id: '1', name: 'John Smith', subject: 'Mathematics', email: 'john.smith@school.edu', phone: '+1 555-0101', status: 'Active', joinDate: 'Jan 15, 2020', students: '142' },
-    { id: '2', name: 'Emma Wilson', subject: 'Physics', email: 'emma.wilson@school.edu', phone: '+1 555-0102', status: 'Active', joinDate: 'Aug 22, 2019', students: '118' },
-    { id: '3', name: 'David Brown', subject: 'English', email: 'david.brown@school.edu', phone: '+1 555-0103', status: 'Active', joinDate: 'Feb 10, 2021', students: '156' },
-    { id: '4', name: 'Sarah Lee', subject: 'Chemistry', email: 'sarah.lee@school.edu', phone: '+1 555-0104', status: 'Active', joinDate: 'Nov 05, 2020', students: '94' },
-    { id: '5', name: 'Michael Chen', subject: 'Biology', email: 'michael.chen@school.edu', phone: '+1 555-0105', status: 'Active', joinDate: 'Mar 18, 2022', students: '105' },
-];
-
 export default function StaffList() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+
+    const schoolId = useAuthStore((state) => state.schoolId);
+    const [staffList, setStaffList] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (schoolId) {
+            setIsLoading(true);
+            getStaffList(schoolId)
+                .then((res) => {
+                    if (res && res.success) {
+                        setStaffList(res.data || []);
+                    } else {
+                        setStaffList([]);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error fetching staff list:', err);
+                    setStaffList([]);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }
+    }, [schoolId]);
 
     return (
         <View style={styles.container}>
@@ -36,7 +56,7 @@ export default function StaffList() {
                 <HeroCard
                     topLabel="Total Staff Members"
                     topIcon="users"
-                    title={STAFF_DATA.length.toString()}
+                    title={staffList.length.toString()}
                     subtitle="All active"
                     colors={theme.gradients.blue}
                 /> </View>
@@ -48,32 +68,41 @@ export default function StaffList() {
             >
                 {/* Staff List */}
                 <View style={styles.listContainer}>
-                    {STAFF_DATA.map((staff) => (
-                        <TouchableOpacity
-                            key={staff.id}
-                            style={styles.staffCard}
-                            activeOpacity={0.7}
-                            onPress={() => navigation.navigate('StaffDetail', { staff })}
-                        >
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.staffName}>{staff.name}</Text>
-                                <View style={styles.statusBadge}>
-                                    <Text style={styles.statusText}>{staff.status}</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={theme.colors.linkPrimary} style={{ marginTop: 40 }} />
+                    ) : staffList.length === 0 ? (
+                        <View style={styles.centered}>
+                            <Icon name="users" size={48} color={theme.colors.textMuted} style={styles.emptyIcon} />
+                            <Text style={styles.emptyText}>No staff members found</Text>
+                        </View>
+                    ) : (
+                        staffList.map((staff) => (
+                            <TouchableOpacity
+                                key={staff.id}
+                                style={styles.staffCard}
+                                activeOpacity={0.7}
+                                onPress={() => navigation.navigate('StaffDetail', { staff })}
+                            >
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.staffName}>{staff.name || 'Unknown'}</Text>
+                                    <View style={styles.statusBadge}>
+                                        <Text style={styles.statusText}>Active</Text>
+                                    </View>
                                 </View>
-                            </View>
 
-                            <Text style={styles.staffSubject}>{staff.subject}</Text>
+                                <Text style={styles.staffSubject}>Staff ID: {staff.id}</Text>
 
-                            <View style={styles.contactRow}>
-                                <Icon name="mail" size={14} color={theme.colors.textBody} style={styles.contactIcon} />
-                                <Text style={styles.contactText}>{staff.email}</Text>
-                            </View>
-                            <View style={styles.contactRow}>
-                                <Icon name="phone" size={14} color={theme.colors.textBody} style={styles.contactIcon} />
-                                <Text style={styles.contactText}>{staff.phone}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
+                                <View style={styles.contactRow}>
+                                    <Icon name="mail" size={14} color={theme.colors.textBody} style={styles.contactIcon} />
+                                    <Text style={styles.contactText}>{staff.email || 'N/A'}</Text>
+                                </View>
+                                <View style={styles.contactRow}>
+                                    <Icon name="phone" size={14} color={theme.colors.textBody} style={styles.contactIcon} />
+                                    <Text style={styles.contactText}>{staff.phoneNo || 'N/A'}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))
+                    )}
                 </View>
             </ScrollView>
         </View>
@@ -138,5 +167,18 @@ const styles = StyleSheet.create({
     contactText: {
         fontSize: 14,
         color: theme.colors.textBody,
+    },
+    centered: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    emptyIcon: {
+        marginBottom: 12,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: theme.colors.textMuted,
+        fontWeight: '500',
     },
 });

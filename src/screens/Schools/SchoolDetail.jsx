@@ -13,16 +13,31 @@ export default function SchoolDetail() {
 
   // Retrieve passed data or use fallback
   const school = route.params?.school || {
-    name: 'Greenwood High School',
-    location: 'Downtown District',
-    students: '450',
-    staff: '32',
-    score: '92%',
+    schoolName: 'Greenwood High School',
+    locationAddress: 'Downtown District',
+    locationName: 'Downtown District',
+    totalStudent: 450,
+    schoolEmployees: 32,
+    dateOfEstablishment: '1995-01-01T00:00:00',
+    principalName: 'Sarah Johnson',
+    totalSchoolSalary: 38400,
   };
 
+  const schoolName = school.schoolName || 'Unknown';
+  const location = school.locationAddress || school.locationName || 'N/A';
+  const principalName = school.principalName || 'N/A';
+  const establishedYear = school.dateOfEstablishment
+    ? new Date(school.dateOfEstablishment).getFullYear().toString()
+    : 'N/A';
+  const students = school.totalStudent !== undefined ? String(school.totalStudent) : '0';
+  const staff = school.schoolEmployees !== undefined ? String(school.schoolEmployees) : '0';
+  const salaryVal = school.totalSchoolSalary !== undefined
+    ? `PKR ${Number(school.totalSchoolSalary).toLocaleString()}`
+    : 'N/A';
+
   const RECENT_ACTIVITY = [
-    { id: '1', title: 'Monthly salary distributed', date: 'Apr 25, 2026', highlight: '$38,400', icon: 'trending-up' },
-    { id: '2', title: 'Lab equipment approved', date: 'Apr 22, 2026', highlight: '$2,400', icon: 'trending-up' },
+    { id: '1', title: 'Monthly salary distributed', date: 'Apr 25, 2026', highlight: salaryVal, icon: 'trending-up' },
+    { id: '2', title: 'Lab equipment approved', date: 'Apr 22, 2026', highlight: 'PKR 2,400', icon: 'trending-up' },
     { id: '3', title: '3 leave requests approved', date: 'Apr 20, 2026', highlight: '', icon: 'trending-up' },
   ];
 
@@ -44,26 +59,26 @@ export default function SchoolDetail() {
           </TouchableOpacity>
         </View>
         <View style={styles.headerTitles}>
-          <Text style={styles.pageTitle}>{school.name}</Text>
-          <Text style={styles.pageSubtitle}>{school.location}</Text>
+          <Text style={styles.pageTitle}>{schoolName}</Text>
+          <Text style={styles.pageSubtitle}>{location}</Text>
         </View>
       </LinearGradient>
-              
-        {/* Floating Top Info Card */}
-        <View style={[styles.floatingCard, theme.shadow.card]}>
-          <View style={styles.floatCol}>
-            <Text style={styles.floatLabel}>Principal</Text>
-            <Text style={styles.floatValue}>Sarah Johnson</Text>
-          </View>
-          <View style={styles.floatCol}>
-            <Text style={styles.floatLabel}>Established</Text>
-            <Text style={styles.floatValue}>1995</Text>
-          </View>
+
+      {/* Floating Top Info Card */}
+      <View style={[styles.floatingCard, theme.shadow.card]}>
+        <View style={styles.floatCol}>
+          <Text style={styles.floatLabel}>Principal</Text>
+          <Text style={styles.floatValue}>{principalName}</Text>
         </View>
+        <View style={styles.floatCol}>
+          <Text style={styles.floatLabel}>Established</Text>
+          <Text style={styles.floatValue}>{establishedYear}</Text>
+        </View>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* 2x2 Grid Stats */}
+        {/* 1x2 Grid Stats */}
         <View style={styles.gridContainer}>
           <View style={styles.gridRow}>
             {/* Students */}
@@ -71,7 +86,7 @@ export default function SchoolDetail() {
               <View style={[styles.gridIconCircle, { backgroundColor: theme.colors.blueSurface }]}>
                 <Icon name="users" size={20} color={theme.colors.linkPrimary} />
               </View>
-              <Text style={styles.gridValue}>{school.students}</Text>
+              <Text style={styles.gridValue}>{students}</Text>
               <Text style={styles.gridLabel}>Students</Text>
             </View>
 
@@ -80,28 +95,8 @@ export default function SchoolDetail() {
               <View style={[styles.gridIconCircle, { backgroundColor: theme.colors.greenSurface }]}>
                 <Icon name="user-check" size={20} color={theme.colors.successStrong} />
               </View>
-              <Text style={styles.gridValue}>{school.staff}</Text>
+              <Text style={styles.gridValue}>{staff}</Text>
               <Text style={styles.gridLabel}>Staff Members</Text>
-            </View>
-          </View>
-
-          <View style={styles.gridRow}>
-            {/* Performance */}
-            <View style={styles.gridCard}>
-              <View style={[styles.gridIconCircle, { backgroundColor: theme.colors.purpleSurface }]}>
-                <Icon name="award" size={20} color={theme.colors.accentPurple} />
-              </View>
-              <Text style={styles.gridValue}>{school.score}</Text>
-              <Text style={styles.gridLabel}>Performance</Text>
-            </View>
-
-            {/* Attendance */}
-            <View style={styles.gridCard}>
-              <View style={[styles.gridIconCircle, { backgroundColor: theme.colors.approvalCardBg }]}>
-                <Icon name="calendar" size={20} color={theme.colors.warning} />
-              </View>
-              <Text style={styles.gridValue}>96%</Text>
-              <Text style={styles.gridLabel}>Attendance</Text>
             </View>
           </View>
         </View>
@@ -113,17 +108,17 @@ export default function SchoolDetail() {
           </View>
           <View>
             <Text style={styles.salaryLabel}>Monthly Salary</Text>
-            <Text style={styles.salaryValue}>$38,400</Text>
+            <Text style={styles.salaryValue}>{salaryVal}</Text>
           </View>
         </View>
 
         {/* Recent Activity */}
         <View style={styles.activityContainer}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          
+
           {RECENT_ACTIVITY.map((activity, index) => (
-            <View 
-              key={activity.id} 
+            <View
+              key={activity.id}
               style={[
                 styles.activityRow,
                 index === RECENT_ACTIVITY.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }
@@ -132,7 +127,7 @@ export default function SchoolDetail() {
               <View style={styles.activityIconCircle}>
                 <Icon name={activity.icon} size={18} color={theme.colors.linkPrimary} />
               </View>
-              
+
               <View style={styles.activityDetails}>
                 <Text style={styles.activityTitle}>{activity.title}</Text>
                 <Text style={styles.activityDate}>{activity.date}</Text>
@@ -155,7 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundLight,
   },
   headerBg: {
-    paddingBottom: 70, 
+    paddingBottom: 70,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -190,7 +185,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
-    marginTop: 0, 
+    marginTop: 0,
   },
   floatingCard: {
     flexDirection: 'row',
@@ -215,12 +210,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textHeading,
   },
   gridContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   gridRow: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   gridCard: {
     flex: 1,
@@ -229,7 +224,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: theme.colors.borderSubtle,
-    ...theme.shadow.card,
   },
   gridIconCircle: {
     width: 44,
@@ -255,7 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 20,
-    marginBottom: 30,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: theme.colors.borderSubtle,
   },
@@ -273,7 +267,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: theme.colors.textHeading,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   activityContainer: {
     backgroundColor: theme.colors.white,

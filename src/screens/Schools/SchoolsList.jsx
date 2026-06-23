@@ -1,87 +1,111 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+import { useAuthStore } from '../../store/AuthStore';
+import { getEmployeeSchoolDashboardDetails } from '../../network/apis';
 
 // Components
 import HeroCard from '../../components/HeroCard';
 
-const SCHOOLS_DATA = [
-  { id: '1', name: 'Greenwood High School', location: 'Downtown', students: '450', staff: '32', score: '92%' },
-  { id: '2', name: 'Riverside Academy', location: 'North District', students: '380', staff: '28', score: '88%' },
-  { id: '3', name: 'Maple Valley School', location: 'East Side', students: '520', staff: '38', score: '95%' },
-  { id: '4', name: 'Sunset Elementary', location: 'West End', students: '310', staff: '24', score: '90%' },
-  { id: '5', name: 'Oakwood Institute', location: 'South Hills', students: '420', staff: '30', score: '87%' },
-  { id: '6', name: 'Pine Ridge School', location: 'Central', students: '390', staff: '29', score: '91%' },
-];
-
 export default function SchoolsList() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+
+  const empId = useAuthStore((state) => state.empId);
+  const [schoolsList, setSchoolsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (empId) {
+      setIsLoading(true);
+      getEmployeeSchoolDashboardDetails(empId)
+        .then((res) => {
+          if (res && res.success) {
+            setSchoolsList(res.data || []);
+          } else {
+            setSchoolsList([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching employee school details:', err);
+          setSchoolsList([]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [empId]);
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+
         {/* Custom Hero Card for Schools */}
         <View style={styles.heroWrapper}>
           <HeroCard
             topLabel="Total Schools"
-            title="6"
-            subtitle="Across 5 districts"
+            title={schoolsList.length.toString()}
+            subtitle="Assigned schools"
             colors={theme.gradients.purple}
           />
         </View>
 
         {/* Schools List */}
         <View style={styles.listContainer}>
-          {SCHOOLS_DATA.map((school) => (
-            <TouchableOpacity 
-              key={school.id} 
-              style={styles.schoolCard}
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('SchoolDetail', { school })}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.schoolName}>{school.name}</Text>
-                <Icon name="chevron-right" size={20} color={theme.colors.textMuted} />
-              </View>
-              
-              <View style={styles.locationRow}>
-                <Icon name="map-pin" size={14} color={theme.colors.textBody} style={{ marginRight: 6 }} />
-                <Text style={styles.locationText}>{school.location}</Text>
-              </View>
-
-              <View style={styles.statsRow}>
-                <View style={[styles.statBox, { backgroundColor: theme.colors.blueSurface }]}>
-                  <View style={styles.statTop}>
-                    <Icon name="users" size={12} color={theme.colors.linkPrimary} style={{ marginRight: 4 }} />
-                    <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Students</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={theme.colors.purple} style={{ marginTop: 40 }} />
+          ) : schoolsList.length === 0 ? (
+            <View style={styles.centered}>
+              <Icon name="home" size={48} color={theme.colors.textMuted} style={styles.emptyIcon} />
+              <Text style={styles.emptyText}>No schools assigned</Text>
+            </View>
+          ) : (
+            schoolsList.map((school, index) => {
+              const uniqueId = school.schoolIdFk || index;
+              const locationStr = school.locationAddress || school.locationName || 'N/A';
+              return (
+                <TouchableOpacity
+                  key={uniqueId}
+                  style={styles.schoolCard}
+                  activeOpacity={0.7}
+                  onPress={() => navigation.navigate('SchoolDetail', { school })}
+                >
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.schoolName}>{school.schoolName || 'Unknown'}</Text>
+                    <Icon name="chevron-right" size={20} color={theme.colors.textMuted} />
                   </View>
-                  <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{school.students}</Text>
-                </View>
 
-                <View style={[styles.statBox, { backgroundColor: theme.colors.greenSurface }]}>
-                  <View style={styles.statTop}>
-                    <Icon name="user-check" size={12} color={theme.colors.successStrong} style={{ marginRight: 4 }} />
-                    <Text style={[styles.statLabel, { color: theme.colors.successStrong }]}>Staff</Text>
+                  <View style={styles.locationRow}>
+                    <Icon name="map-pin" size={14} color={theme.colors.textBody} style={{ marginRight: 6 }} />
+                    <Text style={styles.locationText} numberOfLines={1}>{locationStr}</Text>
                   </View>
-                  <Text style={[styles.statValue, { color: theme.colors.successStrong }]}>{school.staff}</Text>
-                </View>
 
-                <View style={[styles.statBox, { backgroundColor: theme.colors.purpleSurface }]}>
-                  <View style={styles.statTop}>
-                    <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Score</Text>
+                  <View style={styles.statsRow}>
+                    <View style={[styles.statBox, { backgroundColor: theme.colors.blueSurface }]}>
+                      <View style={styles.statTop}>
+                        <Icon name="users" size={12} color={theme.colors.linkPrimary} style={{ marginRight: 4 }} />
+                        <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Students</Text>
+                      </View>
+                      <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{school.totalStudent || 0}</Text>
+                    </View>
+
+                    <View style={[styles.statBox, { backgroundColor: theme.colors.greenSurface }]}>
+                      <View style={styles.statTop}>
+                        <Icon name="user-check" size={12} color={theme.colors.successStrong} style={{ marginRight: 4 }} />
+                        <Text style={[styles.statLabel, { color: theme.colors.successStrong }]}>Staff</Text>
+                      </View>
+                      <Text style={[styles.statValue, { color: theme.colors.successStrong }]}>{school.schoolEmployees || 0}</Text>
+                    </View>
                   </View>
-                  <Text style={[styles.statValue, { color: theme.colors.accentPurple }]}>{school.score}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </View>
@@ -155,5 +179,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '800',
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: theme.colors.textMuted,
+    fontWeight: '500',
   },
 });

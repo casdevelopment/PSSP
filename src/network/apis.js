@@ -218,10 +218,13 @@ export const getEmployeeAttendanceSummary = async payload => {
   }
 };
 
-export const getStudentLast7DaysAttendanceHistory = async () => {
+export const getStudentLast7DaysAttendanceHistory = async (studentId) => {
   try {
     const response = await axiosInstance.get(
       '/EP/GetStudentLast7DaysAttendaceHistory',
+      {
+        params: { StudentId: studentId }
+      }
     );
     return response?.data;
   } catch (error) {
@@ -329,3 +332,39 @@ export const getEmployeesAttendanceLast7Days = async (schoolId) => {
     throw error;
   }
 };
+
+
+export const getStaffList = async (schoolId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetStaffList', {
+      params: { SchoolId: schoolId }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get staff list error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeeDetailsWithStudentCount = async (employeeId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeeDetailsWithStudentCount', {
+      params: { EmployeeId: employeeId }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employee details error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+export const getEmployeeSchoolDashboardDetails = async (empId) => {
+  try {
+    const response = await axiosInstance.get(`/EP/GetEmployeeSchoolDashboardDetails${empId}`);
+    return response?.data;
+  } catch (error) {
+    console.error('Error fetching employee school dashboard details:', error.response?.data || error.message);
+    throw error;
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import FullReportmodel from '../../components/FullReportModel';
+import { getStudentLast7DaysAttendanceHistory } from '../../network/apis';
 
 export default function StudentDetail() {
   const insets = useSafeAreaInsets();
@@ -20,9 +22,10 @@ export default function StudentDetail() {
   const [ismodelVisible, setmodelVisible] = useState(false);
 
   // Retrieve the passed student data, fallback to placeholder if none provided
-  const student = route.params?.student || { 
-    studentName: 'Alice Johnson', 
-    rollNumber: '101', 
+  const student = route.params?.student || {
+    studentId: 101,
+    studentName: 'Alice Johnson',
+    rollNumber: '101',
     fatherName: 'Robert Johnson',
     guardianPhoneNumber: '+1 555-1001',
     className: 'Class-10',
@@ -47,13 +50,30 @@ export default function StudentDetail() {
     { id: '3', subject: 'English', date: 'Apr 22, 2026', score: '96%' },
   ];
 
-  const ATTENDANCE_HISTORY = [
-    { id: '1', date: 'Apr 29', status: 'Present' },
-    { id: '2', date: 'Apr 28', status: 'Present' },
-    { id: '3', date: 'Apr 27', status: 'Late' },
-    { id: '4', date: 'Apr 26', status: 'Present' },
-    { id: '5', date: 'Apr 25', status: 'Present' },
-  ];
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const studentId = student.studentId;
+    if (studentId) {
+      setIsLoading(true);
+      getStudentLast7DaysAttendanceHistory(studentId)
+        .then((res) => {
+          if (res && res.success) {
+            setAttendanceHistory(res.data || []);
+          } else {
+            setAttendanceHistory([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching student attendance history:', err);
+          setAttendanceHistory([]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [student.studentId]);
 
   return (
     <View style={styles.container}>
@@ -75,15 +95,15 @@ export default function StudentDetail() {
 
       {/* Top Stats Cards */}
       <View style={styles.statsRow}>
-        <View style={[styles.statCard,{ backgroundColor: theme.colors.blueSurface }]}>
+        <View style={[styles.statCard, { backgroundColor: theme.colors.blueSurface }]}>
           <View style={styles.statHeader}>
             <Icon name="calendar" size={16} color={theme.colors.linkPrimary} />
             <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Class</Text>
           </View>
           <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>{className}</Text>
         </View>
-        
-        <View style={[styles.statCard,{ backgroundColor: theme.colors.purpleSurface }]}>
+
+        <View style={[styles.statCard, { backgroundColor: theme.colors.purpleSurface }]}>
           <View style={styles.statHeader}>
             <Icon name="award" size={16} color={theme.colors.accentPurple} />
             <Text style={[styles.statLabel, { color: theme.colors.accentPurple }]}>Section</Text>
@@ -100,7 +120,7 @@ export default function StudentDetail() {
         {/* Contact & Registration Information */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Contact & Identity</Text>
-          
+
           <View style={[styles.contactRow, { backgroundColor: theme.colors.appBackground }]}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.textOnDarkMuted }]}>
               <Icon name="phone" size={18} color={theme.colors.linkPrimary} />
@@ -110,7 +130,7 @@ export default function StudentDetail() {
               <Text style={styles.contactValue}>{phone}</Text>
             </View>
           </View>
-          
+
           <View style={[styles.contactRow, { backgroundColor: theme.colors.appBackground }]}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.successSubtle }]}>
               <Icon name="file-text" size={18} color={theme.colors.successStrong} />
@@ -171,32 +191,51 @@ export default function StudentDetail() {
 
         {/* Attendance History */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Attendance History (Mock)</Text>
-          {ATTENDANCE_HISTORY.map((item, index) => {
-            const isPresent = item.status === 'Present';
-            return (
-              <View 
-                key={item.id} 
-                style={[
-                  styles.historyRow,
-                  index === ATTENDANCE_HISTORY.length - 1 ? { borderBottomWidth: 0, paddingBottom: 0 } : {}
-                ]}
-              >
-                <Text style={styles.historyDate}>{item.date}</Text>
-                <View style={[
-                  styles.statusChip, 
-                  { backgroundColor: isPresent ? theme.colors.successSubtle : theme.colors.warningSubtle }
-                ]}>
-                  <Text style={[
-                    styles.statusChipText, 
-                    { color: isPresent ? theme.colors.successStrong : theme.colors.warning }
-                  ]}>
-                    {item.status}
-                  </Text>
+          <Text style={styles.sectionTitle}>Attendance History</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color={theme.colors.linkPrimary} style={{ marginVertical: 20 }} />
+          ) : attendanceHistory.length === 0 ? (
+            <Text style={styles.emptyHistoryText}>No attendance history found</Text>
+          ) : (
+            attendanceHistory.map((item, index) => {
+              const isPresent = item.attendanceStatus === 'Present';
+              const isAbsent = item.attendanceStatus === 'Absent';
+
+              let chipBg = theme.colors.warningSubtle;
+              let chipText = theme.colors.warning;
+              if (isPresent) {
+                chipBg = theme.colors.successSubtle;
+                chipText = theme.colors.successStrong;
+              } else if (isAbsent) {
+                chipBg = theme.colors.dangerSubtle;
+                chipText = theme.colors.dangerStrong;
+              }
+
+              const formattedDate = item.attendanceDate
+                ? new Date(item.attendanceDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+                : 'N/A';
+
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.historyRow,
+                    index === attendanceHistory.length - 1 ? { borderBottomWidth: 0, paddingBottom: 0 } : {}
+                  ]}
+                >
+                  <Text style={styles.historyDate}>{formattedDate}</Text>
+                  <View style={[styles.statusChip, { backgroundColor: chipBg }]}>
+                    <Text style={[styles.statusChipText, { color: chipText }]}>
+                      {item.attendanceStatus || 'N/A'}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            )
-          })}
+              );
+            })
+          )}
         </View>
       </ScrollView>
 
@@ -205,16 +244,16 @@ export default function StudentDetail() {
         <TouchableOpacity style={styles.primaryBtn}>
           <Text style={styles.primaryBtnText}>Send Message</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => setmodelVisible(true)}>
           <Text style={styles.secondaryBtnText}>View Full Report</Text>
         </TouchableOpacity>
       </View>
 
       {/* Embedded model - Passing student object downward */}
-      <FullReportmodel 
-        visible={ismodelVisible} 
-        onClose={() => setmodelVisible(false)} 
+      <FullReportmodel
+        visible={ismodelVisible}
+        onClose={() => setmodelVisible(false)}
         student={student}
       />
     </View>
@@ -228,7 +267,7 @@ const styles = StyleSheet.create({
   },
   headerBg: {
     backgroundColor: theme.colors.linkPrimary,
-    paddingBottom: 40, 
+    paddingBottom: 40,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -264,7 +303,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
-    marginTop: -30, 
+    marginTop: -30,
   },
   statsRow: {
     backgroundColor: theme.colors.white,
@@ -277,7 +316,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.borderSubtle,
     padding: 20,
-    ...theme.shadow.card,
     gap: 12,
   },
   statCard: {
@@ -437,5 +475,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textBody,
     fontSize: 15,
     fontWeight: '600',
+  },
+  emptyHistoryText: {
+    fontSize: 14,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginVertical: 10,
   },
 });
