@@ -1,46 +1,158 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  StatusBar 
+  StatusBar,
+  ActivityIndicator,
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-
-// Components
 import HeroCard from '../../components/HeroCard';
-
-const DISTRIBUTION_DATA = [
-  { id: '1', name: 'John Smith', subject: 'Mathematics', amount: '$3,200', date: 'Apr 25, 2026', status: 'Paid' },
-  { id: '2', name: 'Emma Wilson', subject: 'Physics', amount: '$3,000', date: 'Apr 25, 2026', status: 'Paid' },
-  { id: '3', name: 'David Brown', subject: 'English', amount: '$2,900', date: 'Due Apr 30', status: 'Pending' },
-  { id: '4', name: 'Sarah Lee', subject: 'Chemistry', amount: '$3,100', date: 'Apr 25, 2026', status: 'Paid' },
-  { id: '5', name: 'Michael Chen', subject: 'Biology', amount: '$3,000', date: 'Due Apr 30', status: 'Pending' },
-];
+import { useAuthStore } from '../../store/AuthStore';
+import { 
+  getEmployeeSalaryStatusBySchool, 
+  getEmployeeSchoolDashboardDetails, 
+  principalSalaryAcknowledgement 
+} from '../../network/apis';
 
 export default function SalaryDistribution() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const role = useAuthStore((state) => state.userType); // 'coordinator', 'principal'
+  const empId = useAuthStore((state) => state.empId);
+  const schoolId = useAuthStore((state) => state.schoolId);
+  const userId = useAuthStore((state) => state.userId);
+
   const [activeTab, setActiveTab] = useState('Current Month');
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [payingId, setPayingId] = useState(null); // tracking paying state for individual items
+
+  const fetchData = useCallback(async () => {
+    try {
+      if (role === 'coordinator') {
+        const res = await getEmployeeSchoolDashboardDetails(empId);
+        if (res?.success) {
+          setData(res.data || []);
+        } else if (res?.code === 404) {
+          setData([]);
+        }
+      } else {
+        // Principal
+        const res = await getEmployeeSalaryStatusBySchool(schoolId);
+        if (res?.success) {
+          setData(res.data || []);
+        } else if (res?.code === 404) {
+          setData([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching salary distribution data:', error);
+      setData([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [role, empId, schoolId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const handlePayNow = async (item) => {
+    if (payingId) return;
+    setPayingId(item.empid);
+    try {
+      const payload = {
+        empId: item.empid,
+        registerId: item.registerId,
+        userId: userId
+      };
+      const res = await principalSalaryAcknowledgement(payload);
+      if (res?.success) {
+        Alert.alert('Success', `Salary of ${item.name} paid successfully.`);
+        // Refresh local data state
+        setData(prevData => prevData.map(d => {
+          if (d.empid === item.empid && d.registerId === item.registerId) {
+            return { ...d, salaryStatus: 'Paid' };
+          }
+          return d;
+        }));
+      } else {
+        Alert.alert('Error', res?.message || 'Failed to pay salary.');
+      }
+    } catch (error) {
+      console.error('Error acknowledging salary payment:', error);
+      Alert.alert('Error', 'An error occurred while paying salary.');
+    } finally {
+      setPayingId(null);
+    }
+  };
+
+  // Calculations for Hero Card
+  let totalAmount = 0;
+  let subtitleText = '';
+  
+  if (role === 'coordinator') {
+    totalAmount = data.reduce((sum, item) => sum + (item.totalSchoolSalary || 0), 0);
+    subtitleText = `${data.length} assigned schools`;
+  } else {
+    // Principal
+    totalAmount = data.reduce((sum, item) => sum + (item.netSalary || 0), 0);
+    subtitleText = `${data.length} staff members`;
+  }
+
+  // Filter data based on selected tab
+  let filteredData = [...data];
+  if (activeTab === 'History') {
+    if (role === 'coordinator') {
+      filteredData = [...data]; // School summaries are constant
+    } else {
+      // Principal shows paid/acknowledged staff records in history tab
+      filteredData = data.filter(d => d.salaryStatus?.toLowerCase() === 'paid' || d.salaryStatus?.toLowerCase() === 'acknowledged');
+    }
+  }
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.successStrong} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
     
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.successStrong]} />
+        }
+      >
         
-        {/* Total Distribution Hero using Custom Component */}
+        {/* Total Distribution Hero */}
         <View style={styles.heroWrapper}>
           <HeroCard
-            topLabel="Total This Month"
+            topLabel={role === 'coordinator' ? "Total Schools Salaries" : "Total Staff Salaries"}
             topIcon="dollar-sign"
-            title="$15,200"
-            subtitle="5 staff members • April 2026"
+            title={`PKR ${totalAmount.toLocaleString()}`}
+            subtitle={subtitleText}
             colors={theme.gradients.green}
           />
         </View>
@@ -65,51 +177,138 @@ export default function SalaryDistribution() {
           </TouchableOpacity>
         </View>
 
-        {/* Staff List */}
+        {/* Staff / School List */}
         <View style={styles.listContainer}>
-          {DISTRIBUTION_DATA.map((record) => {
-            const isPaid = record.status === 'Paid';
-            return (
-              <TouchableOpacity 
-                key={record.id} 
-                style={styles.recordCard}
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate('StaffSalaryDetails', { record })}
-              >
-                <View style={styles.cardHeader}>
-                  <View>
-                    <Text style={styles.staffName}>{record.name}</Text>
-                    <Text style={styles.staffSubject}>{record.subject}</Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }]}>
-                    <Text style={[styles.statusBadgeText, { color: isPaid ? theme.colors.successStrong : theme.colors.pendingChipText }]}>
-                      {record.status}
-                    </Text>
-                  </View>
-                </View>
+          {filteredData.length === 0 ? (
+            <View style={styles.recordCard}>
+              <Text style={{ textAlign: 'center', color: theme.colors.textMuted }}>
+                No records found.
+              </Text>
+            </View>
+          ) : (
+            filteredData.map((item, idx) => {
+              if (role === 'coordinator') {
+                const formattedEstablishment = item.dateOfEstablishment
+                  ? new Date(item.dateOfEstablishment).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'N/A';
 
-                <View style={styles.cardBottom}>
-                  <View>
-                    <Text style={styles.amountText}>{record.amount}</Text>
-                    <View style={styles.dateRow}>
-                      <Icon name="calendar" size={13} color={theme.colors.textMuted} style={{ marginRight: 6 }} />
-                      <Text style={styles.dateText}>{record.date}</Text>
+                return (
+                  <TouchableOpacity 
+                    key={item.schoolIdFk || String(idx)} 
+                    style={styles.recordCard}
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('StaffSalaryDetails', { 
+                      record: {
+                        name: item.principalName || 'No Principal Assigned',
+                        principalId: item.principalId,
+                        schoolName: item.schoolName,
+                        schoolId: item.schoolIdFk,
+                        amount: `PKR ${item.totalSchoolSalary.toLocaleString()}`,
+                        status: 'Paid',
+                        isCoordinatorView: true,
+                        schoolEmployees: item.schoolEmployees,
+                        totalSchoolSalary: item.totalSchoolSalary
+                      } 
+                    })}
+                  >
+                    <View style={styles.cardHeader}>
+                      <View style={{ flex: 1, paddingRight: 8 }}>
+                        <Text style={styles.staffName}>{item.schoolName}</Text>
+                        <Text style={styles.staffSubject}>Principal: {item.principalName || 'Not Assigned'}</Text>
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: theme.colors.blueSurface }]}>
+                        <Text style={[styles.statusBadgeText, { color: theme.colors.linkPrimary }]}>
+                          Active
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  
-                  {isPaid ? (
-                    <View style={styles.paidCircle}>
-                      <Icon name="check" size={16} color={theme.colors.successStrong} />
+
+                    <View style={styles.cardBottom}>
+                      <View>
+                        <Text style={styles.amountText}>PKR {item.totalSchoolSalary.toLocaleString()}</Text>
+                        <View style={styles.dateRow}>
+                          <Icon name="calendar" size={13} color={theme.colors.textMuted} style={{ marginRight: 6 }} />
+                          <Text style={styles.dateText}>Est: {formattedEstablishment}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.paidCircle}>
+                        <Icon name="chevron-right" size={16} color={theme.colors.linkPrimary} />
+                      </View>
                     </View>
-                  ) : (
-                    <TouchableOpacity style={styles.payNowBtn}>
-                      <Text style={styles.payNowBtnText}>Pay Now</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                  </TouchableOpacity>
+                );
+              } else {
+                // Principal View (Staff Salaries)
+                const isPaid = item.salaryStatus?.toLowerCase() === 'paid' || item.salaryStatus?.toLowerCase() === 'acknowledged';
+                const formattedPaymentDate = item.Date
+                  ? new Date(item.Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'N/A';
+
+                return (
+                  <TouchableOpacity 
+                    key={item.empid || String(idx)} 
+                    style={styles.recordCard}
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('StaffSalaryDetails', { 
+                      record: {
+                        empid: item.empid,
+                        name: item.name,
+                        subject: 'Staff Member',
+                        amount: `PKR ${item.netSalary?.toLocaleString()}`,
+                        date: item.Date,
+                        status: item.salaryStatus,
+                        registerId: item.registerId,
+                        isCoordinatorView: false
+                      } 
+                    })}
+                  >
+                    <View style={styles.cardHeader}>
+                      <View>
+                        <Text style={styles.staffName}>{item.name}</Text>
+                        <Text style={styles.staffSubject}>Staff Member</Text>
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }]}>
+                        <Text style={[styles.statusBadgeText, { color: isPaid ? theme.colors.successStrong : theme.colors.pendingChipText }]}>
+                          {item.salaryStatus || 'Pending'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardBottom}>
+                      <View>
+                        <Text style={styles.amountText}>PKR {item.netSalary?.toLocaleString()}</Text>
+                        <View style={styles.dateRow}>
+                          <Icon name="calendar" size={13} color={theme.colors.textMuted} style={{ marginRight: 6 }} />
+                          <Text style={styles.dateText}>
+                            {isPaid ? `Paid: ${formattedPaymentDate}` : `Due Date: ${formattedPaymentDate}`}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {isPaid ? (
+                        <View style={styles.paidCircle}>
+                          <Icon name="check" size={16} color={theme.colors.successStrong} />
+                        </View>
+                      ) : (
+                        <TouchableOpacity 
+                          style={styles.payNowBtn} 
+                          onPress={() => handlePayNow(item)}
+                          disabled={payingId !== null}
+                        >
+                          {payingId === item.empid ? (
+                            <ActivityIndicator size="small" color={theme.colors.white} />
+                          ) : (
+                            <Text style={styles.payNowBtnText}>Pay Now</Text>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              }
+            })
+          )}
         </View>
 
       </ScrollView>
@@ -127,12 +326,11 @@ const styles = StyleSheet.create({
   },
   heroWrapper: {
     marginTop: 10,
-    // Note: HeroCard has built-in paddingHorizontal: 16, so we wrap it without adding more padding here
   },
   tabsRow: {
     flexDirection: 'row',
     marginBottom: 20,
-    marginHorizontal: 16, // Added to account for scroll padding removal
+    marginHorizontal: 16,
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     borderWidth: 1,
@@ -163,7 +361,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     gap: 12,
-    paddingHorizontal: 16, // Added to account for scroll padding removal
+    paddingHorizontal: 16,
   },
   recordCard: {
     backgroundColor: theme.colors.white,
@@ -206,7 +404,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   amountText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: theme.colors.textHeading,
     marginBottom: 6,
@@ -232,6 +430,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
+    minWidth: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   payNowBtnText: {
     color: theme.colors.white,

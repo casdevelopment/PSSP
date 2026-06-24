@@ -434,3 +434,85 @@ export const postExpense = async (payload) => {
   }
 };
 
+// ==================== SALARY APIS ====================
+
+export const getEmployeeCurrentSalary = async (empId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeeCurrentSalary', {
+      params: { EmpId: empId }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employee current salary error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeeSalaryHistory = async (empId, year) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeeSalaryHistory', {
+      params: { EmpId: empId, Year: year }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employee salary history error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeeSalaryDetails = async (empId, registerId) => {
+  try {
+    const response = await axiosInstance.get('/EP/GetEmployeeSalaryDetails', {
+      params: {
+        EmpId: empId,
+        RegisterId: registerId
+      }
+    });
+    return response?.data;
+  } catch (error) {
+    console.error('Get employee salary details error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const updateSalaryAcknowledgement = async (empId, registerId) => {
+  try {
+    const payload = {
+      EmpId: empId,
+      RegisterId: registerId
+    };
+    const response = await axiosInstance.post(
+      '/EP/UpdateSalaryAcknowledgement',
+      payload,
+      {
+        params: payload
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.error('Update salary acknowledgement error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const principalSalaryAcknowledgement = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/PrincipalSalaryAcknowledgement', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Principal salary acknowledgement error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEmployeeSalaryStatusBySchool = async (schoolId) => {
+  try {
+    const response = await axiosInstance.get(`/EP/GetEmployeeSalaryStatusBySchool${schoolId}`);
+    return response?.data;
+  } catch (error) {
+    console.error('Get employee salary status by school error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+

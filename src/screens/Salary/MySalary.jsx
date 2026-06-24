@@ -1,22 +1,79 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-
-// Update import path based on your file structure
 import HeroCard from '../../components/HeroCard'; 
+import { useAuthStore } from '../../store/AuthStore';
+import { getEmployeeCurrentSalary, getEmployeeSalaryHistory } from '../../network/apis';
 
 export default function MySalary() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const empId = useAuthStore((state) => state.empId);
 
-  const HISTORY_DATA = [
-    { id: '1', month: 'March 2026', date: 'Mar 25, 2026', amount: '$3,200', status: 'Received' },
-    { id: '2', month: 'February 2026', date: 'Feb 25, 2026', amount: '$3,200', status: 'Received' },
-    { id: '3', month: 'January 2026', date: 'Jan 25, 2026', amount: '$3,200', status: 'Received' },
-  ];
+  const [currentSalaryData, setCurrentSalaryData] = useState([]);
+  const [monthlyRecords, setMonthlyRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const year = new Date().getFullYear();
+      const currentRes = await getEmployeeCurrentSalary(empId);
+      const historyRes = await getEmployeeSalaryHistory(empId, year);
+
+      if (currentRes?.success) {
+        setCurrentSalaryData(currentRes.data || []);
+      }
+      if (historyRes?.success && historyRes.data) {
+        setMonthlyRecords(historyRes.data.monthlyRecords || []);
+      }
+    } catch (error) {
+      console.error('Error fetching staff salary details:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [empId]);
+
+  useEffect(() => {
+    if (empId) {
+      fetchData();
+    }
+  }, [empId, fetchData]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const basic = currentSalaryData?.find(item => item.name?.toLowerCase() === 'basic')?.netAmount || 0;
+  const allowance = currentSalaryData?.find(item => item.name?.toLowerCase() === 'allowance')?.netAmount || 0;
+  const deductions = currentSalaryData
+    ?.filter(item => {
+      const name = item.name?.toLowerCase();
+      return name !== 'basic' && name !== 'allowance';
+    })
+    ?.reduce((sum, item) => sum + (item.netAmount || 0), 0) || 0;
+  const total = currentSalaryData?.[0]?.totalSalary || (basic + allowance + deductions);
+
+  // Latest month status
+  const latestRecord = monthlyRecords[0];
+  const latestMonth = latestRecord ? latestRecord.monthLabel : new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  const isPaid = latestRecord ? (latestRecord.salaryStatus?.toLowerCase() === 'acknowledged' || latestRecord.salaryStatus?.toLowerCase() === 'paid') : false;
+  const formattedPaidOn = latestRecord && latestRecord.paidOn
+    ? new Date(latestRecord.paidOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.successStrong} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -25,49 +82,64 @@ export default function MySalary() {
       {/* Current Month Hero Using Reusable HeroCard */}
       <View style={{ marginTop: 10 }}>
         <HeroCard
-          colors={theme.gradients.green}
+          colors={isPaid ? theme.gradients.green : theme.gradients.orange}
           topLabel="Current Month"
           topIcon="dollar-sign"
-          title="$3,200"
-          subtitle="April 2026"
+          title={`PKR ${total.toLocaleString()}`}
+          subtitle={latestMonth}
           titleStyle={styles.heroAmount}
           rightElement={
             <View style={styles.checkCircle}>
-              <Icon name="check" size={20} color={theme.colors.white} />
+              <Icon name={isPaid ? "check" : "clock"} size={20} color={theme.colors.white} />
             </View>
           }
         >
           {/* Injected custom bottom row */}
           <View style={styles.heroBottomRow}>
             <Icon name="calendar" size={14} color={theme.colors.white90} style={{ marginRight: 6 }} />
-            <Text style={styles.heroDate}>Received on Apr 25, 2026</Text>
+            <Text style={styles.heroDate}>
+              {latestRecord?.salaryStatus?.toLowerCase() === 'acknowledged' 
+                ? `Acknowledged on ${formattedPaidOn || ''}`
+                : latestRecord?.salaryStatus?.toLowerCase() === 'paid'
+                ? `Paid on ${formattedPaidOn || ''}`
+                : 'Pending payment'
+              }
+            </Text>
           </View>
         </HeroCard>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.successStrong]} />
+        }
+      >
         {/* Salary Breakdown */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Salary Breakdown</Text>
 
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Base Salary</Text>
-            <Text style={styles.breakdownValue}>$2,800</Text>
+            <Text style={styles.breakdownValue}>PKR {basic.toLocaleString()}</Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Allowances</Text>
-            <Text style={styles.breakdownValue}>$400</Text>
+            <Text style={styles.breakdownValue}>PKR {allowance.toLocaleString()}</Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Deductions</Text>
-            <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>-$0</Text>
+            <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>
+              {deductions < 0 ? `-PKR ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
+            </Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>$3,200</Text>
+            <Text style={styles.totalAmount}>PKR {total.toLocaleString()}</Text>
           </View>
         </View>
 
@@ -80,28 +152,61 @@ export default function MySalary() {
         </View>
 
         <View style={styles.sectionCard}>
-          {HISTORY_DATA.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('SalaryDetail', { month: item.month })}
-            >
-              <View style={[styles.historyRow, index === HISTORY_DATA.length - 1 && { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
-                <View>
-                  <Text style={styles.historyMonth}>{item.month}</Text>
-                  <Text style={styles.historyDate}>{item.date}</Text>
-                </View>
-                <View style={styles.historyRight}>
-                  <Text style={styles.historyAmount}>{item.amount}</Text>
-                  <View style={styles.statusRow}>
-                    <Icon name="check" size={14} color={theme.colors.successStrong} style={{ marginRight: 4 }} />
-                    <Text style={styles.statusText}>Received</Text>
+          {monthlyRecords.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: theme.colors.textMuted, marginVertical: 10 }}>
+              No salary history found.
+            </Text>
+          ) : (
+            monthlyRecords.slice(0, 3).map((item, index) => {
+              const recIsPaid = item.salaryStatus?.toLowerCase() === 'acknowledged' || item.salaryStatus?.toLowerCase() === 'paid';
+              const recDateFormatted = item.paidOn
+                ? new Date(item.paidOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'Pending';
+              
+              return (
+                <TouchableOpacity
+                  key={item.registerMasterId || String(index)}
+                  activeOpacity={0.7}
+                  onPress={() => navigation.navigate('SalaryDetail', { 
+                    registerMasterId: item.registerMasterId,
+                    month: item.monthLabel,
+                    amount: `PKR ${item.netSalary?.toLocaleString()}`,
+                    salaryStatus: item.salaryStatus
+                  })}
+                >
+                  <View style={[styles.historyRow, index === Math.min(3, monthlyRecords.length) - 1 && { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
+                    <View>
+                      <Text style={styles.historyMonth}>{item.monthLabel}</Text>
+                      <Text style={styles.historyDate}>
+                        {item.salaryStatus === 'Acknowledged' 
+                          ? `Acknowledged: ${recDateFormatted}` 
+                          : item.salaryStatus === 'Paid'
+                          ? `Paid: ${recDateFormatted}`
+                          : 'Pending'
+                        }
+                      </Text>
+                    </View>
+                    <View style={styles.historyRight}>
+                      <Text style={styles.historyAmount}>PKR {item.netSalary?.toLocaleString()}</Text>
+                      <View style={styles.statusRow}>
+                        <Icon 
+                          name={recIsPaid ? "check" : "clock"} 
+                          size={14} 
+                          color={recIsPaid ? theme.colors.successStrong : theme.colors.warning} 
+                          style={{ marginRight: 4 }} 
+                        />
+                        <Text style={[styles.statusText, { color: recIsPaid ? theme.colors.successStrong : theme.colors.warning }]}>
+                          {item.salaryStatus || 'Pending'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
+
 
         {/* Download Button */}
         <TouchableOpacity style={styles.outlineBtn}>

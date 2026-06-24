@@ -1,31 +1,125 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-
-// Adjust path as needed for your project structure
-import HeroCard from '../../components/HeroCard'; 
+import HeroCard from '../../components/HeroCard';
+import { useAuthStore } from '../../store/AuthStore';
+import { getEmployeeSalaryDetails, getEmployeeCurrentSalary, principalSalaryAcknowledgement } from '../../network/apis';
 
 export default function StaffSalaryDetails() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
+  const userId = useAuthStore((state) => state.userId);
 
-  // Retrieve passed record or use fallback
-  const record = route.params?.record || {
-    name: 'John Smith',
-    subject: 'Mathematics',
-    amount: '$3,200',
-    date: 'Apr 25, 2026',
-    status: 'Paid',
-    base: '$2,800',
-    allowances: '$400',
-    deductions: '$0',
+  const routeRecord = route.params?.record;
+  const record = useMemo(() => routeRecord || {
+    name: 'Staff Member',
+    subject: 'Staff Member',
+    amount: 'PKR 0',
+    date: '',
+    status: 'Pending',
+    isCoordinatorView: false
+  }, [routeRecord]);
+
+  const [loading, setLoading] = useState(true);
+  const [details, setDetails] = useState([]); // for Principal view (detailed lines)
+  const [currentSalaryData, setCurrentSalaryData] = useState([]); // for Coordinator view (principal current summary)
+  const [salaryStatus, setSalaryStatus] = useState(record.status || 'Pending');
+  const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    setSalaryStatus(record.status || 'Pending');
+  }, [record.status]);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        if (record.isCoordinatorView) {
+          if (record.principalId) {
+            const res = await getEmployeeCurrentSalary(record.principalId);
+            if (res?.success) {
+              setCurrentSalaryData(res.data || []);
+            }
+          }
+        } else {
+          if (record.registerId) {
+            const res = await getEmployeeSalaryDetails(record.empid, record.registerId);
+            if (res?.success) {
+              setDetails(res.data || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching details in StaffSalaryDetails:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [record]);
+
+  const handlePaySalary = async () => {
+    if (paying) return;
+    setPaying(true);
+    try {
+      const payload = {
+        empId: record.empid,
+        registerId: record.registerId,
+        userId: userId
+      };
+      const res = await principalSalaryAcknowledgement(payload);
+      if (res?.success) {
+        Alert.alert('Success', `Salary of ${record.name} paid successfully.`);
+        setSalaryStatus('Paid');
+      } else {
+        Alert.alert('Error', res?.message || 'Failed to pay salary.');
+      }
+    } catch (error) {
+      console.error('Error acknowledging salary payment:', error);
+      Alert.alert('Error', 'An error occurred while paying salary.');
+    } finally {
+      setPaying(false);
+    }
   };
 
-  const isPaid = record.status === 'Paid';
+  const isPaid = salaryStatus?.toLowerCase() === 'paid' || salaryStatus?.toLowerCase() === 'acknowledged';
+
+  // Dynamic values depending on Coordinator vs Principal
+  let displayAmount = record.amount;
+  let formattedDate = record.date
+    ? new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'N/A';
+
+  // For Coordinator: Principal breakdown
+  const basic = currentSalaryData?.find(item => item.name?.toLowerCase() === 'basic')?.netAmount || 0;
+  const allowance = currentSalaryData?.find(item => item.name?.toLowerCase() === 'allowance')?.netAmount || 0;
+  const deductions = currentSalaryData
+    ?.filter(item => {
+      const name = item.name?.toLowerCase();
+      return name !== 'basic' && name !== 'allowance';
+    })
+    ?.reduce((sum, item) => sum + (item.netAmount || 0), 0) || 0;
+  const total = currentSalaryData?.[0]?.totalSalary || (basic + allowance + deductions);
+
+  if (record.isCoordinatorView) {
+    displayAmount = `PKR ${total.toLocaleString()}`;
+  } else {
+    const netSalaryComponent = details.find(item => item.componentName === 'TOTAL NET SALARY');
+    if (netSalaryComponent) {
+      displayAmount = `PKR ${netSalaryComponent.amount?.toLocaleString()}`;
+    }
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.successStrong} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -41,33 +135,28 @@ export default function StaffSalaryDetails() {
         </View>
         <View style={styles.headerTitles}>
           <Text style={styles.pageTitle}>Salary Details</Text>
-          <Text style={styles.pageSubtitle}>{record.name}</Text>
+          <Text style={styles.pageSubtitle}>{record.isCoordinatorView ? record.schoolName : record.name}</Text>
         </View>
       </View>
 
-{/* Total Amount Card (Floating) Replaced with HeroCard */}
+      {/* Total Amount Card (Floating) Replaced with HeroCard */}
       <View style={{ marginTop: -30 }}>
         <HeroCard
-          // Using an array of white to ensure the LinearGradient renders as a solid white card
-          colors={[theme.colors.white, theme.colors.white]} 
-          
-          // Passing a Text component directly into the string prop overrides the HeroCard's hardcoded white label
-          topLabel={<Text style={{ color: theme.colors.textMuted }}>Total Amount</Text>} 
-          
-          title={record.amount}
-          titleStyle={{ fontSize: 36, fontWeight: '800', color: theme.colors.textHeading }} 
-          
+          colors={[theme.colors.white, theme.colors.white]}
+          topLabel={<Text style={{ color: theme.colors.textMuted }}>Total Amount</Text>}
+          title={displayAmount}
+          titleStyle={{ fontSize: 32, fontWeight: '800', color: theme.colors.textHeading }}
           rightElement={
-            <View 
+            <View
               style={[
-                styles.statusIconCircle, 
+                styles.statusIconCircle,
                 { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }
               ]}
             >
-              <Icon 
-                name={isPaid ? "check" : "dollar-sign"} 
-                size={24} 
-                color={isPaid ? theme.colors.successStrong : theme.colors.pendingChipText} 
+              <Icon
+                name={isPaid ? "check" : "dollar-sign"}
+                size={24}
+                color={isPaid ? theme.colors.successStrong : theme.colors.pendingChipText}
               />
             </View>
           }
@@ -75,31 +164,37 @@ export default function StaffSalaryDetails() {
           {/* Bottom section updated to use dark text and subtle borders for the white background */}
           <View style={[styles.amountBottom, { borderTopColor: theme.colors.surfaceSubtle }]}>
             <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-            <Text style={[styles.dateText, { color: theme.colors.textBody }]}>{record.date}</Text>
+            <Text style={[styles.dateText, { color: theme.colors.textBody }]}>
+              {record.isCoordinatorView ? `Est. Date: ${formattedDate}` : `Due/Paid Date: ${formattedDate}`}
+            </Text>
           </View>
         </HeroCard>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* NEW: Additional Information Card */}
-        <View style={styles.additionalCard}>
-          <Text style={styles.sectionTitle}>Additional Information</Text>
-          <View style={styles.additionalRow}>
-            <View style={styles.additionalBlockLeft}>
-              <Text style={styles.additionalLabel}>Total Staff</Text>
-              <Text style={styles.additionalValueBlue}>32</Text>
-            </View>
-            <View style={styles.additionalBlockRight}>
-              <Text style={styles.additionalLabel}>Staff Salaries</Text>
-              <Text style={styles.additionalValueGreen}>$102,400</Text>
+        {/* Coordinator Specific: Additional Information Card */}
+        {record.isCoordinatorView && (
+          <View style={styles.additionalCard}>
+            <Text style={styles.sectionTitle}>Additional Information</Text>
+            <View style={styles.additionalRow}>
+              <View style={styles.additionalBlockLeft}>
+                <Text style={styles.additionalLabel}>Total Staff</Text>
+                <Text style={styles.additionalValueBlue}>{record.schoolEmployees || 0}</Text>
+              </View>
+              <View style={styles.additionalBlockRight}>
+                <Text style={styles.additionalLabel}>Staff Salaries</Text>
+                <Text style={styles.additionalValueGreen}>
+                  PKR {(record.totalSchoolSalary || 0).toLocaleString()}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
-        {/* Staff Information */}
+        {/* Staff / Principal Information */}
         <View style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>Staff Information</Text>
+          <Text style={styles.sectionTitle}>{record.isCoordinatorView ? 'Principal Information' : 'Staff Information'}</Text>
 
           <View style={styles.infoRow}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
@@ -113,11 +208,11 @@ export default function StaffSalaryDetails() {
 
           <View style={[styles.infoRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.purpleSurface }]}>
-              <Icon name="user" size={18} color={theme.colors.accentPurple} />
+              <Icon name="tag" size={18} color={theme.colors.accentPurple} />
             </View>
             <View>
-              <Text style={styles.infoLabel}>Subject</Text>
-              <Text style={styles.infoValue}>{record.subject}</Text>
+              <Text style={styles.infoLabel}>Role</Text>
+              <Text style={styles.infoValue}>{record.isCoordinatorView ? 'Principal' : 'Staff Member'}</Text>
             </View>
           </View>
         </View>
@@ -125,37 +220,76 @@ export default function StaffSalaryDetails() {
         {/* Salary Breakdown */}
         <Text style={styles.sectionTitle}>Salary Breakdown</Text>
         <View style={styles.breakdownCard}>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Base Salary</Text>
-            <Text style={styles.breakdownValue}>{record.base || '$2,800'}</Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Allowances</Text>
-            <Text style={styles.breakdownValue}>{record.allowances || '$400'}</Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Deductions</Text>
-            <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>{record.deductions || '$0'}</Text>
-          </View>
+          {record.isCoordinatorView ? (
+            // Coordinator view renders mapped Principal current summary
+            <>
+              <View style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>Base Salary</Text>
+                <Text style={styles.breakdownValue}>PKR {basic.toLocaleString()}</Text>
+              </View>
+              <View style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>Allowances</Text>
+                <Text style={styles.breakdownValue}>PKR {allowance.toLocaleString()}</Text>
+              </View>
+              <View style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>Deductions</Text>
+                <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>
+                  {deductions < 0 ? `-PKR ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
+                </Text>
+              </View>
+            </>
+          ) : (
+            // Principal view renders dynamic breakdown lines from getEmployeeSalaryDetails
+            details.filter(item => item.componentName !== 'TOTAL NET SALARY').map((item, idx) => (
+              <View key={idx} style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>{item.componentName}</Text>
+                <Text style={[
+                  styles.breakdownValue,
+                  item.amount < 0 && { color: theme.colors.danger }
+                ]}>
+                  {item.amount < 0
+                    ? `-PKR ${Math.abs(item.amount).toLocaleString()}`
+                    : `PKR ${item.amount.toLocaleString()}`
+                  }
+                </Text>
+              </View>
+            ))
+          )}
 
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{record.amount}</Text>
+            <Text style={styles.totalLabel}>Total Net Salary</Text>
+            <Text style={styles.totalAmount}>{displayAmount}</Text>
           </View>
         </View>
 
-        {/* Conditional Bottom Button */}
-        {isPaid ? (
+        {/* Action Button: Coordinators can only view / download payslip, Principals can pay if status is Pending */}
+        {record.isCoordinatorView ? (
           <TouchableOpacity style={styles.outlineBtn} activeOpacity={0.8}>
             <Icon name="download" size={18} color={theme.colors.textBody} style={{ marginRight: 8 }} />
             <Text style={styles.outlineBtnText}>Download Payslip</Text>
           </TouchableOpacity>
+        ) : isPaid ? (
+          <View style={[styles.primaryBtn, { backgroundColor: theme.colors.successSubtle }]}>
+            <Icon name="check" size={18} color={theme.colors.successStrong} style={{ marginRight: 6 }} />
+            <Text style={[styles.primaryBtnText, { color: theme.colors.successStrong }]}>Paid</Text>
+          </View>
         ) : (
-          <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.8}>
-            <Icon name="dollar-sign" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
-            <Text style={styles.primaryBtnText}>Pay Salary Now</Text>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            activeOpacity={0.8}
+            onPress={handlePaySalary}
+            disabled={paying}
+          >
+            {paying ? (
+              <ActivityIndicator color={theme.colors.white} />
+            ) : (
+              <>
+                <Icon name="dollar-sign" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
+                <Text style={styles.primaryBtnText}>Pay Salary Now</Text>
+              </>
+            )}
           </TouchableOpacity>
         )}
 
@@ -214,21 +348,21 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.surfaceSubtle,
     paddingTop: 16,
   },
-  statusIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-    iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
+  statusIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
   dateText: {
     fontSize: 14,
     color: theme.colors.textBody,
@@ -240,8 +374,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 4,
   },
-  
-  // NEW Additional Info Styles
   additionalCard: {
     backgroundColor: theme.colors.white,
     borderRadius: 16,
@@ -282,7 +414,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: theme.colors.successStrong,
   },
-
   infoCard: {
     backgroundColor: theme.colors.white,
     borderRadius: 16,
@@ -298,14 +429,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surfaceSubtle,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
   },
   infoLabel: {
     fontSize: 13,
@@ -386,8 +509,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   outlineBtnText: {
-    color: theme.colors.textBody,
     fontSize: 16,
     fontWeight: '600',
+    color: theme.colors.textHeading,
   },
 });

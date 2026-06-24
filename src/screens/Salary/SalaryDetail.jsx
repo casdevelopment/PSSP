@@ -1,17 +1,82 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
+import { useAuthStore } from '../../store/AuthStore';
+import { getEmployeeSalaryDetails, updateSalaryAcknowledgement } from '../../network/apis';
 
 export default function SalaryDetail() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
+    const empId = useAuthStore((state) => state.empId);
 
-    const month = route.params?.month || 'March 2026';
-    const amount = route.params?.amount || '$3,200';
+    const registerMasterId = route.params?.registerMasterId;
+    const month = route.params?.month || 'Selected Month';
+    const amount = route.params?.amount || 'PKR 0';
+    const initialStatus = route.params?.salaryStatus || 'Pending';
+
+    const [details, setDetails] = useState([]);
+    const [salaryStatus, setSalaryStatus] = useState(initialStatus);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchDetails = async () => {
+            if (!registerMasterId) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const res = await getEmployeeSalaryDetails(empId, registerMasterId);
+                if (res?.success) {
+                    setDetails(res.data || []);
+                }
+            } catch (error) {
+                console.error('Error fetching employee salary details:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDetails();
+    }, [empId, registerMasterId]);
+
+    const handleAcknowledge = async () => {
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            const res = await updateSalaryAcknowledgement(empId, registerMasterId);
+            if (res?.success) {
+                Alert.alert('Success', 'This salary record has been acknowledged.');
+                setSalaryStatus('Acknowledged');
+            } else {
+                Alert.alert('Error', res?.message || 'Failed to acknowledge salary.');
+            }
+        } catch (error) {
+            console.error('Acknowledgement error:', error);
+            Alert.alert('Error', 'An error occurred while acknowledging salary.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Filter out total net salary and handle display values
+    const breakdownItems = details.filter(item => item.componentName !== 'TOTAL NET SALARY');
+    const netSalaryComponent = details.find(item => item.componentName === 'TOTAL NET SALARY');
+    const displayTotalAmount = netSalaryComponent ? `PKR ${netSalaryComponent.amount?.toLocaleString()}` : amount;
+
+    const isStatusPaid = salaryStatus?.toLowerCase() === 'paid';
+    const isStatusAcknowledged = salaryStatus?.toLowerCase() === 'acknowledged';
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={theme.colors.successStrong} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -31,21 +96,27 @@ export default function SalaryDetail() {
                 </View>
             </View>
 
-
             {/* Total Amount Card (Floating) */}
             <View style={[styles.amountCard, theme.shadow.card]}>
                 <View style={styles.amountTop}>
                     <View>
                         <Text style={styles.amountLabel}>Total Amount</Text>
-                        <Text style={styles.amountValue}>{amount}</Text>
+                        <Text style={styles.amountValue}>{displayTotalAmount}</Text>
                     </View>
-                    <View style={styles.checkCircleLarge}>
-                        <Icon name="check" size={24} color={theme.colors.successStrong} />
+                    <View style={[
+                        styles.checkCircleLarge,
+                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: theme.colors.pendingChipBg }
+                    ]}>
+                        <Icon
+                            name={isStatusPaid || isStatusAcknowledged ? "check" : "clock"}
+                            size={24}
+                            color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : theme.colors.pendingChipText}
+                        />
                     </View>
                 </View>
                 <View style={styles.amountBottom}>
                     <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-                    <Text style={styles.dateText}>Received on Mar 25, 2026</Text>
+                    <Text style={styles.dateText}>Statement Month: {month}</Text>
                 </View>
             </View>
 
@@ -53,13 +124,40 @@ export default function SalaryDetail() {
                 {/* Payment Status */}
                 <View style={styles.SectionCard}>
                     <Text style={styles.sectionTitle}>Payment Status</Text>
-                    <View style={styles.statusCard}>
+                    <View style={[
+                        styles.statusCard,
+                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: theme.colors.pendingChipBg }
+                    ]}>
                         <View style={styles.statusIconCircle}>
-                            <Icon name="check" size={16} color={theme.colors.successStrong} />
+                            <Icon
+                                name={isStatusPaid || isStatusAcknowledged ? "check" : "clock"}
+                                size={16}
+                                color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : theme.colors.pendingChipText}
+                            />
                         </View>
                         <View>
-                            <Text style={styles.statusTitle}>Payment Received</Text>
-                            <Text style={styles.statusSubtitle}>Successfully acknowledged</Text>
+                            <Text style={[
+                                styles.statusTitle,
+                                !isStatusPaid && !isStatusAcknowledged && { color: theme.colors.pendingChipText }
+                            ]}>
+                                {isStatusAcknowledged
+                                    ? 'Payment Acknowledged'
+                                    : isStatusPaid
+                                        ? 'Payment Received'
+                                        : 'Pending Payment'
+                                }
+                            </Text>
+                            <Text style={[
+                                styles.statusSubtitle,
+                                !isStatusPaid && !isStatusAcknowledged && { color: theme.colors.pendingChipText, opacity: 0.8 }
+                            ]}>
+                                {isStatusAcknowledged
+                                    ? 'Successfully acknowledged'
+                                    : isStatusPaid
+                                        ? 'Awaiting your acknowledgment'
+                                        : 'Awaiting payment process'
+                                }
+                            </Text>
                         </View>
                     </View>
                 </View>
@@ -68,35 +166,68 @@ export default function SalaryDetail() {
                 <View style={styles.SectionCard}>
                     <Text style={styles.sectionTitle}>Salary Breakdown</Text>
 
-                    <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>Base Salary</Text>
-                        <Text style={styles.breakdownValue}>$2,800</Text>
-                    </View>
-                    <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>Allowances</Text>
-                        <Text style={styles.breakdownValue}>$400</Text>
-                    </View>
-                    <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>Deductions</Text>
-                        <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>$0</Text>
-                    </View>
-                    <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>Taxes</Text>
-                        <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>$0</Text>
-                    </View>
+                    {breakdownItems.length === 0 ? (
+                        <Text style={{ textAlign: 'center', color: theme.colors.textMuted, marginVertical: 10 }}>
+                            No components found.
+                        </Text>
+                    ) : (
+                        breakdownItems.map((item, idx) => (
+                            <View key={idx} style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{item.componentName}</Text>
+                                <Text style={[
+                                    styles.breakdownValue,
+                                    item.amount < 0 && { color: theme.colors.danger }
+                                ]}>
+                                    {item.amount < 0
+                                        ? `-PKR ${Math.abs(item.amount).toLocaleString()}`
+                                        : `PKR ${item.amount.toLocaleString()}`
+                                    }
+                                </Text>
+                            </View>
+                        ))
+                    )}
 
                     <View style={styles.divider} />
 
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Net Salary</Text>
-                        <Text style={styles.totalAmount}>{amount}</Text>
+                        <Text style={styles.totalAmount}>{displayTotalAmount}</Text>
                     </View>
                 </View>
 
-                {/* Large Download Button */}
-                <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.8}>
-                    <Icon name="download" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
-                    <Text style={styles.primaryBtnText}>Download Payslip</Text>
+                {/* Conditional Acknowledgment Action Button */}
+                {isStatusPaid ? (
+                    <TouchableOpacity
+                        style={styles.primaryBtn}
+                        activeOpacity={0.8}
+                        onPress={handleAcknowledge}
+                        disabled={submitting}
+                    >
+                        {submitting ? (
+                            <ActivityIndicator color={theme.colors.white} />
+                        ) : (
+                            <>
+                                <Icon name="check-circle" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
+                                <Text style={styles.primaryBtnText}>Acknowledge Receipt</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                ) : isStatusAcknowledged ? (
+                    <View style={[styles.primaryBtn, { backgroundColor: theme.colors.successSubtle }]}>
+                        <Icon name="check" size={20} color={theme.colors.successStrong} style={{ marginRight: 8 }} />
+                        <Text style={[styles.primaryBtnText, { color: theme.colors.successStrong }]}>Acknowledged</Text>
+                    </View>
+                ) : (
+                    <View style={[styles.primaryBtn, { backgroundColor: theme.colors.surfaceSubtle }]}>
+                        <Icon name="clock" size={20} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
+                        <Text style={[styles.primaryBtnText, { color: theme.colors.textMuted }]}>Pending Payment</Text>
+                    </View>
+                )}
+
+                {/* Download Payslip Button */}
+                <TouchableOpacity style={[styles.outlineBtn, { marginTop: 12 }]} activeOpacity={0.8}>
+                    <Icon name="download" size={18} color={theme.colors.textHeading} style={{ marginRight: 8 }} />
+                    <Text style={styles.outlineBtnText}>Download Payslip</Text>
                 </TouchableOpacity>
 
             </ScrollView>
@@ -169,7 +300,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     amountValue: {
-        fontSize: 36,
+        fontSize: 32,
         fontWeight: '800',
         color: theme.colors.textHeading,
     },
@@ -225,7 +356,6 @@ const styles = StyleSheet.create({
     statusSubtitle: {
         fontSize: 13,
         color: theme.colors.successStrong,
-        opacity: 0.8,
     },
     SectionCard: {
         backgroundColor: theme.colors.white,
@@ -273,7 +403,7 @@ const styles = StyleSheet.create({
     },
     primaryBtn: {
         flexDirection: 'row',
-        backgroundColor: theme.colors.linkPrimary,
+        backgroundColor: theme.colors.successStrong,
         paddingVertical: 18,
         borderRadius: 14,
         alignItems: 'center',
@@ -283,5 +413,20 @@ const styles = StyleSheet.create({
         color: theme.colors.white,
         fontSize: 16,
         fontWeight: '700',
+    },
+    outlineBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.white,
+        borderWidth: 1,
+        borderColor: theme.colors.borderSubtle,
+        borderRadius: 14,
+        paddingVertical: 18,
+    },
+    outlineBtnText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.textHeading,
     },
 });
