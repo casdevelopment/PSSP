@@ -15,6 +15,7 @@ export default function Profile() {
   const userType = useAuthStore((state) => state.userType);
   const role = userType.toLowerCase();
   const image = useAuthStore((state) => state.image);
+  const imageUri = image ? (image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`) : null;
   const username = useAuthStore((state) => state.username);
   const schoolCount = useAuthStore((state) => state.schoolCount);
 
@@ -22,7 +23,7 @@ export default function Profile() {
   console.log(profileDetails, 'profileDetails')
   const logout = useAuthStore((state) => state.logout);
   const navigation = useNavigation();
-  console.log(image, 'image')
+  console.log(imageUri, 'imageUri')
 
 
   const getProfileData = () => {
@@ -102,10 +103,10 @@ export default function Profile() {
         >
           <View style={styles.heroContent}>
             <View style={styles.avatarCircle}>
-              {image ? (
+              {imageUri ? (
                 <Image
-                  source={{ uri: image }}
-                  style={{ height: 80, width: 80, resizeMode: 'contain' }}
+                  source={{ uri: imageUri }}
+                  style={styles.avatarImage}
                 />) : (
                 <Icon name="user" size={32} color={theme.colors.white} />
               )}
@@ -247,6 +248,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    overflow: 'hidden',
   },
 
   avatarImage: {
