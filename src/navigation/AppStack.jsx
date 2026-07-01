@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
+import { theme } from '../theme/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MainTabs from './MainTabs';
 import Attendance from '../screens/Attendance/Attendance';
@@ -36,7 +38,7 @@ export default function AppStack() {
     const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
 
     return (
-        <>
+        <View style={{ flex: 1, backgroundColor: theme.colors.appBackground }}>
             <Stack.Navigator initialRouteName='MainTabs'>
                 <Stack.Screen name='MainTabs' component={MainTabs} options={{ headerShown: false }} />
                 <Stack.Screen name='Attendance' component={Attendance} />
@@ -125,6 +127,6 @@ export default function AppStack() {
                 visible={isLeavemodelVisible}
                 onClose={() => setIsLeavemodelVisible(false)}
             />
-        </>
+        </View>
     );
 }
