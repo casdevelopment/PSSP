@@ -9,6 +9,8 @@ import AttendanceCard from '../../components/AttendanceCard';
 import { useAuthStore } from '../../store/AuthStore';
 
 import { getEmpAssignGradeList, getGradesByClasses, getClassesBySection, getStudentForAttendance, markStudentsAttendance, getHRShift, getEmployeesShift, markEmployeeAttendance } from '../../network/apis';
+import { saveApiCache, getApiCache, checkOfflineSubmission, saveOfflineAttendance } from '../../utils/db';
+import { syncOfflineAttendance } from '../../utils/sync';
 
 export default function Attendance() {
   const insets = useSafeAreaInsets();
@@ -29,6 +31,11 @@ export default function Attendance() {
   const isStudent = type === 'student';
 
   const [data, setData] = useState([]);
+
+  // Trigger sync on mount
+  useEffect(() => {
+    syncOfflineAttendance();
+  }, []);
 
   // Dropdown lists and selections
   const [gradesList, setGradesList] = useState([]);
@@ -58,16 +65,21 @@ export default function Attendance() {
   // 1. Fetch Grades on mount
   useEffect(() => {
     if (isStudent && empId) {
+      const cacheKey = `getEmpAssignGradeList_${empId}`;
       getEmpAssignGradeList(empId)
         .then((res) => {
           if (res && res.success) {
             setGradesList(res.data || []);
-            // if (res.data && res.data.length > 0) {
-            //   setSelectedGrade(res.data[0]);
-            // }
+            saveApiCache(cacheKey, res.data || []);
           }
         })
-        .catch(err => console.error("Error fetching grades list:", err));
+        .catch(async (err) => {
+          console.error("Error fetching grades list:", err);
+          const cachedData = await getApiCache(cacheKey);
+          if (cachedData) {
+            setGradesList(cachedData);
+          }
+        });
     }
   }, [isStudent, empId]);
 
@@ -79,16 +91,21 @@ export default function Attendance() {
       setSectionsList([]);
       setSelectedSection(null);
 
+      const cacheKey = `getGradesByClasses_${schoolId}_${selectedGrade.gradeId}`;
       getGradesByClasses(schoolId, selectedGrade.gradeId)
         .then((res) => {
           if (res && res.success) {
             setClassesList(res.data || []);
-            // if (res.data && res.data.length > 0) {
-            //   setSelectedClass(res.data[0]);
-            // }
+            saveApiCache(cacheKey, res.data || []);
           }
         })
-        .catch(err => console.error("Error fetching classes list:", err));
+        .catch(async (err) => {
+          console.error("Error fetching classes list:", err);
+          const cachedData = await getApiCache(cacheKey);
+          if (cachedData) {
+            setClassesList(cachedData);
+          }
+        });
     }
   }, [isStudent, schoolId, selectedGrade]);
 
@@ -98,16 +115,23 @@ export default function Attendance() {
       setSectionsList([]);
       setSelectedSection(null);
 
+      const cacheKey = `getClassesBySection_${schoolId}_${selectedClass.classId}_${userId}`;
       getClassesBySection(schoolId, selectedClass.classId, userId)
         .then((res) => {
           if (res && res.success) {
             setSectionsList(res.data || []);
-            // if (res.data && res.data.length > 0) {
-            //   setSelectedSection(res.data[0]);
-            // }
+            saveApiCache(cacheKey, res.data || []);
           }
         })
-        .catch(err => Alert.alert("No Section found!"));
+        .catch(async (err) => {
+          console.error("Error fetching sections list:", err);
+          const cachedData = await getApiCache(cacheKey);
+          if (cachedData) {
+            setSectionsList(cachedData);
+          } else {
+            Alert.alert("No Section found!");
+          }
+        });
     }
   }, [isStudent, schoolId, selectedClass, userId]);
 
@@ -124,10 +148,13 @@ export default function Attendance() {
         isOnRollStudents: false
       };
 
+      const cacheKey = `getStudentForAttendance_${schoolId}_${selectedClass.classId}_${selectedSection.sectionId}`;
+
       getStudentForAttendance(payload)
         .then((res) => {
           if (res && res.success) {
             const apiStudents = res.data || [];
+            saveApiCache(cacheKey, apiStudents);
 
             const mapped = apiStudents.map(student => {
               const studentIdStr = String(student.studentId);
@@ -142,7 +169,6 @@ export default function Attendance() {
             });
             setData(mapped);
 
-            // Check if all loaded students have a saved status
             const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
             setIsSubmitted(allSaved);
           } else {
@@ -150,10 +176,46 @@ export default function Attendance() {
             setIsSubmitted(false);
           }
         })
-        .catch(err => {
+        .catch(async (err) => {
           console.error("Error fetching students for attendance:", err);
-          setData([]);
-          setIsSubmitted(false);
+          
+          const cachedStudents = await getApiCache(cacheKey);
+          if (cachedStudents) {
+            const offlinePayload = await checkOfflineSubmission(
+              'student',
+              Number(schoolId) || 0,
+              Number(selectedClass.classId) || 0,
+              Number(selectedSection.sectionId) || 0,
+              0,
+              currentDateFormatted
+            );
+
+            const mapped = cachedStudents.map(student => {
+              const studentIdStr = String(student.studentId);
+              let status = null;
+
+              if (offlinePayload) {
+                const offlineRec = offlinePayload.attendanceList?.find(
+                  item => Number(item.studentId) === Number(student.studentId)
+                );
+                status = offlineRec?.attendanceStatusId === 1 ? 'Present' : offlineRec?.attendanceStatusId === 2 ? 'Absent' : null;
+              }
+
+              return {
+                id: studentIdStr,
+                name: student.studentName || 'Unknown Student',
+                subtitle: `Father: ${student.fatherName || 'N/A'} | Roll No: ${student.rollNumber || 'N/A'}`,
+                status,
+                rawItem: student
+              };
+            });
+
+            setData(mapped);
+            setIsSubmitted(offlinePayload ? true : false);
+          } else {
+            setData([]);
+            setIsSubmitted(false);
+          }
         })
         .finally(() => setIsLoadingStudents(false));
     } else if (isStudent) {
@@ -166,16 +228,27 @@ export default function Attendance() {
   useEffect(() => {
     if (!isStudent) {
       setIsLoadingStaff(true);
+      const cacheKey = `getHRShift`;
       getHRShift()
         .then((res) => {
           if (res && res.success) {
             setShiftsList(res.data || []);
+            saveApiCache(cacheKey, res.data || []);
             if (res.data && res.data.length > 0) {
               setSelectedShift(res.data[0]);
             }
           }
         })
-        .catch(err => console.error("Error fetching shifts:", err))
+        .catch(async (err) => {
+          console.error("Error fetching shifts:", err);
+          const cachedData = await getApiCache(cacheKey);
+          if (cachedData) {
+            setShiftsList(cachedData);
+            if (cachedData.length > 0) {
+              setSelectedShift(cachedData[0]);
+            }
+          }
+        })
         .finally(() => setIsLoadingStaff(false));
     }
   }, [isStudent]);
@@ -185,15 +258,13 @@ export default function Attendance() {
     if (!isStudent && schoolId && selectedShift) {
       setIsLoadingStaff(true);
       setIsSubmitted(false);
-      console.log('Calling getEmployeesShift with:', {
-        Date: currentDateFormatted,
-        ShiftId: selectedShift.id,
-        SchoolID: schoolId
-      });
+      
+      const cacheKey = `getEmployeesShift_${selectedShift.id}_${schoolId}`;
       getEmployeesShift(currentDateFormatted, selectedShift.id, schoolId)
         .then((res) => {
           if (res && res.success) {
             const apiEmployees = res.data || [];
+            saveApiCache(cacheKey, apiEmployees);
 
             const mapped = apiEmployees.map(emp => {
               const empIdStr = String(emp.employeeId);
@@ -213,10 +284,46 @@ export default function Attendance() {
             setIsSubmitted(false);
           }
         })
-        .catch(err => {
+        .catch(async (err) => {
           console.error("Error fetching employees shift:", err);
-          setData([]);
-          setIsSubmitted(false);
+          
+          const cachedEmployees = await getApiCache(cacheKey);
+          if (cachedEmployees) {
+            const offlinePayload = await checkOfflineSubmission(
+              'staff',
+              Number(schoolId) || 0,
+              0,
+              0,
+              Number(selectedShift.id) || 0,
+              currentDateFormatted
+            );
+
+            const mapped = cachedEmployees.map(emp => {
+              const empIdStr = String(emp.employeeId);
+              let status = null;
+
+              if (offlinePayload) {
+                const isPresentOffline = offlinePayload.employeeAttendance?.some(
+                  item => Number(item.employeeId) === Number(emp.employeeId)
+                );
+                status = isPresentOffline ? 'Present' : 'Absent';
+              }
+
+              return {
+                id: empIdStr,
+                name: emp.fullName || 'Unknown Staff',
+                subtitle: `Code: ${emp.empCode || 'N/A'} | ${emp.departmentName || 'N/A'}`,
+                status,
+                rawItem: emp
+              };
+            });
+
+            setData(mapped);
+            setIsSubmitted(offlinePayload ? true : false);
+          } else {
+            setData([]);
+            setIsSubmitted(false);
+          }
         })
         .finally(() => setIsLoadingStaff(false));
     } else if (!isStudent && !selectedShift) {
@@ -266,12 +373,33 @@ export default function Attendance() {
       if (apiRes && apiRes.success !== false) {
         setIsSubmitted(true);
         Alert.alert('Success', 'Student attendance submitted successfully.');
+        syncOfflineAttendance();
       } else {
         Alert.alert('Error', apiRes?.message || 'Failed to submit student attendance.');
       }
     } catch (error) {
       console.log('Failed to submit student attendance online:', error.message);
-      Alert.alert('Submission Error', error.message || 'Failed to submit student attendance.');
+      
+      const isNetwork = !error.response || error.message?.includes('Network Error');
+      if (isNetwork) {
+        try {
+          await saveOfflineAttendance(
+            'student',
+            Number(schoolId) || 0,
+            Number(selectedClass?.classId) || 0,
+            Number(selectedSection?.sectionId) || 0,
+            0,
+            currentDateFormatted,
+            apiPayload
+          );
+          setIsSubmitted(true);
+          Alert.alert('Offline Mode', 'Internet not available. Attendance saved locally and will be synced when connection is restored.');
+        } catch (dbErr) {
+          Alert.alert('Local Storage Error', 'Failed to save attendance locally.');
+        }
+      } else {
+        Alert.alert('Submission Error', error.message || 'Failed to submit student attendance.');
+      }
     }
   };
 
@@ -307,9 +435,38 @@ export default function Attendance() {
       }
       setIsSubmitted(true);
       Alert.alert('Success', 'Staff attendance submitted successfully.');
+      syncOfflineAttendance();
     } catch (error) {
       console.log('Failed to submit staff attendance online:', error.message);
-      Alert.alert('Submission Error', error.message || 'Failed to submit staff attendance.');
+
+      const isNetwork = !error.response || error.message?.includes('Network Error');
+      if (isNetwork) {
+        try {
+          const apiPayload = payload || {
+            userId: Number(userId) || 0,
+            schoolId: Number(schoolId) || 0,
+            attendanceDate: new Date().toISOString(),
+            attendanceStatus: 1,
+            employeeAttendance: []
+          };
+
+          await saveOfflineAttendance(
+            'staff',
+            Number(schoolId) || 0,
+            0,
+            0,
+            Number(selectedShift?.id) || 0,
+            currentDateFormatted,
+            apiPayload
+          );
+          setIsSubmitted(true);
+          Alert.alert('Offline Mode', 'Internet not available. Attendance saved locally and will be synced when connection is restored.');
+        } catch (dbErr) {
+          Alert.alert('Local Storage Error', 'Failed to save attendance locally.');
+        }
+      } else {
+        Alert.alert('Submission Error', error.message || 'Failed to submit staff attendance.');
+      }
     }
   };
 

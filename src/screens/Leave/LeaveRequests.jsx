@@ -139,6 +139,10 @@ export default function LeaveRequests() {
             <StatusBar barStyle="dark-content" />
 
             <ScrollView
+                style={{
+                    flex: 1,
+                    backgroundColor: theme.colors.background,
+                }}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={

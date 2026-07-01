@@ -13,14 +13,14 @@ const Splash = ({ navigation }) => {
         const hasSeenOnboarding = await AsyncStorage.getItem(
           'hasSeenOnboarding',
         );
-        console.log('Onboarding status:', hasSeenOnboarding); 
+        console.log('Onboarding status:', hasSeenOnboarding);
         setTimeout(() => {
           if (hasSeenOnboarding === null) {
             navigation.replace('Onboarding'); // first time → show onboarding
           } else {
             navigation.replace('Login'); // already seen → go to login
           }
-        }, 3000); // keep your splash delay
+        }, 2000); // keep your splash delay
       } catch (e) {
         console.log('Error checking onboarding:', e);
         navigation.replace('Login');
@@ -29,10 +29,10 @@ const Splash = ({ navigation }) => {
 
     checkOnboarding();
   }, [navigation]);
-  
+
   return (
-    <LinearGradient 
-      colors={theme.gradients.purple} 
+    <LinearGradient
+      colors={theme.gradients.purple}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { theme } from '../../theme/theme';
@@ -72,82 +72,91 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <LinearGradient
-            colors={theme.gradients.purple}
-            style={[styles.logoBox, theme.shadow.card]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Image source={require('../../assets/icons/degree-icon.png')} style={styles.logoIcon} />
-          </LinearGradient>
-          <View style={styles.headerTextWrapper}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <LinearGradient
+                colors={theme.gradients.purple}
+                style={[styles.logoBox, theme.shadow.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Image source={require('../../assets/icons/degree-icon.png')} style={styles.logoIcon} />
+              </LinearGradient>
+              <View style={styles.headerTextWrapper}>
+                <Text style={styles.title}>Welcome Back</Text>
+                <Text style={styles.subtitle}>Sign in to continue</Text>
+              </View>
+            </View>
+
+            {/* Form */}
+            <View style={styles.formContainer}>
+              <CustomInput
+                label="Username"
+                iconName="mail"
+                placeholder="Enter your username"
+                autoCapitalize="none"
+                value={userName}
+                onChangeText={setUserName}
+              />
+
+              <CustomInput
+                label="Password"
+                iconName="lock"
+                placeholder="••••••••"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+
+              <TouchableOpacity style={styles.forgotBtn} onPress={() => setIsForgotVisible(true)}>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {!!errorMessage && (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            )}
+
+            {/* Action Buttons */}
+            <PrimaryButton
+              title="Sign In"
+              onPress={handleSignIn}
+              showChevron={false}
+              style={styles.signInBtnWrapper}
+              loading={isSubmitting}
+            />
+
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity style={styles.faceIdBtn}>
+              <Text style={styles.faceIdBtnText}>Sign in with Face ID</Text>
+            </TouchableOpacity>
           </View>
-        </View>
 
-        {/* Form */}
-        <View style={styles.formContainer}>
-          <CustomInput
-            label="Username"
-            iconName="mail"
-            placeholder="sa"
-            autoCapitalize="none"
-            value={userName}
-            onChangeText={setUserName}
-          />
-
-          <CustomInput
-            label="Password"
-            iconName="lock"
-            placeholder="••••••••"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-
-          <TouchableOpacity style={styles.forgotBtn} onPress={() => setIsForgotVisible(true)}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
-
-
-        {!!errorMessage && (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        )}
-
-        {/* Action Buttons */}
-        <PrimaryButton
-          title="Sign In"
-          onPress={handleSignIn}
-          showChevron={false}
-          style={styles.signInBtnWrapper}
-          loading={isSubmitting}
-        />
-
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.divider} />
-        </View>
-
-        <TouchableOpacity style={styles.faceIdBtn}>
-          <Text style={styles.faceIdBtnText}>Sign in with Face ID</Text>
-        </TouchableOpacity>
-
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Don't have an account? </Text>
-        <TouchableOpacity>
-          <Text style={styles.contactAdminText}>Contact Admin</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity>
+              <Text style={styles.contactAdminText}>Contact Admin</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <ForgotPasswordModel
         visible={isForgotVisible}
@@ -162,8 +171,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.appBackground,
   },
-  content: {
+  keyboardAvoidingView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+  },
+  content: {
     paddingHorizontal: theme.spacing.xl,
   },
   header: {
