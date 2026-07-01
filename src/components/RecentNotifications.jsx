@@ -17,14 +17,14 @@ const RecentNotifications = () => {
           <Icon name="bell" size={20} color={theme.colors.textMuted} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.list}>
         {notificationsData.map((item, index) => (
-          <TouchableOpacity 
-            key={item.id} 
+          <TouchableOpacity
+            key={item.id}
             style={[
-              styles.itemContainer, 
-              index === notificationsData.length - 1 ? null : styles.itemMargin 
+              styles.itemContainer,
+              index === notificationsData.length - 1 ? null : styles.itemMargin
             ]}
             activeOpacity={0.7}
           >
@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: theme.colors.borderSubtle,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',

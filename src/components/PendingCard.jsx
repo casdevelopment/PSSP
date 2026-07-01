@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: theme.colors.borderSubtle,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',

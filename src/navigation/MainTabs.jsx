@@ -47,7 +47,7 @@ export default function MainTabs() {
             if (route.name === 'Home') iconName = 'home';
             else if (route.name === 'Staff') iconName = 'users';
             else if (route.name === 'Timetable') iconName = 'calendar';
-            else if (route.name === 'Salary' || route.name === 'Salary Management') iconName = 'dollar-sign';
+            else if (route.name === 'Salary' || route.name === 'Salary Management' || route.name === 'SalaryDistribution') iconName = 'dollar-sign';
             else if (route.name === 'Profile') iconName = 'user';
             else if (route.name === 'Schools') iconName = 'trello';
             else if (route.name === 'Expenses') iconName = 'file-text';
@@ -100,7 +100,7 @@ export default function MainTabs() {
             <Tab.Screen
               name="Salary Management"
               component={SalaryDistribution}
-              options={{ headerShown: true, title: 'Salary Management' }}
+              options={{ headerShown: true, title: 'Salary' }}
             />
             <Tab.Screen
               name="Expenses"
@@ -143,7 +143,7 @@ export default function MainTabs() {
               name="Timetable"
               component={Timetable}
               options={{
-                headerTitleStyle: { fontSize: 24, fontWeight: '800', color: theme.colors.textHeading },
+                headerTitleStyle: { fontSize: 20, fontWeight: '600', color: theme.colors.textHeading },
                 headerRight: () => <HeaderPlusButton onPress={() => setIsAddScheduleModalVisible(true)} />
               }}
             />

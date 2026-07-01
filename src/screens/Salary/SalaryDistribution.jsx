@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   StatusBar,
   ActivityIndicator,
   RefreshControl,
@@ -16,10 +16,10 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import { useAuthStore } from '../../store/AuthStore';
-import { 
-  getEmployeeSalaryStatusBySchool, 
-  getEmployeeSchoolDashboardDetails, 
-  principalSalaryAcknowledgement 
+import {
+  getEmployeeSalaryStatusBySchool,
+  getEmployeeSchoolDashboardDetails,
+  principalSalaryAcknowledgement
 } from '../../network/apis';
 
 export default function SalaryDistribution() {
@@ -105,7 +105,7 @@ export default function SalaryDistribution() {
   // Calculations for Hero Card
   let totalAmount = 0;
   let subtitleText = '';
-  
+
   if (role === 'coordinator') {
     totalAmount = data.reduce((sum, item) => sum + (item.totalSchoolSalary || 0), 0);
     subtitleText = `${data.length} assigned schools`;
@@ -137,15 +137,15 @@ export default function SalaryDistribution() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
-    
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.successStrong]} />
         }
       >
-        
+
         {/* Total Distribution Hero */}
         <View style={styles.heroWrapper}>
           <HeroCard
@@ -158,7 +158,7 @@ export default function SalaryDistribution() {
         </View>
 
         {/* Tabs */}
-        <View style={styles.tabsRow}>
+        {/* <View style={styles.tabsRow}>
           <TouchableOpacity 
             style={[styles.tabBtn, activeTab === 'Current Month' ? styles.tabActive : styles.tabInactive]}
             onPress={() => setActiveTab('Current Month')}
@@ -175,7 +175,7 @@ export default function SalaryDistribution() {
               History
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Staff / School List */}
         <View style={styles.listContainer}>
@@ -193,11 +193,11 @@ export default function SalaryDistribution() {
                   : 'N/A';
 
                 return (
-                  <TouchableOpacity 
-                    key={item.schoolIdFk || String(idx)} 
+                  <TouchableOpacity
+                    key={item.schoolIdFk || String(idx)}
                     style={styles.recordCard}
                     activeOpacity={0.7}
-                    onPress={() => navigation.navigate('StaffSalaryDetails', { 
+                    onPress={() => navigation.navigate('StaffSalaryDetails', {
                       record: {
                         name: item.principalName || 'No Principal Assigned',
                         principalId: item.principalId,
@@ -208,7 +208,7 @@ export default function SalaryDistribution() {
                         isCoordinatorView: true,
                         schoolEmployees: item.schoolEmployees,
                         totalSchoolSalary: item.totalSchoolSalary
-                      } 
+                      }
                     })}
                   >
                     <View style={styles.cardHeader}>
@@ -231,7 +231,7 @@ export default function SalaryDistribution() {
                           <Text style={styles.dateText}>Est: {formattedEstablishment}</Text>
                         </View>
                       </View>
-                      
+
                       <View style={styles.paidCircle}>
                         <Icon name="chevron-right" size={16} color={theme.colors.linkPrimary} />
                       </View>
@@ -246,11 +246,11 @@ export default function SalaryDistribution() {
                   : 'N/A';
 
                 return (
-                  <TouchableOpacity 
-                    key={item.empid || String(idx)} 
+                  <TouchableOpacity
+                    key={item.empid || String(idx)}
                     style={styles.recordCard}
                     activeOpacity={0.7}
-                    onPress={() => navigation.navigate('StaffSalaryDetails', { 
+                    onPress={() => navigation.navigate('StaffSalaryDetails', {
                       record: {
                         empid: item.empid,
                         name: item.name,
@@ -260,7 +260,7 @@ export default function SalaryDistribution() {
                         status: item.salaryStatus,
                         registerId: item.registerId,
                         isCoordinatorView: false
-                      } 
+                      }
                     })}
                   >
                     <View style={styles.cardHeader}>
@@ -285,14 +285,14 @@ export default function SalaryDistribution() {
                           </Text>
                         </View>
                       </View>
-                      
+
                       {isPaid ? (
                         <View style={styles.paidCircle}>
                           <Icon name="check" size={16} color={theme.colors.successStrong} />
                         </View>
                       ) : (
-                        <TouchableOpacity 
-                          style={styles.payNowBtn} 
+                        <TouchableOpacity
+                          style={styles.payNowBtn}
                           onPress={() => handlePayNow(item)}
                           disabled={payingId !== null}
                         >
