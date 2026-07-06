@@ -109,7 +109,9 @@ export default function AttendanceHistory() {
                 }
             } else {
                 // For Principal viewing Staff attendance
-                const res = await getEmployeesAttendanceLast7Days(schoolId);
+                const formattedFromDate = new Date(fromDate + 'T00:00:00').toISOString();
+                const formattedToDate = new Date(toDate + 'T23:59:59').toISOString();
+                const res = await getEmployeesAttendanceLast7Days(schoolId, formattedFromDate, formattedToDate);
                 if (res && res.success && res.data) {
                     const dataList = res.data || [];
                     

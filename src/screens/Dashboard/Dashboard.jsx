@@ -256,9 +256,9 @@ const Dashboard = () => {
 
             </>
           )}
-          {(!role || role === 'staff') && (
+          {/* {(!role || role === 'staff') && (
             <RecentNotifications />
-          )}
+          )} */}
 
         </ScrollView>
       )}

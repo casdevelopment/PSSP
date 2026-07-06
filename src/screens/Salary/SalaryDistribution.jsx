@@ -21,6 +21,31 @@ import {
   getEmployeeSchoolDashboardDetails,
   principalSalaryAcknowledgement
 } from '../../network/apis';
+const formatEstablishmentDate = (dateStr) => {
+  if (!dateStr || dateStr.startsWith('1900-01-01')) {
+    return 'N/A';
+  }
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return 'N/A';
+  }
+};
+
+const formatSalaryDate = (dateStr) => {
+  if (!dateStr || dateStr.startsWith('1900-01-01')) {
+    return 'N/A';
+  }
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US', { month: 'long' });
+  } catch {
+    return 'N/A';
+  }
+};
 
 export default function SalaryDistribution() {
   const insets = useSafeAreaInsets();
@@ -188,9 +213,7 @@ export default function SalaryDistribution() {
           ) : (
             filteredData.map((item, idx) => {
               if (role === 'coordinator') {
-                const formattedEstablishment = item.dateOfEstablishment
-                  ? new Date(item.dateOfEstablishment).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  : 'N/A';
+                const formattedEstablishment = formatEstablishmentDate(item.dateOfEstablishment);
 
                 return (
                   <TouchableOpacity
@@ -241,9 +264,7 @@ export default function SalaryDistribution() {
               } else {
                 // Principal View (Staff Salaries)
                 const isPaid = item.salaryStatus?.toLowerCase() === 'paid' || item.salaryStatus?.toLowerCase() === 'acknowledged';
-                const formattedPaymentDate = item.Date
-                  ? new Date(item.Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  : 'N/A';
+                const formattedPaymentDate = formatSalaryDate(item.salaryStatusChangeDate);
 
                 return (
                   <TouchableOpacity
@@ -256,7 +277,7 @@ export default function SalaryDistribution() {
                         name: item.name,
                         subject: 'Staff Member',
                         amount: `PKR ${item.netSalary?.toLocaleString()}`,
-                        date: item.Date,
+                        date: item.salaryStatusChangeDate,
                         status: item.salaryStatus,
                         registerId: item.registerId,
                         isCoordinatorView: false

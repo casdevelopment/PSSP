@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
 import { getEmployeeSalaryDetails, updateSalaryAcknowledgement } from '../../network/apis';
+import SalaryNotPaidModal from '../../components/SalaryNotPaidModal';
 
 export default function SalaryDetail() {
     const insets = useSafeAreaInsets();
@@ -22,6 +23,7 @@ export default function SalaryDetail() {
     const [salaryStatus, setSalaryStatus] = useState(initialStatus);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [isNotPaidModalVisible, setIsNotPaidModalVisible] = useState(false);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -224,13 +226,29 @@ export default function SalaryDetail() {
                     </View>
                 )}
 
-                {/* Download Payslip Button */}
-                <TouchableOpacity style={[styles.outlineBtn, { marginTop: 12 }]} activeOpacity={0.8}>
-                    <Icon name="download" size={18} color={theme.colors.textHeading} style={{ marginRight: 8 }} />
-                    <Text style={styles.outlineBtnText}>Download Payslip</Text>
-                </TouchableOpacity>
+                {/* Salary Not Paid Button */}
+                {isStatusPaid && (
+                    <TouchableOpacity
+                        style={[styles.outlineBtnDanger, { marginTop: 12 }]}
+                        activeOpacity={0.8}
+                        onPress={() => setIsNotPaidModalVisible(true)}
+                    >
+                        <Icon name="x-circle" size={18} color={theme.colors.dangerStrong || '#DC2626'} style={{ marginRight: 8 }} />
+                        <Text style={styles.outlineBtnDangerText}>Salary Not Paid</Text>
+                    </TouchableOpacity>
+                )}
 
             </ScrollView>
+
+            <SalaryNotPaidModal
+                visible={isNotPaidModalVisible}
+                onClose={() => setIsNotPaidModalVisible(false)}
+                empId={empId}
+                registerId={registerMasterId}
+                onSuccess={() => {
+                    navigation.goBack();
+                }}
+            />
         </View>
     );
 }
@@ -428,5 +446,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: theme.colors.textHeading,
+    },
+    outlineBtnDanger: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.white,
+        borderWidth: 1,
+        borderColor: theme.colors.dangerStrong || '#DC2626',
+        borderRadius: 14,
+        paddingVertical: 18,
+    },
+    outlineBtnDangerText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.dangerStrong || '#DC2626',
     },
 });

@@ -23,7 +23,7 @@ export default function Attendance() {
 
   let type;
   if (role === 'principal' || role === 'principle') {
-    type = 'staff';
+    type = 'student';
   } else {
     type = 'student';
   }

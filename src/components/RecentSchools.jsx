@@ -1,41 +1,81 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
-
-const schoolsData = [
-  { id: '1', name: 'Greenwood High', students: 450, staff: 32 },
-  { id: '2', name: 'Riverside Academy', students: 380, staff: 28 },
-  { id: '3', name: 'Maple Valley School', students: 520, staff: 38 },
-];
+import { useAuthStore } from '../store/AuthStore';
+import { getEmployeeSchoolDashboardDetails } from '../network/apis';
 
 const RecentSchools = () => {
+  const navigation = useNavigation();
+  const empId = useAuthStore((state) => state.empId);
+
+  const [schools, setSchools] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (empId) {
+      setIsLoading(true);
+      getEmployeeSchoolDashboardDetails(empId)
+        .then((res) => {
+          if (res && res.success) {
+            // Display only recent/first 3 schools on the dashboard
+            setSchools((res.data || []).slice(0, 3));
+          } else {
+            setSchools([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching recent schools:', err);
+          setSchools([]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
+  }, [empId]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Recent Schools</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Schools')}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
       
       <View style={styles.list}>
-        {schoolsData.map((item, index) => (
-          <TouchableOpacity 
-            key={item.id} 
-            style={[
-              styles.itemContainer, 
-              index === schoolsData.length - 1 ? null : styles.itemMargin 
-            ]}
-            activeOpacity={0.7}
-          >
-            <View style={styles.textContainer}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.details}>{item.students} students • {item.staff} staff</Text>
-            </View>
-            <Icon name="chevron-right" size={20} color={theme.colors.textMuted} />
-          </TouchableOpacity>
-        ))}
+        {isLoading ? (
+          <ActivityIndicator size="small" color={theme.colors.purple} style={{ padding: 20 }} />
+        ) : schools.length === 0 ? (
+          <Text style={styles.emptyText}>No assigned schools found</Text>
+        ) : (
+          schools.map((school, index) => {
+            const uniqueId = school.schoolIdFk || index;
+            const studentsCount = school.totalStudent || 0;
+            const staffCount = school.schoolEmployees || 0;
+
+            return (
+              <TouchableOpacity 
+                key={uniqueId} 
+                style={[
+                  styles.itemContainer, 
+                  index === schools.length - 1 ? null : styles.itemMargin 
+                ]}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('SchoolDetail', { school })}
+              >
+                <View style={styles.textContainer}>
+                  <Text style={styles.name}>{school.schoolName || 'Unknown School'}</Text>
+                  <Text style={styles.details}>{studentsCount} students • {staffCount} staff</Text>
+                </View>
+                <Icon name="chevron-right" size={20} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -94,6 +134,12 @@ const styles = StyleSheet.create({
   details: {
     fontSize: 15,
     color: theme.colors.textMuted,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: theme.colors.textMuted,
+    fontSize: 15,
+    paddingVertical: 12,
   },
 });
 

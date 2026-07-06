@@ -4,7 +4,7 @@ export const getQuickActions = (role, navigation) => {
             return [
                 { title: 'View All Schools', bgColor: '#F0F5FF', textColor: '#2563EB', onPress: () => navigation.navigate('Schools') },
                 { title: 'Review Expenses', bgColor: '#F0FDF4', textColor: '#059669', onPress: () => navigation.navigate('Expenses') },
-                { title: 'Approve Leaves', bgColor: '#FFF7ED', textColor: '#EA580C', onPress: () => navigation.navigate('LeaveRequests') },
+                { title: 'Approve Leaves', bgColor: '#FFF7ED', textColor: '#EA580C', onPress: () => navigation.navigate('LeaveRequestsManagement') },
             ];
         case 'staff':
             return [

@@ -321,10 +321,14 @@ export const markEmployeeAttendance = async (payload) => {
   }
 };
 
-export const getEmployeesAttendanceLast7Days = async (schoolId) => {
+export const getEmployeesAttendanceLast7Days = async (schoolId, fromDate, toDate) => {
   try {
     const response = await axiosInstance.get('/EP/GetEmployeesAttendanceLast7Days', {
-      params: { schoolId }
+      params: {
+        SchoolId: schoolId,
+        FromDate: fromDate,
+        ToDate: toDate
+      }
     });
     return response?.data;
   } catch (error) {
@@ -534,6 +538,17 @@ export const saveExpenseList = async (payload) => {
     throw error;
   }
 };
+
+export const saveSalaryNotAcknowledgement = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/SaveSalaryNotAcknowledgement', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Save salary not acknowledgement error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 
 

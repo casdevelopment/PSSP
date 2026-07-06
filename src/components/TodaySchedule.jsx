@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     marginHorizontal: 16,
     marginTop: 16,
+    marginBottom: 16,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
