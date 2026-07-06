@@ -15,7 +15,7 @@ export default function Profile() {
   const userType = useAuthStore((state) => state.userType);
   const role = userType.toLowerCase();
   const image = useAuthStore((state) => state.image);
-  const imageUri = image ? (image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`) : null;
+  const imageUri = image ? (image.startsWith('data:') ? image : `data:image/png;base64,${image}`) : null;
   const username = useAuthStore((state) => state.username);
   const schoolCount = useAuthStore((state) => state.schoolCount);
 

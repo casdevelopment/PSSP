@@ -14,7 +14,7 @@ export default function SalaryHistory() {
 
     const currentYear = new Date().getFullYear();
     const years = [currentYear, currentYear - 1, currentYear - 2];
-    
+
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [historyData, setHistoryData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -28,6 +28,7 @@ export default function SalaryHistory() {
             }
         } catch (error) {
             console.error('Error fetching employee salary history:', error);
+            setHistoryData([]);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -106,8 +107,8 @@ export default function SalaryHistory() {
             {/* Year Tabs */}
             <View style={styles.tabsRow}>
                 {years.map((y) => (
-                    <TouchableOpacity 
-                        key={y} 
+                    <TouchableOpacity
+                        key={y}
                         style={selectedYear === y ? styles.activeTab : styles.inactiveTab}
                         onPress={() => {
                             setLoading(true);
@@ -124,8 +125,8 @@ export default function SalaryHistory() {
                     <ActivityIndicator size="large" color={theme.colors.successStrong} />
                 </View>
             ) : (
-                <ScrollView 
-                    contentContainerStyle={styles.scrollContent} 
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.successStrong]} />
@@ -156,9 +157,9 @@ export default function SalaryHistory() {
                                     key={record.registerMasterId || String(index)}
                                     style={styles.recordCard}
                                     activeOpacity={0.7}
-                                    onPress={() => navigation.navigate('SalaryDetail', { 
-                                        registerMasterId: record.registerMasterId, 
-                                        month: record.monthLabel, 
+                                    onPress={() => navigation.navigate('SalaryDetail', {
+                                        registerMasterId: record.registerMasterId,
+                                        month: record.monthLabel,
                                         amount: `PKR ${record.netSalary?.toLocaleString()}`,
                                         salaryStatus: record.salaryStatus
                                     })}
@@ -197,11 +198,11 @@ export default function SalaryHistory() {
                                     </View>
 
                                     <Text style={styles.paidDateText}>
-                                        {record.salaryStatus === 'Acknowledged' 
-                                            ? `Acknowledged on ${formattedPaidDate}` 
+                                        {record.salaryStatus === 'Acknowledged'
+                                            ? `Acknowledged on ${formattedPaidDate}`
                                             : record.salaryStatus === 'Paid'
-                                            ? `Paid on ${formattedPaidDate}`
-                                            : 'Pending payment'
+                                                ? `Paid on ${formattedPaidDate}`
+                                                : 'Pending payment'
                                         }
                                     </Text>
                                 </TouchableOpacity>

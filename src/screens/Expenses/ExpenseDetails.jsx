@@ -15,6 +15,7 @@ export default function ExpenseDetails() {
   const navigation = useNavigation();
   const route = useRoute();
   const userId = useAuthStore((state) => state.userId);
+  const role = useAuthStore((state) => state.userType);
 
   const record = route.params?.record;
   const expId = record?.id || '0';
@@ -206,7 +207,7 @@ export default function ExpenseDetails() {
       </ScrollView>
 
       {/* Bottom Action Bar (Approve/Reject) */}
-      {isPending && (
+      {isPending && role === 'coordinator' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity
             style={[styles.rejectBtn, isOperating && { opacity: 0.6 }]}

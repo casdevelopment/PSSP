@@ -16,6 +16,7 @@ import StaffDetail from '../screens/staff/StaffDetails';
 import SalaryHistory from '../screens/Salary/SalaryHistory';
 import SalaryDetail from '../screens/Salary/SalaryDetail';
 import StaffSalaryDetails from '../screens/Salary/StaffSalaryDetails';
+import SalaryDistribution from '../screens/Salary/SalaryDistribution';
 import ExpenseDetails from '../screens/Expenses/ExpenseDetails';
 import SchoolDetail from '../screens/Schools/SchoolDetail';
 import MySchedule from '../screens/Timetable/MySchedule';
@@ -104,6 +105,18 @@ export default function AppStack() {
                     name="StaffSalaryDetails"
                     component={StaffSalaryDetails}
                     options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="SalaryDistribution"
+                    component={SalaryDistribution}
+                    options={{
+                        title: 'Salary Distribution',
+                        headerTitle: 'Salary Distribution',
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: '600',
+                        },
+                    }}
                 />
                 <Stack.Screen name="ClassDetails" component={ClassDetails} options={{ headerShown: false }} />
                 <Stack.Screen name="ExpenseDetails" component={ExpenseDetails} options={{ headerShown: false }} />

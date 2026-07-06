@@ -178,7 +178,7 @@ export default function Attendance() {
         })
         .catch(async (err) => {
           console.error("Error fetching students for attendance:", err);
-          
+
           const cachedStudents = await getApiCache(cacheKey);
           if (cachedStudents) {
             const offlinePayload = await checkOfflineSubmission(
@@ -258,7 +258,7 @@ export default function Attendance() {
     if (!isStudent && schoolId && selectedShift) {
       setIsLoadingStaff(true);
       setIsSubmitted(false);
-      
+
       const cacheKey = `getEmployeesShift_${selectedShift.id}_${schoolId}`;
       getEmployeesShift(currentDateFormatted, selectedShift.id, schoolId)
         .then((res) => {
@@ -286,7 +286,7 @@ export default function Attendance() {
         })
         .catch(async (err) => {
           console.error("Error fetching employees shift:", err);
-          
+
           const cachedEmployees = await getApiCache(cacheKey);
           if (cachedEmployees) {
             const offlinePayload = await checkOfflineSubmission(
@@ -379,7 +379,7 @@ export default function Attendance() {
       }
     } catch (error) {
       console.log('Failed to submit student attendance online:', error.message);
-      
+
       const isNetwork = !error.response || error.message?.includes('Network Error');
       if (isNetwork) {
         try {
@@ -800,6 +800,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     alignItems: 'center',
     marginTop: 12,
+    marginBottom: 16,
   },
   submitBtnInactive: {
     backgroundColor: '#E5E7EB',
@@ -860,6 +861,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginHorizontal: 16,
     marginTop: 12,
+    marginBottom: 16,
     gap: 8,
   },
   submittedBadgeText: {

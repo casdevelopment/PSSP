@@ -139,17 +139,26 @@ export default function MainTabs() {
                 headerRight: () => <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
               }}
             />
-            <Tab.Screen
+            {/* <Tab.Screen
               name="Timetable"
               component={Timetable}
               options={{
                 headerTitleStyle: { fontSize: 20, fontWeight: '600', color: theme.colors.textHeading },
                 headerRight: () => <HeaderPlusButton onPress={() => setIsAddScheduleModalVisible(true)} />
               }}
+            /> */}
+            <Tab.Screen
+              name="Expenses"
+              component={ExpenseRequests}
+              options={{
+                title: 'Expenses',
+                headerTitle: 'Expenses Requests',
+                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+              }}
             />
             <Tab.Screen
               name="Salary Management"
-              component={SalaryDistribution}
+              component={MySalary}
               options={{
                 title: 'Salary',
                 headerTitle: 'Salary Management',
