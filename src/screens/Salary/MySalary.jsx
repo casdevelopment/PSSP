@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
-import HeroCard from '../../components/HeroCard'; 
+import HeroCard from '../../components/HeroCard';
 import { useAuthStore } from '../../store/AuthStore';
 import { getEmployeeCurrentSalary, getEmployeeSalaryHistory } from '../../network/apis';
 
@@ -78,13 +78,12 @@ export default function MySalary() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.backgroundLight} />
-      
+
       {/* Current Month Hero Using Reusable HeroCard */}
       <View style={{ marginTop: 10 }}>
         <HeroCard
           colors={isPaid ? theme.gradients.green : theme.gradients.orange}
           topLabel="Current Month"
-          topIcon="dollar-sign"
           title={`PKR ${total.toLocaleString()}`}
           subtitle={latestMonth}
           titleStyle={styles.heroAmount}
@@ -98,19 +97,19 @@ export default function MySalary() {
           <View style={styles.heroBottomRow}>
             <Icon name="calendar" size={14} color={theme.colors.white90} style={{ marginRight: 6 }} />
             <Text style={styles.heroDate}>
-              {latestRecord?.salaryStatus?.toLowerCase() === 'acknowledged' 
+              {latestRecord?.salaryStatus?.toLowerCase() === 'acknowledged'
                 ? `Acknowledged on ${formattedPaidOn || ''}`
                 : latestRecord?.salaryStatus?.toLowerCase() === 'paid'
-                ? `Paid on ${formattedPaidOn || ''}`
-                : 'Pending payment'
+                  ? `Paid on ${formattedPaidOn || ''}`
+                  : 'Pending payment'
               }
             </Text>
           </View>
         </HeroCard>
       </View>
 
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.successStrong]} />
@@ -131,7 +130,7 @@ export default function MySalary() {
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Deductions</Text>
             <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>
-              {deductions < 0 ? `-PKR ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
+              {deductions < 0 ? `PKR - ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
             </Text>
           </View>
 
@@ -162,38 +161,39 @@ export default function MySalary() {
               const recDateFormatted = item.paidOn
                 ? new Date(item.paidOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : 'Pending';
-              
+
               return (
                 <TouchableOpacity
                   key={item.registerMasterId || String(index)}
                   activeOpacity={0.7}
-                  onPress={() => navigation.navigate('SalaryDetail', { 
+                  onPress={() => navigation.navigate('SalaryDetail', {
                     registerMasterId: item.registerMasterId,
                     month: item.monthLabel,
                     amount: `PKR ${item.netSalary?.toLocaleString()}`,
-                    salaryStatus: item.salaryStatus
+                    salaryStatus: item.salaryStatus,
+                    remarks: item.remarks
                   })}
                 >
                   <View style={[styles.historyRow, index === Math.min(3, monthlyRecords.length) - 1 && { borderBottomWidth: 0, paddingBottom: 0, marginBottom: 0 }]}>
                     <View>
                       <Text style={styles.historyMonth}>{item.monthLabel}</Text>
                       <Text style={styles.historyDate}>
-                        {item.salaryStatus === 'Acknowledged' 
-                          ? `Acknowledged: ${recDateFormatted}` 
+                        {item.salaryStatus === 'Acknowledged'
+                          ? `Acknowledged: ${recDateFormatted}`
                           : item.salaryStatus === 'Paid'
-                          ? `Paid: ${recDateFormatted}`
-                          : 'Pending'
+                            ? `Paid: ${recDateFormatted}`
+                            : 'Pending'
                         }
                       </Text>
                     </View>
                     <View style={styles.historyRight}>
                       <Text style={styles.historyAmount}>PKR {item.netSalary?.toLocaleString()}</Text>
                       <View style={styles.statusRow}>
-                        <Icon 
-                          name={recIsPaid ? "check" : "clock"} 
-                          size={14} 
-                          color={recIsPaid ? theme.colors.successStrong : theme.colors.warning} 
-                          style={{ marginRight: 4 }} 
+                        <Icon
+                          name={recIsPaid ? "check" : "clock"}
+                          size={14}
+                          color={recIsPaid ? theme.colors.successStrong : theme.colors.warning}
+                          style={{ marginRight: 4 }}
                         />
                         <Text style={[styles.statusText, { color: recIsPaid ? theme.colors.successStrong : theme.colors.warning }]}>
                           {item.salaryStatus || 'Pending'}
@@ -209,10 +209,10 @@ export default function MySalary() {
 
 
         {/* Download Button */}
-        <TouchableOpacity style={styles.outlineBtn}>
+        {/* <TouchableOpacity style={styles.outlineBtn}>
           <Icon name="download" size={18} color={theme.colors.textHeading} style={{ marginRight: 8 }} />
           <Text style={styles.outlineBtnText}>Download Payslip</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
       </ScrollView>
     </View>

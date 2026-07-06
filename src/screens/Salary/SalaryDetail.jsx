@@ -71,6 +71,7 @@ export default function SalaryDetail() {
 
     const isStatusPaid = salaryStatus?.toLowerCase() === 'paid';
     const isStatusAcknowledged = salaryStatus?.toLowerCase() === 'acknowledged';
+    const isStatusNotPaid = salaryStatus?.toLowerCase() === 'not paid';
 
     if (loading) {
         return (
@@ -107,12 +108,12 @@ export default function SalaryDetail() {
                     </View>
                     <View style={[
                         styles.checkCircleLarge,
-                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: theme.colors.pendingChipBg }
+                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: isStatusNotPaid ? theme.colors.dangerSubtle : theme.colors.pendingChipBg }
                     ]}>
                         <Icon
-                            name={isStatusPaid || isStatusAcknowledged ? "check" : "clock"}
+                            name={isStatusPaid || isStatusAcknowledged ? "check" : isStatusNotPaid ? "alert-circle" : "clock"}
                             size={24}
-                            color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : theme.colors.pendingChipText}
+                            color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : isStatusNotPaid ? theme.colors.dangerStrong : theme.colors.pendingChipText}
                         />
                     </View>
                 </View>
@@ -123,46 +124,91 @@ export default function SalaryDetail() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
                 {/* Payment Status */}
                 <View style={styles.SectionCard}>
                     <Text style={styles.sectionTitle}>Payment Status</Text>
                     <View style={[
                         styles.statusCard,
-                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: theme.colors.pendingChipBg }
+                        !isStatusPaid && !isStatusAcknowledged && { backgroundColor: isStatusNotPaid ? theme.colors.dangerSubtle : theme.colors.pendingChipBg }
                     ]}>
                         <View style={styles.statusIconCircle}>
                             <Icon
-                                name={isStatusPaid || isStatusAcknowledged ? "check" : "clock"}
+                                name={isStatusPaid || isStatusAcknowledged ? "check" : isStatusNotPaid ? "alert-circle" : "clock"}
                                 size={16}
-                                color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : theme.colors.pendingChipText}
+                                color={isStatusPaid || isStatusAcknowledged ? theme.colors.successStrong : isStatusNotPaid ? theme.colors.dangerStrong : theme.colors.pendingChipText}
                             />
                         </View>
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <Text style={[
                                 styles.statusTitle,
-                                !isStatusPaid && !isStatusAcknowledged && { color: theme.colors.pendingChipText }
+                                !isStatusPaid && !isStatusAcknowledged && { color: isStatusNotPaid ? theme.colors.dangerStrong : theme.colors.pendingChipText }
                             ]}>
                                 {isStatusAcknowledged
                                     ? 'Payment Acknowledged'
                                     : isStatusPaid
                                         ? 'Payment Received'
-                                        : 'Pending Payment'
+                                        : isStatusNotPaid
+                                            ? 'Reported Unpaid'
+                                            : 'Pending Payment'
                                 }
                             </Text>
                             <Text style={[
                                 styles.statusSubtitle,
-                                !isStatusPaid && !isStatusAcknowledged && { color: theme.colors.pendingChipText, opacity: 0.8 }
+                                !isStatusPaid && !isStatusAcknowledged && { color: isStatusNotPaid ? theme.colors.dangerStrong : theme.colors.pendingChipText, opacity: 0.8 }
                             ]}>
                                 {isStatusAcknowledged
                                     ? 'Successfully acknowledged'
                                     : isStatusPaid
                                         ? 'Awaiting your acknowledgment'
-                                        : 'Awaiting payment process'
+                                        : isStatusNotPaid
+                                            ? 'You reported this salary as unpaid'
+                                            : 'Awaiting payment process'
                                 }
                             </Text>
                         </View>
                     </View>
                 </View>
+
+                {/* Conditional Acknowledgment Action Buttons */}
+                {isStatusPaid && (
+                    <>
+                        <TouchableOpacity
+                            style={[styles.primaryBtn, { marginBottom: 12 }]}
+                            activeOpacity={0.8}
+                            onPress={handleAcknowledge}
+                            disabled={submitting}
+                        >
+                            {submitting ? (
+                                <ActivityIndicator color={theme.colors.white} />
+                            ) : (
+                                <>
+                                    <Icon name="check-circle" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
+                                    <Text style={styles.primaryBtnText}>Acknowledge Receipt</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.outlineBtnDanger, { marginBottom: 16 }]}
+                            activeOpacity={0.8}
+                            onPress={() => setIsNotPaidModalVisible(true)}
+                        >
+                            <Icon name="x-circle" size={18} color={theme.colors.dangerStrong || '#DC2626'} style={{ marginRight: 8 }} />
+                            <Text style={styles.outlineBtnDangerText}>Salary Not Paid</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
+
+                {/* Remarks Card */}
+                {isStatusNotPaid && route.params?.remarks && (
+                    <View style={styles.SectionCard}>
+                        <Text style={styles.sectionTitle}>Remarks / Reason</Text>
+                        <Text style={{ fontSize: 15, color: theme.colors.textBody, lineHeight: 22 }}>
+                            {route.params.remarks}
+                        </Text>
+                    </View>
+                )}
 
                 {/* Salary Breakdown */}
                 <View style={styles.SectionCard}>
@@ -181,7 +227,7 @@ export default function SalaryDetail() {
                                     item.amount < 0 && { color: theme.colors.danger }
                                 ]}>
                                     {item.amount < 0
-                                        ? `-PKR ${Math.abs(item.amount).toLocaleString()}`
+                                        ? `PKR - ${Math.abs(item.amount).toLocaleString()}`
                                         : `PKR ${item.amount.toLocaleString()}`
                                     }
                                 </Text>
@@ -196,47 +242,6 @@ export default function SalaryDetail() {
                         <Text style={styles.totalAmount}>{displayTotalAmount}</Text>
                     </View>
                 </View>
-
-                {/* Conditional Acknowledgment Action Button */}
-                {isStatusPaid ? (
-                    <TouchableOpacity
-                        style={styles.primaryBtn}
-                        activeOpacity={0.8}
-                        onPress={handleAcknowledge}
-                        disabled={submitting}
-                    >
-                        {submitting ? (
-                            <ActivityIndicator color={theme.colors.white} />
-                        ) : (
-                            <>
-                                <Icon name="check-circle" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
-                                <Text style={styles.primaryBtnText}>Acknowledge Receipt</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-                ) : isStatusAcknowledged ? (
-                    <View style={[styles.primaryBtn, { backgroundColor: theme.colors.successSubtle }]}>
-                        <Icon name="check" size={20} color={theme.colors.successStrong} style={{ marginRight: 8 }} />
-                        <Text style={[styles.primaryBtnText, { color: theme.colors.successStrong }]}>Acknowledged</Text>
-                    </View>
-                ) : (
-                    <View style={[styles.primaryBtn, { backgroundColor: theme.colors.surfaceSubtle }]}>
-                        <Icon name="clock" size={20} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-                        <Text style={[styles.primaryBtnText, { color: theme.colors.textMuted }]}>Pending Payment</Text>
-                    </View>
-                )}
-
-                {/* Salary Not Paid Button */}
-                {isStatusPaid && (
-                    <TouchableOpacity
-                        style={[styles.outlineBtnDanger, { marginTop: 12 }]}
-                        activeOpacity={0.8}
-                        onPress={() => setIsNotPaidModalVisible(true)}
-                    >
-                        <Icon name="x-circle" size={18} color={theme.colors.dangerStrong || '#DC2626'} style={{ marginRight: 8 }} />
-                        <Text style={styles.outlineBtnDangerText}>Salary Not Paid</Text>
-                    </TouchableOpacity>
-                )}
 
             </ScrollView>
 

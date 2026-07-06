@@ -21,7 +21,8 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const getDayName = (dateStr) => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  return DAYS_OF_WEEK[date.getDay()];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[date.getDay()];
 };
 
 const getDateForDayName = (dayName) => {

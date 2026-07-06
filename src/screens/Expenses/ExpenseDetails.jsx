@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
-import { getExpenseDetailsWithSchool, postExpense } from '../../network/apis';
+import { getExpenseDetailsWithSchool, postExpense, deleteExpense } from '../../network/apis';
 
 // Components
 import HeroCard from '../../components/HeroCard';
@@ -61,18 +61,27 @@ export default function ExpenseDetails() {
     if (!detail) return;
     try {
       setIsOperating(true);
-      const payload = {
-        userId: Number(userId) || 0,
-        schoolId: Number(detail.schoolID) || 0,
-        saveMode: String(saveMode),
-        expenses: [
-          {
-            expenseId: Number(detail.expID) || 0
-          }
-        ]
-      };
+      let response;
+      if (saveMode === 'delete') {
+        const payload = {
+          expenseId: Number(detail.expID) || 0,
+          userId: Number(userId) || 0
+        };
+        response = await deleteExpense(payload);
+      } else {
+        const payload = {
+          userId: Number(userId) || 0,
+          schoolId: Number(detail.schoolID) || 0,
+          saveMode: String(saveMode),
+          expenses: [
+            {
+              expenseId: Number(detail.expID) || 0
+            }
+          ]
+        };
+        response = await postExpense(payload);
+      }
 
-      const response = await postExpense(payload);
       if (response && response.success) {
         Alert.alert(
           'Success',
@@ -119,8 +128,9 @@ export default function ExpenseDetails() {
     );
   }
 
-  const isApproved = detail.isPosted === true;
-  const isPending = detail.isPosted === false;
+  const isRejected = detail.isDeleted === true || record?.rawItem?.isDeleted === true || record?.status === 'Rejected';
+  const isApproved = !isRejected && (detail.isPosted === true || record?.status === 'Approved');
+  const isPending = !isApproved && !isRejected;
   const formattedAmount = `PKR ${Number(detail.amount).toLocaleString()}`;
 
   return (
@@ -153,20 +163,34 @@ export default function ExpenseDetails() {
           rightElement={
             <View style={[
               styles.statusBadge,
-              { backgroundColor: isApproved ? theme.colors.successSubtle : theme.colors.pendingChipBg }
+              {
+                backgroundColor: isApproved
+                  ? theme.colors.successSubtle
+                  : isRejected
+                    ? theme.colors.dangerSubtle
+                    : theme.colors.pendingChipBg
+              }
             ]}>
               <Text style={[
                 styles.statusBadgeText,
-                { color: isApproved ? theme.colors.successStrong : theme.colors.pendingChipText }
+                {
+                  color: isApproved
+                    ? theme.colors.successStrong
+                    : isRejected
+                      ? theme.colors.dangerStrong
+                      : theme.colors.pendingChipText
+                }
               ]}>
-                {isApproved ? 'Approved' : 'Pending'}
+                {isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}
               </Text>
             </View>
           }
         >
           <View style={styles.amountBottom}>
             <Icon name="info" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
-            <Text style={styles.dateText}>{isApproved ? 'Status: Approved' : 'Status: Pending Review'}</Text>
+            <Text style={styles.dateText}>
+              {isApproved ? 'Status: Approved' : isRejected ? 'Status: Rejected' : 'Status: Pending Review'}
+            </Text>
           </View>
         </HeroCard>
       </View>
@@ -207,7 +231,7 @@ export default function ExpenseDetails() {
       </ScrollView>
 
       {/* Bottom Action Bar (Approve/Reject) */}
-      {isPending && role === 'coordinator' && (
+      {!isApproved && !isRejected && role === 'coordinator' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity
             style={[styles.rejectBtn, isOperating && { opacity: 0.6 }]}

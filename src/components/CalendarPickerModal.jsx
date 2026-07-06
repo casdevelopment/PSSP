@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     daysGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
     },
     calendarDayBtn: {
         width: 38,

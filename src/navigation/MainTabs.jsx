@@ -122,7 +122,7 @@ export default function MainTabs() {
                 title: 'My Students',
                 headerTitle: 'My Students',
                 headerTitleStyle: { fontSize: 20, fontWeight: '600' },
-                headerRight: () => <HeaderPlusButton onPress={() => setIsAddStudentmodelVisible(true)} />
+                // headerRight: () => <HeaderPlusButton onPress={() => setIsAddStudentmodelVisible(true)} />
               }}
             />
             <Tab.Screen name="Salary" component={MySalary} options={{ headerShown: true }} />
@@ -135,8 +135,8 @@ export default function MainTabs() {
               options={{
                 title: 'Staff',
                 headerTitle: 'Staff Management',
-                headerTitleStyle: { fontSize: 20, fontWeight: '600' },
-                headerRight: () => <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
+                // headerTitleStyle: { fontSize: 20, fontWeight: '600' },
+                // headerRight: () => <HeaderPlusButton onPress={() => setIsAddStaffmodelVisible(true)} />
               }}
             />
             {/* <Tab.Screen
@@ -174,14 +174,14 @@ export default function MainTabs() {
         visible={isAddScheduleModalVisible}
         onClose={() => setIsAddScheduleModalVisible(false)}
       />
-      <AddStudentModel
+      {/* <AddStudentModel
         visible={isAddStudentmodelVisible}
         onClose={() => setIsAddStudentmodelVisible(false)}
       />
       <AddStaffModel
         visible={isAddStaffmodelVisible}
         onClose={() => setIsAddStaffmodelVisible(false)}
-      />
+      /> */}
     </>
   );
 }

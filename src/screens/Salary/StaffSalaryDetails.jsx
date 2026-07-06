@@ -165,7 +165,7 @@ export default function StaffSalaryDetails() {
           <View style={[styles.amountBottom, { borderTopColor: theme.colors.surfaceSubtle }]}>
             <Icon name="calendar" size={14} color={theme.colors.textMuted} style={{ marginRight: 8 }} />
             <Text style={[styles.dateText, { color: theme.colors.textBody }]}>
-              {record.isCoordinatorView ? `Est. Date: ${formattedDate}` : `Due/Paid Date: ${formattedDate}`}
+              Date: {formattedDate}
             </Text>
           </View>
         </HeroCard>
@@ -217,6 +217,16 @@ export default function StaffSalaryDetails() {
           </View>
         </View>
 
+        {/* Remarks Card for Not Paid status */}
+        {record.status?.toLowerCase() === 'not paid' && record.remarks && (
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Remarks</Text>
+            <Text style={{ fontSize: 15, color: theme.colors.danger || '#DC2626', lineHeight: 22 }}>
+              {record.remarks}
+            </Text>
+          </View>
+        )}
+
         {/* Salary Breakdown */}
         <Text style={styles.sectionTitle}>Salary Breakdown</Text>
         <View style={styles.breakdownCard}>
@@ -234,7 +244,7 @@ export default function StaffSalaryDetails() {
               <View style={styles.breakdownRow}>
                 <Text style={styles.breakdownLabel}>Deductions</Text>
                 <Text style={[styles.breakdownValue, { color: theme.colors.danger }]}>
-                  {deductions < 0 ? `-PKR ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
+                  {deductions < 0 ? `PKR - ${Math.abs(deductions).toLocaleString()}` : `PKR ${deductions.toLocaleString()}`}
                 </Text>
               </View>
             </>
@@ -248,7 +258,7 @@ export default function StaffSalaryDetails() {
                   item.amount < 0 && { color: theme.colors.danger }
                 ]}>
                   {item.amount < 0
-                    ? `-PKR ${Math.abs(item.amount).toLocaleString()}`
+                    ? `PKR - ${Math.abs(item.amount).toLocaleString()}`
                     : `PKR ${item.amount.toLocaleString()}`
                   }
                 </Text>
@@ -264,33 +274,30 @@ export default function StaffSalaryDetails() {
           </View>
         </View>
 
-        {/* Action Button: Coordinators can only view / download payslip, Principals can pay if status is Pending */}
-        {record.isCoordinatorView ? (
-          <TouchableOpacity style={styles.outlineBtn} activeOpacity={0.8}>
-            <Icon name="download" size={18} color={theme.colors.textBody} style={{ marginRight: 8 }} />
-            <Text style={styles.outlineBtnText}>Download Payslip</Text>
-          </TouchableOpacity>
-        ) : isPaid ? (
-          <View style={[styles.primaryBtn, { backgroundColor: theme.colors.successSubtle }]}>
-            <Icon name="check" size={18} color={theme.colors.successStrong} style={{ marginRight: 6 }} />
-            <Text style={[styles.primaryBtnText, { color: theme.colors.successStrong }]}>Paid</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            activeOpacity={0.8}
-            onPress={handlePaySalary}
-            disabled={paying}
-          >
-            {paying ? (
-              <ActivityIndicator color={theme.colors.white} />
-            ) : (
-              <>
-                <Icon name="dollar-sign" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
-                <Text style={styles.primaryBtnText}>Pay Salary Now</Text>
-              </>
-            )}
-          </TouchableOpacity>
+        {/* Action Button: Principals can pay if status is Pending */}
+        {!record.isCoordinatorView && (
+          isPaid ? (
+            <View style={[styles.primaryBtn, { backgroundColor: theme.colors.successSubtle }]}>
+              <Icon name="check" size={18} color={theme.colors.successStrong} style={{ marginRight: 6 }} />
+              <Text style={[styles.primaryBtnText, { color: theme.colors.successStrong }]}>Paid</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              activeOpacity={0.8}
+              onPress={handlePaySalary}
+              disabled={paying}
+            >
+              {paying ? (
+                <ActivityIndicator color={theme.colors.white} />
+              ) : (
+                <>
+                  <Icon name="dollar-sign" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
+                  <Text style={styles.primaryBtnText}>Pay Salary Now</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )
         )}
 
       </ScrollView>

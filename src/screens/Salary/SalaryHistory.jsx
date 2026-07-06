@@ -85,7 +85,6 @@ export default function SalaryHistory() {
             <View style={[styles.statsContainer, theme.shadow.card]}>
                 <View style={[styles.statBox, { backgroundColor: theme.colors.successSubtle }]}>
                     <View style={styles.statLabelRow}>
-                        <Icon name="dollar-sign" size={14} color={theme.colors.successStrong} />
                         <Text style={[styles.statLabel, { color: theme.colors.successStrong }]}>Total ({selectedYear})</Text>
                     </View>
                     <Text style={[styles.statValue, { color: theme.colors.successStrong }]}>
@@ -95,7 +94,7 @@ export default function SalaryHistory() {
 
                 <View style={[styles.statBox, { backgroundColor: theme.colors.blueSurface }]}>
                     <View style={styles.statLabelRow}>
-                        <Icon name="trending-up" size={14} color={theme.colors.linkPrimary} />
+                        {/* <Icon name="trending-up" size={14} color={theme.colors.linkPrimary} /> */}
                         <Text style={[styles.statLabel, { color: theme.colors.linkPrimary }]}>Average</Text>
                     </View>
                     <Text style={[styles.statValue, { color: theme.colors.linkPrimary }]}>
@@ -161,7 +160,8 @@ export default function SalaryHistory() {
                                         registerMasterId: record.registerMasterId,
                                         month: record.monthLabel,
                                         amount: `PKR ${record.netSalary?.toLocaleString()}`,
-                                        salaryStatus: record.salaryStatus
+                                        salaryStatus: record.salaryStatus,
+                                        remarks: record.remarks
                                     })}
                                 >
                                     <View style={styles.recordTop}>

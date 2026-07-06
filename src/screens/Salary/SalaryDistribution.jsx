@@ -175,7 +175,6 @@ export default function SalaryDistribution() {
         <View style={styles.heroWrapper}>
           <HeroCard
             topLabel={role === 'coordinator' ? "Total Schools Salaries" : "Total Staff Salaries"}
-            topIcon="dollar-sign"
             title={`PKR ${totalAmount.toLocaleString()}`}
             subtitle={subtitleText}
             colors={theme.gradients.green}
@@ -280,6 +279,7 @@ export default function SalaryDistribution() {
                         date: item.salaryStatusChangeDate,
                         status: item.salaryStatus,
                         registerId: item.registerId,
+                        remarks: item.remarks,
                         isCoordinatorView: false
                       }
                     })}
@@ -289,8 +289,26 @@ export default function SalaryDistribution() {
                         <Text style={styles.staffName}>{item.name}</Text>
                         <Text style={styles.staffSubject}>Staff Member</Text>
                       </View>
-                      <View style={[styles.statusBadge, { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }]}>
-                        <Text style={[styles.statusBadgeText, { color: isPaid ? theme.colors.successStrong : theme.colors.pendingChipText }]}>
+                      <View style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor: isPaid
+                            ? theme.colors.successSubtle
+                            : item.salaryStatus?.toLowerCase() === 'not paid'
+                              ? theme.colors.dangerSubtle
+                              : theme.colors.pendingChipBg
+                        }
+                      ]}>
+                        <Text style={[
+                          styles.statusBadgeText,
+                          {
+                            color: isPaid
+                              ? theme.colors.successStrong
+                              : item.salaryStatus?.toLowerCase() === 'not paid'
+                                ? theme.colors.dangerStrong
+                                : theme.colors.pendingChipText
+                          }
+                        ]}>
                           {item.salaryStatus || 'Pending'}
                         </Text>
                       </View>

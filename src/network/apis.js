@@ -549,6 +549,16 @@ export const saveSalaryNotAcknowledgement = async (payload) => {
   }
 };
 
+export const deleteExpense = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/DeleteExpense', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Delete expense error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 
 

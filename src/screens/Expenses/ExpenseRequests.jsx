@@ -89,7 +89,7 @@ export default function ExpenseRequests() {
           school: item.schoolName || 'Unknown School',
           amount: `PKR ${Number(item.amount).toLocaleString()}`,
           amountRaw: item.amount,
-          status: item.isPosted ? 'Approved' : 'Pending',
+          status: item.isDeleted ? 'Rejected' : (item.isPosted ? 'Approved' : 'Pending'),
           date: formatDate(item.expAddedDate),
           rawItem: item
         }));
@@ -201,6 +201,17 @@ export default function ExpenseRequests() {
         <View style={styles.listContainer}>
           {expenses.map((record) => {
             const isApproved = record.status === 'Approved';
+            const isRejected = record.status === 'Rejected';
+            const badgeBg = isApproved
+              ? theme.colors.successSubtle
+              : isRejected
+                ? theme.colors.dangerSubtle
+                : theme.colors.pendingChipBg;
+            const badgeText = isApproved
+              ? theme.colors.successStrong
+              : isRejected
+                ? theme.colors.dangerStrong
+                : theme.colors.pendingChipText;
 
             return (
               <TouchableOpacity
@@ -217,11 +228,11 @@ export default function ExpenseRequests() {
 
                   <View style={[
                     styles.statusBadge,
-                    { backgroundColor: isApproved ? theme.colors.successSubtle : theme.colors.pendingChipBg }
+                    { backgroundColor: badgeBg }
                   ]}>
                     <Text style={[
                       styles.statusBadgeText,
-                      { color: isApproved ? theme.colors.successStrong : theme.colors.pendingChipText }
+                      { color: badgeText }
                     ]}>
                       {record.status}
                     </Text>

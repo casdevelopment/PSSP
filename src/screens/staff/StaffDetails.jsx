@@ -198,7 +198,7 @@ export default function StaffDetail() {
                         </View>
 
                         {/* Recent Activity */}
-                        <View style={styles.sectionCard}>
+                        {/* <View style={styles.sectionCard}>
                             <Text style={styles.sectionTitle}>Recent Activity</Text>
                             {RECENT_ACTIVITY.map((activity, index) => (
                                 <View
@@ -217,13 +217,13 @@ export default function StaffDetail() {
                                     </View>
                                 </View>
                             ))}
-                        </View>
+                        </View> */}
                     </>
                 )}
             </ScrollView>
 
             {/* Bottom Action Bar */}
-            <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            {/* <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                 <TouchableOpacity style={styles.primaryBtn}>
                     <Text style={styles.primaryBtnText}>Edit Details</Text>
                 </TouchableOpacity>
@@ -231,7 +231,7 @@ export default function StaffDetail() {
                 <TouchableOpacity style={styles.secondaryBtn}>
                     <Text style={styles.secondaryBtnText}>View Timetable</Text>
                 </TouchableOpacity>
-            </View>
+            </View> */}
         </View>
     );
 }

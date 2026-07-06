@@ -173,7 +173,7 @@ export default function StudentDetail() {
         </View>
 
         {/* Recent Test Scores */}
-        <View style={styles.sectionCard}>
+        {/* <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Recent Test Scores (Mock)</Text>
           {TEST_SCORES.map((item) => (
             <View key={item.id} style={[styles.scoreRow, { backgroundColor: theme.colors.purpleSurface }]}>
@@ -187,7 +187,7 @@ export default function StudentDetail() {
               </View>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Attendance History */}
         <View style={styles.sectionCard}>
@@ -241,12 +241,12 @@ export default function StudentDetail() {
 
       {/* Bottom Action Bar */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <TouchableOpacity style={styles.primaryBtn}>
+        {/* <TouchableOpacity style={styles.primaryBtn}>
           <Text style={styles.primaryBtnText}>Send Message</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity style={styles.secondaryBtn} onPress={() => setmodelVisible(true)}>
-          <Text style={styles.secondaryBtnText}>View Full Report</Text>
+        <TouchableOpacity style={styles.primaryBtn} onPress={() => setmodelVisible(true)}>
+          <Text style={styles.primaryBtnText}>View Full Report</Text>
         </TouchableOpacity>
       </View>
 
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
   },
   sectionCard: {
