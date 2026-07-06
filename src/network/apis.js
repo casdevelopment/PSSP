@@ -515,4 +515,25 @@ export const getEmployeeSalaryStatusBySchool = async (schoolId) => {
   }
 };
 
+export const getAccountHeadList = async (type) => {
+  try {
+    const response = await axiosInstance.post('/EP/GetAccountHeadList', JSON.stringify(type));
+    return response?.data;
+  } catch (error) {
+    console.error('Get account head list error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const saveExpenseList = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/SaveExpenseList', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Save expense list error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 

@@ -18,6 +18,8 @@ import { getExpensePendingListSchool } from '../../network/apis';
 // Components
 import HeroCard from '../../components/HeroCard';
 import CalendarPickerModal from '../../components/CalendarPickerModal';
+import HeaderPlusButton from '../../components/HeaderPlusButton';
+import AddExpenseModel from '../../components/AddExpenseModel';
 
 const formatDateString = (date) => {
   const y = date.getFullYear();
@@ -40,6 +42,7 @@ const formatDate = (dateStr) => {
 export default function ExpenseRequests() {
   const navigation = useNavigation();
   const empId = useAuthStore((state) => state.empId);
+  const role = useAuthStore((state) => state.userType);
 
   const todayDate = new Date();
   const thirtyDaysAgo = new Date();
@@ -49,11 +52,22 @@ export default function ExpenseRequests() {
   const [toDate, setToDate] = useState(formatDateString(todayDate));
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (role === 'principal') {
+      navigation.setOptions({
+        headerRight: () => (
+          <HeaderPlusButton onPress={() => setIsAddModalVisible(true)} />
+        ),
+      });
+    }
+  }, [navigation, role]);
 
   const fetchExpenses = useCallback(async (showLoader = true) => {
     try {
@@ -249,6 +263,12 @@ export default function ExpenseRequests() {
         selectedDate={toDate}
         onSelectDate={(date) => setToDate(date)}
         title="Select To Date"
+      />
+
+      <AddExpenseModel
+        visible={isAddModalVisible}
+        onClose={() => setIsAddModalVisible(false)}
+        onSuccess={() => fetchExpenses(true)}
       />
     </View>
   );
