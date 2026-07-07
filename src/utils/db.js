@@ -164,3 +164,55 @@ export const checkOfflineSubmission = async (type, schoolId, classId, sectionId,
     return null;
   }
 };
+
+/**
+Mark cached students/employees as submitted in api_cache
+ */
+export const markCachedAttendanceAsSubmitted = async (type, schoolId, classId, sectionId, shiftId, payload) => {
+  try {
+    const cacheKey = type === 'student'
+      ? `getStudentForAttendance_${schoolId}_${classId}_${sectionId}`
+      : `getEmployeesShift_${shiftId}_${schoolId}`;
+
+    const cachedData = await getApiCache(cacheKey);
+    if (!cachedData) return;
+
+    let updatedData = [];
+    if (type === 'student') {
+      const studentMap = new Map();
+      payload.attendanceList?.forEach(item => {
+        studentMap.set(Number(item.studentId), item.attendanceStatusId);
+      });
+
+      updatedData = cachedData.map(student => {
+        const studentId = Number(student.studentId);
+        if (studentMap.has(studentId)) {
+          return {
+            ...student,
+            attendanceStatusIdFk: String(studentMap.get(studentId)),
+            attendanceColorStatus: 'marked'
+          };
+        }
+        return student;
+      });
+    } else if (type === 'staff') {
+      const presentEmpIds = new Set(payload.employeeAttendance?.map(item => Number(item.employeeId)));
+
+      updatedData = cachedData.map(emp => {
+        const empId = Number(emp.employeeId);
+        const isPresent = presentEmpIds.has(empId);
+        return {
+          ...emp,
+          statusINTime: emp.statusINTime || (isPresent ? new Date().toISOString() : 'Absent'),
+          statusOUTTime: emp.statusOUTTime,
+          attendanceColorStatus: 'marked'
+        };
+      });
+    }
+
+    await saveApiCache(cacheKey, updatedData);
+    console.log(`Updated local API cache to marked status for key "${cacheKey}".`);
+  } catch (error) {
+    console.error("Failed to mark cached attendance as submitted:", error);
+  }
+};

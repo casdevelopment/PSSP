@@ -1,5 +1,5 @@
 import { markStudentsAttendance, markEmployeeAttendance } from '../network/apis';
-import { getPendingAttendance, deleteOfflineAttendance, updateOfflineAttendanceStatus } from './db';
+import { getPendingAttendance, deleteOfflineAttendance, updateOfflineAttendanceStatus, markCachedAttendanceAsSubmitted } from './db';
 
 // Track if a sync operation is currently active to avoid concurrent sync runs
 let isSyncing = false;
@@ -38,6 +38,14 @@ export const syncOfflineAttendance = async () => {
 
         if (res && res.success !== false) {
           console.log(`Successfully synced offline attendance ID: ${item.id}`);
+          await markCachedAttendanceAsSubmitted(
+            item.type,
+            item.schoolId,
+            item.classId,
+            item.sectionId,
+            item.shiftId,
+            item.payload
+          );
           await deleteOfflineAttendance(item.id);
         } else {
           console.warn(`Server rejected offline attendance ID: ${item.id}. Message: ${res?.message}`);

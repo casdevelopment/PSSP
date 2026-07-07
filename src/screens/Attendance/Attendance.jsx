@@ -9,7 +9,7 @@ import AttendanceCard from '../../components/AttendanceCard';
 import { useAuthStore } from '../../store/AuthStore';
 
 import { getEmpAssignGradeList, getGradesByClasses, getClassesBySection, getStudentForAttendance, markStudentsAttendance, getHRShift, getEmployeesShift, markEmployeeAttendance } from '../../network/apis';
-import { saveApiCache, getApiCache, checkOfflineSubmission, saveOfflineAttendance } from '../../utils/db';
+import { saveApiCache, getApiCache, checkOfflineSubmission, saveOfflineAttendance, markCachedAttendanceAsSubmitted } from '../../utils/db';
 import { syncOfflineAttendance } from '../../utils/sync';
 
 export default function Attendance() {
@@ -23,7 +23,7 @@ export default function Attendance() {
 
   let type;
   if (role === 'principal' || role === 'principle') {
-    type = 'student';
+    type = 'staff';
   } else {
     type = 'student';
   }
@@ -170,7 +170,8 @@ export default function Attendance() {
             setData(mapped);
 
             const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
-            setIsSubmitted(allSaved);
+            const allMarked = mapped.length > 0 && mapped.every(s => s.rawItem?.attendanceColorStatus === 'marked');
+            setIsSubmitted(allSaved || allMarked);
           } else {
             setData([]);
             setIsSubmitted(false);
@@ -199,6 +200,12 @@ export default function Attendance() {
                   item => Number(item.studentId) === Number(student.studentId)
                 );
                 status = offlineRec?.attendanceStatusId === 1 ? 'Present' : offlineRec?.attendanceStatusId === 2 ? 'Absent' : null;
+              } else {
+                if (student.attendanceStatusIdFk === '1') {
+                  status = 'Present';
+                } else if (student.attendanceStatusIdFk === '2') {
+                  status = 'Absent';
+                }
               }
 
               return {
@@ -211,7 +218,9 @@ export default function Attendance() {
             });
 
             setData(mapped);
-            setIsSubmitted(offlinePayload ? true : false);
+            const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
+            const allMarked = mapped.length > 0 && mapped.every(s => s.rawItem?.attendanceColorStatus === 'marked');
+            setIsSubmitted(offlinePayload ? true : (allSaved || allMarked));
           } else {
             setData([]);
             setIsSubmitted(false);
@@ -269,16 +278,28 @@ export default function Attendance() {
             const mapped = apiEmployees.map(emp => {
               const empIdStr = String(emp.employeeId);
 
+              const isMarked = emp.statusINTime !== null || emp.statusOUTTime !== null;
+              let status = null;
+              if (isMarked) {
+                status = 'Present';
+              }
+
               return {
                 id: empIdStr,
                 name: emp.fullName || 'Unknown Staff',
                 subtitle: `Code: ${emp.empCode || 'N/A'} | ${emp.departmentName || 'N/A'}`,
-                status: null,
-                rawItem: emp
+                status,
+                rawItem: {
+                  ...emp,
+                  attendanceColorStatus: isMarked ? 'marked' : 'unmarked'
+                }
               };
             });
             setData(mapped);
-            setIsSubmitted(false);
+            
+            const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
+            const anyMarked = mapped.some(s => s.rawItem?.attendanceColorStatus === 'marked');
+            setIsSubmitted(allSaved || anyMarked);
           } else {
             setData([]);
             setIsSubmitted(false);
@@ -307,6 +328,11 @@ export default function Attendance() {
                   item => Number(item.employeeId) === Number(emp.employeeId)
                 );
                 status = isPresentOffline ? 'Present' : 'Absent';
+              } else {
+                const isMarked = emp.statusINTime !== null || emp.statusOUTTime !== null;
+                if (isMarked) {
+                  status = 'Present';
+                }
               }
 
               return {
@@ -314,12 +340,17 @@ export default function Attendance() {
                 name: emp.fullName || 'Unknown Staff',
                 subtitle: `Code: ${emp.empCode || 'N/A'} | ${emp.departmentName || 'N/A'}`,
                 status,
-                rawItem: emp
+                rawItem: {
+                  ...emp,
+                  attendanceColorStatus: (emp.statusINTime !== null || emp.statusOUTTime !== null) ? 'marked' : 'unmarked'
+                }
               };
             });
 
             setData(mapped);
-            setIsSubmitted(offlinePayload ? true : false);
+            const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
+            const anyMarked = mapped.some(s => s.rawItem?.attendanceColorStatus === 'marked');
+            setIsSubmitted(offlinePayload ? true : (allSaved || anyMarked));
           } else {
             setData([]);
             setIsSubmitted(false);
@@ -349,6 +380,8 @@ export default function Attendance() {
       return 0;
     };
 
+    const unmarkedStudents = data.filter(person => person.rawItem?.attendanceColorStatus !== 'marked');
+
     const apiPayload = {
       attendance: {
         userId: Number(userId) || 0,
@@ -357,7 +390,7 @@ export default function Attendance() {
         sectionId: Number(selectedSection?.sectionId) || 0,
         attendanceDate: new Date().toISOString()
       },
-      attendanceList: data.map(person => {
+      attendanceList: unmarkedStudents.map(person => {
         const studentIdNum = Number(person.id) || Number(person.rawItem?.studentId) || 0;
         return {
           attendanceStatusId: getStatusId(person.status),
@@ -369,14 +402,23 @@ export default function Attendance() {
     console.log('Submitting Student Attendance Payload', apiPayload);
 
     try {
-      const apiRes = await markStudentsAttendance(apiPayload);
-      if (apiRes && apiRes.success !== false) {
-        setIsSubmitted(true);
-        Alert.alert('Success', 'Student attendance submitted successfully.');
-        syncOfflineAttendance();
-      } else {
-        Alert.alert('Error', apiRes?.message || 'Failed to submit student attendance.');
+      if (apiPayload.attendanceList.length > 0) {
+        const apiRes = await markStudentsAttendance(apiPayload);
+        if (!apiRes || apiRes.success === false) {
+          throw new Error(apiRes?.message || 'Failed to submit student attendance.');
+        }
       }
+      setIsSubmitted(true);
+      await markCachedAttendanceAsSubmitted(
+        'student',
+        Number(schoolId) || 0,
+        Number(selectedClass?.classId) || 0,
+        Number(selectedSection?.sectionId) || 0,
+        0,
+        apiPayload
+      );
+      Alert.alert('Success', 'Student attendance submitted successfully.');
+      syncOfflineAttendance();
     } catch (error) {
       console.log('Failed to submit student attendance online:', error.message);
 
@@ -390,6 +432,14 @@ export default function Attendance() {
             Number(selectedSection?.sectionId) || 0,
             0,
             currentDateFormatted,
+            apiPayload
+          );
+          await markCachedAttendanceAsSubmitted(
+            'student',
+            Number(schoolId) || 0,
+            Number(selectedClass?.classId) || 0,
+            Number(selectedSection?.sectionId) || 0,
+            0,
             apiPayload
           );
           setIsSubmitted(true);
@@ -407,6 +457,7 @@ export default function Attendance() {
     // Build API Request payload only for present employees
     const presentEmployees = data
       .filter(person => person.status === 'Present')
+      .filter(person => person.rawItem?.attendanceColorStatus !== 'marked')
       .map(person => ({
         employeeId: Number(person.id) || Number(person.rawItem?.employeeId) || Number(person.rawItem?.id) || 0,
         shiftId: Number(selectedShift?.id) || 0
@@ -424,6 +475,14 @@ export default function Attendance() {
       };
     }
 
+    const apiPayload = payload || {
+      userId: Number(userId) || 0,
+      schoolId: Number(schoolId) || 0,
+      attendanceDate: new Date().toISOString(),
+      attendanceStatus: 1,
+      employeeAttendance: []
+    };
+
     console.log('Direct Submitting Staff Attendance Payload (Present Only):', JSON.stringify(payload, null, 2));
 
     try {
@@ -434,6 +493,14 @@ export default function Attendance() {
         }
       }
       setIsSubmitted(true);
+      await markCachedAttendanceAsSubmitted(
+        'staff',
+        Number(schoolId) || 0,
+        0,
+        0,
+        Number(selectedShift?.id) || 0,
+        apiPayload
+      );
       Alert.alert('Success', 'Staff attendance submitted successfully.');
       syncOfflineAttendance();
     } catch (error) {
@@ -442,14 +509,6 @@ export default function Attendance() {
       const isNetwork = !error.response || error.message?.includes('Network Error');
       if (isNetwork) {
         try {
-          const apiPayload = payload || {
-            userId: Number(userId) || 0,
-            schoolId: Number(schoolId) || 0,
-            attendanceDate: new Date().toISOString(),
-            attendanceStatus: 1,
-            employeeAttendance: []
-          };
-
           await saveOfflineAttendance(
             'staff',
             Number(schoolId) || 0,
@@ -457,6 +516,14 @@ export default function Attendance() {
             0,
             Number(selectedShift?.id) || 0,
             currentDateFormatted,
+            apiPayload
+          );
+          await markCachedAttendanceAsSubmitted(
+            'staff',
+            Number(schoolId) || 0,
+            0,
+            0,
+            Number(selectedShift?.id) || 0,
             apiPayload
           );
           setIsSubmitted(true);
@@ -579,7 +646,12 @@ export default function Attendance() {
         ) : (
           <View style={styles.listContainer}>
             {data.map((person) => (
-              <AttendanceCard key={person.id} person={person} onStatusChange={handleStatusChange} disabled={isSubmitted} />
+              <AttendanceCard
+                key={person.id}
+                person={person}
+                onStatusChange={handleStatusChange}
+                disabled={isSubmitted || person.rawItem?.attendanceColorStatus === 'marked'}
+              />
             ))}
           </View>
         )}
