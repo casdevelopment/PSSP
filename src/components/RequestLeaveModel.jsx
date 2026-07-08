@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
 import { applyLeave } from '../network/apis';
+import SecondaryButton from './SecondaryButton';
 import CalendarPickerModal from './CalendarPickerModal';
 import { useLeaveStore } from '../store/LeaveStore';
 
@@ -41,6 +42,7 @@ export default function RequestLeaveModel({ visible, onClose }) {
     const [showTypePicker, setShowTypePicker] = useState(false);
     const [showFromDatePicker, setShowFromDatePicker] = useState(false);
     const [showToDatePicker, setShowToDatePicker] = useState(false);
+    const [searchText, setSearchText] = useState('');
 
 
 
@@ -52,6 +54,7 @@ export default function RequestLeaveModel({ visible, onClose }) {
         setShowTypePicker(false);
         setShowFromDatePicker(false);
         setShowToDatePicker(false);
+        setSearchText('');
         onClose();
     };
 
@@ -134,11 +137,13 @@ export default function RequestLeaveModel({ visible, onClose }) {
                         <ScrollView
                             contentContainerStyle={styles.formContent}
                             showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
                         >
                             <View style={styles.inputGroup}>
                                 <Text style={styles.inputLabel}>Leave Type</Text>
                                 <TouchableOpacity
                                     style={styles.inputBox}
+                                    activeOpacity={0.7}
                                     onPress={() => setShowTypePicker(!showTypePicker)}
                                 >
                                     <View style={styles.dropdownHeader}>
@@ -151,25 +156,49 @@ export default function RequestLeaveModel({ visible, onClose }) {
 
                                 {showTypePicker && (
                                     <View style={styles.dropdownList}>
-                                        {isLoadingBalances ? (
-                                            <ActivityIndicator size="small" color={theme.colors.purple} style={{ padding: 10 }} />
-                                        ) : balances.length === 0 ? (
-                                            <Text style={styles.dropdownNoData}>No leave types available</Text>
-                                        ) : (
-                                            balances.map((item, index) => (
-                                                <TouchableOpacity
-                                                    key={item.empLeaveBalanceID || item.leaveTypeId || String(index)}
-                                                    style={styles.dropdownItem}
-                                                    onPress={() => {
-                                                        setSelectedBalance(item);
-                                                        setShowTypePicker(false);
-                                                    }}
-                                                >
-                                                    <Text style={styles.dropdownItemText}>{item.leaveTypeName}</Text>
-                                                    <Text style={styles.dropdownItemBal}>Bal: {item.balance}</Text>
-                                                </TouchableOpacity>
-                                            ))
-                                        )}
+                                        <View style={styles.searchBarContainer}>
+                                            <Icon name="search" size={16} color="#9CA3AF" style={styles.searchIcon} />
+                                            <TextInput
+                                                style={styles.searchBar}
+                                                placeholder="Search leave type..."
+                                                placeholderTextColor="#9CA3AF"
+                                                value={searchText}
+                                                onChangeText={setSearchText}
+                                                autoCapitalize="none"
+                                            />
+                                        </View>
+                                        <ScrollView
+                                            style={{ maxHeight: 156 }}
+                                            nestedScrollEnabled={true}
+                                            keyboardShouldPersistTaps="handled"
+                                        >
+                                            {isLoadingBalances ? (
+                                                <ActivityIndicator size="small" color={theme.colors.purple} style={{ padding: 16 }} />
+                                            ) : balances.filter(item =>
+                                                (item.leaveTypeName || '').toLowerCase().includes(searchText.toLowerCase())
+                                            ).length === 0 ? (
+                                                <Text style={styles.dropdownNoData}>No leave types found</Text>
+                                            ) : (
+                                                balances
+                                                    .filter(item =>
+                                                        (item.leaveTypeName || '').toLowerCase().includes(searchText.toLowerCase())
+                                                    )
+                                                    .map((item, index) => (
+                                                        <TouchableOpacity
+                                                            key={item.empLeaveBalanceID || item.leaveTypeId || String(index)}
+                                                            style={styles.dropdownItem}
+                                                            onPress={() => {
+                                                                setSelectedBalance(item);
+                                                                setShowTypePicker(false);
+                                                                setSearchText('');
+                                                            }}
+                                                        >
+                                                            <Text style={styles.dropdownItemText}>{item.leaveTypeName}</Text>
+                                                            <Text style={styles.dropdownItemSub}>Bal: {item.balance}</Text>
+                                                        </TouchableOpacity>
+                                                    ))
+                                            )}
+                                        </ScrollView>
                                     </View>
                                 )}
                             </View>
@@ -217,12 +246,13 @@ export default function RequestLeaveModel({ visible, onClose }) {
                         </ScrollView>
 
                         <View style={styles.modelActions}>
-                            <TouchableOpacity
-                                style={styles.cancelBtn}
+                            <SecondaryButton
+                                title="Cancel"
                                 onPress={handleClose}
-                            >
-                                <Text style={styles.cancelBtnText}>Cancel</Text>
-                            </TouchableOpacity>
+                                disabled={isSubmitting}
+                                variant="cancel"
+                                style={{ marginRight: 8 }}
+                            />
 
                             <TouchableOpacity
                                 style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
@@ -361,7 +391,7 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
     },
     dropdownList: {
-        marginTop: 4,
+        marginTop: 6,
         borderWidth: 1,
         borderColor: '#E5E7EB',
         borderRadius: 12,
@@ -372,17 +402,20 @@ const styles = StyleSheet.create({
     dropdownItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
     dropdownItemText: {
         fontSize: 15,
         color: '#0A0A0A',
+        flex: 1,
+        marginRight: 8,
     },
-    dropdownItemBal: {
-        fontSize: 14,
+    dropdownItemSub: {
+        fontSize: 13,
         color: '#6B7280',
     },
     dropdownNoData: {
@@ -391,7 +424,6 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
         fontSize: 15,
     },
-
     dateInputInner: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -400,5 +432,23 @@ const styles = StyleSheet.create({
     dateInputText: {
         fontSize: 16,
         color: '#0A0A0A',
+    },
+    searchBarContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+        backgroundColor: '#F9FAFB',
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchBar: {
+        flex: 1,
+        height: 44,
+        fontSize: 15,
+        color: '#0A0A0A',
+        paddingVertical: 0,
     },
 });

@@ -9,6 +9,7 @@ import { getEmployeeSchoolDashboardDetails } from '../../network/apis';
 
 // Components
 import HeroCard from '../../components/HeroCard';
+import SearchFilter from '../../components/SearchFilter';
 
 export default function SchoolsList() {
   const insets = useSafeAreaInsets();
@@ -17,6 +18,11 @@ export default function SchoolsList() {
   const empId = useAuthStore((state) => state.empId);
   const [schoolsList, setSchoolsList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSchools = schoolsList.filter((school) =>
+    school.schoolName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (empId) {
@@ -55,17 +61,24 @@ export default function SchoolsList() {
           />
         </View>
 
+        {/* Search Bar */}
+        <SearchFilter
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search school..."
+        />
+
         {/* Schools List */}
         <View style={styles.listContainer}>
           {isLoading ? (
             <ActivityIndicator size="large" color={theme.colors.purple} style={{ marginTop: 40 }} />
-          ) : schoolsList.length === 0 ? (
+          ) : filteredSchools.length === 0 ? (
             <View style={styles.centered}>
               <Icon name="home" size={48} color={theme.colors.textMuted} style={styles.emptyIcon} />
-              <Text style={styles.emptyText}>No schools assigned</Text>
+              <Text style={styles.emptyText}>{searchQuery ? 'No matching schools found' : 'No schools assigned'}</Text>
             </View>
           ) : (
-            schoolsList.map((school, index) => {
+            filteredSchools.map((school, index) => {
               const uniqueId = school.schoolIdFk || index;
               const locationStr = school.locationAddress || school.locationName || 'N/A';
               return (

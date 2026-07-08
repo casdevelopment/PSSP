@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,7 @@ import {
     RefreshControl,
     TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
@@ -91,6 +91,7 @@ export default function LeaveRequestsManagement() {
                         dateRange: periodStr,
                         reason: item.reason || 'No reason provided',
                         leaveType: item.leaveTypeName || item.entityLeaveType || item.leaveType || 'Leave',
+                        rejectedRemarks: item.rejectedRemarks || null,
                         appliedOn: formatDate(item.appliedDate || item.fromDate),
                         rawItem: item,
                     };
@@ -110,9 +111,11 @@ export default function LeaveRequestsManagement() {
         }
     }, [schoolId, empId, userType]);
 
-    useEffect(() => {
-        fetchLeaveData(true);
-    }, [fetchLeaveData]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchLeaveData(true);
+        }, [fetchLeaveData])
+    );
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -177,7 +180,7 @@ export default function LeaveRequestsManagement() {
                         <LeaveRequestCard
                             key={request.id}
                             request={request}
-                            onPress={() => navigation.navigate('LeaveDetail', { id: request.id, request })}
+                            onPress={() => navigation.navigate('LeaveDetail', { id: request.id, request, isReviewMode: true })}
                         />
                     ))}
                     {leaveRequests.length === 0 && (

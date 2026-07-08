@@ -85,7 +85,7 @@ export default function StaffSalaryDetails() {
     }
   };
 
-  const isPaid = salaryStatus?.toLowerCase() === 'paid' || salaryStatus?.toLowerCase() === 'acknowledged';
+  const isPaid = salaryStatus?.toLowerCase() === 'paid' || salaryStatus?.toLowerCase() === 'acknowledge';
 
   // Dynamic values depending on Coordinator vs Principal
   let displayAmount = record.amount;
@@ -147,18 +147,20 @@ export default function StaffSalaryDetails() {
           title={displayAmount}
           titleStyle={{ fontSize: 32, fontWeight: '800', color: theme.colors.textHeading }}
           rightElement={
-            <View
-              style={[
-                styles.statusIconCircle,
-                { backgroundColor: isPaid ? theme.colors.successSubtle : theme.colors.pendingChipBg }
-              ]}
-            >
-              <Icon
-                name={isPaid ? "check" : "dollar-sign"}
-                size={24}
-                color={isPaid ? theme.colors.successStrong : theme.colors.pendingChipText}
-              />
-            </View>
+            isPaid ? (
+              <View
+                style={[
+                  styles.statusIconCircle,
+                  { backgroundColor: theme.colors.successSubtle }
+                ]}
+              >
+                <Icon
+                  name="check"
+                  size={24}
+                  color={theme.colors.successStrong}
+                />
+              </View>
+            ) : null
           }
         >
           {/* Bottom section updated to use dark text and subtle borders for the white background */}
@@ -292,7 +294,6 @@ export default function StaffSalaryDetails() {
                 <ActivityIndicator color={theme.colors.white} />
               ) : (
                 <>
-                  <Icon name="dollar-sign" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
                   <Text style={styles.primaryBtnText}>Pay Salary Now</Text>
                 </>
               )}

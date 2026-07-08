@@ -6,6 +6,7 @@ import { theme } from '../theme/theme';
 const getStatusColor = (status) => {
   if (status === 'Pending') return { bg: '#FFEDD4', text: '#EA580C' };
   if (status === 'Approved') return { bg: '#D1FAE5', text: '#059669' };
+  if (status === 'Rejected') return { bg: '#FEE2E2', text: '#EF4444' };
   return { bg: '#F3F4F6', text: '#6B7280' };
 };
 

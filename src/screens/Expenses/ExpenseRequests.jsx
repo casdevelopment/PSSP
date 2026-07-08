@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
@@ -20,6 +20,7 @@ import HeroCard from '../../components/HeroCard';
 import CalendarPickerModal from '../../components/CalendarPickerModal';
 import HeaderPlusButton from '../../components/HeaderPlusButton';
 import AddExpenseModel from '../../components/AddExpenseModel';
+import SearchFilter from '../../components/SearchFilter';
 
 const formatDateString = (date) => {
   const y = date.getFullYear();
@@ -58,6 +59,17 @@ export default function ExpenseRequests() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredExpenses = expenses.filter((record) =>
+    record.school?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpenses(true);
+    }, [fetchExpenses])
+  );
 
   useEffect(() => {
     if (role === 'principal') {
@@ -106,9 +118,7 @@ export default function ExpenseRequests() {
     }
   }, [empId, fromDate, toDate]);
 
-  useEffect(() => {
-    fetchExpenses(true);
-  }, [fetchExpenses]);
+
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -169,7 +179,6 @@ export default function ExpenseRequests() {
         }
       >
 
-
         {/* Date Selector Row */}
         <View style={styles.dateSelectorRow}>
           <TouchableOpacity
@@ -197,9 +206,17 @@ export default function ExpenseRequests() {
           </TouchableOpacity>
         </View>
 
+        {role == 'coordinator' ? (
+          <SearchFilter
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search school..."
+          />
+        ) : null}
+
         {/* Expenses List */}
         <View style={styles.listContainer}>
-          {expenses.map((record) => {
+          {filteredExpenses.map((record) => {
             const isApproved = record.status === 'Approved';
             const isRejected = record.status === 'Rejected';
             const badgeBg = isApproved
@@ -250,10 +267,10 @@ export default function ExpenseRequests() {
             );
           })}
 
-          {expenses.length === 0 && (
+          {filteredExpenses.length === 0 && (
             <View style={styles.emptyContainer}>
               <Icon name="check-circle" size={48} color={theme.colors.success} style={styles.emptyIcon} />
-              <Text style={styles.emptyText}>No pending expense requests</Text>
+              <Text style={styles.emptyText}>{searchQuery ? 'No matching expenses found' : 'No pending expense requests'}</Text>
             </View>
           )}
         </View>

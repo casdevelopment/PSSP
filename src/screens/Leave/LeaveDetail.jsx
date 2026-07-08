@@ -14,11 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
-import { getEmpAllLeaveListHistory, approveStaffAndPrincipalLeaveRequest } from '../../network/apis';
+import { getEmpAllLeaveListHistory, approveStaffAndPrincipalLeaveRequest, rejectStaffAndPrincipalLeaveRequest } from '../../network/apis';
 import { useProfileDetailsStore } from '../../store/ProfileDetailsStore';
+import RejectModal from '../../components/RejectModal';
 // Make sure to adjust this import path to match your folder structure
 import { SectionCard, DetailRow } from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
+import SecondaryButton from '../../components/SecondaryButton';
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -32,8 +34,10 @@ const formatDate = (dateStr) => {
 };
 
 const formatRequestObj = (item) => {
-    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Rejected' : 'Pending';
-    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'rejected' : 'pending';
+    const isApproved = item.approved === true;
+    const isRejected = item.isRejected === true;
+    const status = isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending';
+    const statusTone = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
     const days = item.days || 1;
 
     const fromDateFormatted = formatDate(item.fromDate);
@@ -55,15 +59,16 @@ const formatRequestObj = (item) => {
         subject: 'N/A',
         leaveType: item.entityLeaveType || 'Leave',
         reason: item.reason || 'No reason provided',
+        rejectedRemarks: item.rejectedRemarks || null,
         appliedOn: formatDate(item.fromDate),
         timeline: [
             { label: 'Applied On', date: formatDate(item.fromDate), icon: 'clock', color: '#2B7FFF' },
-            ...(item.approved !== null && item.approved !== undefined ? [
+            ...(isApproved || isRejected ? [
                 {
-                    label: item.approved === true ? 'Approved On' : 'Rejected On',
+                    label: isApproved ? 'Approved On' : 'Rejected On',
                     date: formatDate(item.toDate || item.fromDate),
-                    icon: item.approved === true ? 'check' : 'x',
-                    color: item.approved === true ? '#10B981' : '#E11D48'
+                    icon: isApproved ? 'check' : 'x',
+                    color: isApproved ? '#10B981' : '#E11D48'
                 }
             ] : [])
         ]
@@ -116,9 +121,12 @@ export default function LeaveDetail() {
     const [isLoading, setIsLoading] = useState(!initialRequest);
     const [error, setError] = useState(null);
     const [isApproving, setIsApproving] = useState(false);
+    const [isRejecting, setIsRejecting] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
 
     const role = userType || 'staff';
-    const isReviewer = role === 'principal' || role === 'coordinator';
+    const isReviewMode = route.params?.isReviewMode === true;
+    const isReviewer = isReviewMode && (role === 'principal' || role === 'coordinator');
 
     const handleApprove = async () => {
         try {
@@ -141,6 +149,35 @@ export default function LeaveDetail() {
             Alert.alert('Error', err.message || 'An error occurred while approving leave request.');
         } finally {
             setIsApproving(false);
+        }
+    };
+
+    const handleReject = async (rejectedRemarks) => {
+        try {
+            setIsRejecting(true);
+            const payload = {
+                leaveid: Number(requestId) || 0,
+                rejectedRemarks: rejectedRemarks
+            };
+            const response = await rejectStaffAndPrincipalLeaveRequest(payload);
+            if (response && response.success) {
+                setDetail(prev => prev ? {
+                    ...prev,
+                    status: 'Rejected',
+                    statusTone: 'rejected',
+                    rejectedRemarks: rejectedRemarks
+                } : null);
+                Alert.alert('Success', response.message || 'Leave successfully rejected.', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            } else {
+                Alert.alert('Error', response?.message || 'Failed to reject leave request.');
+            }
+        } catch (err) {
+            console.error('Error rejecting leave:', err);
+            Alert.alert('Error', err.message || 'An error occurred while rejecting leave request.');
+        } finally {
+            setIsRejecting(false);
         }
     };
 
@@ -301,6 +338,12 @@ export default function LeaveDetail() {
                     <Text style={styles.reasonText}>{detail.reason}</Text>
                 </SectionCard>
 
+                {detail.rejectedRemarks ? (
+                    <SectionCard title="Rejection Remarks">
+                        <Text style={styles.reasonText}>{detail.rejectedRemarks}</Text>
+                    </SectionCard>
+                ) : null}
+
                 <SectionCard title="Timeline">
                     <DetailRow
                         label="Applied On"
@@ -323,7 +366,7 @@ export default function LeaveDetail() {
                     )}
                 </SectionCard>
 
-                {!isReviewer && (
+                {/* {!isReviewer && (
                     <View style={[styles.approvedBanner, { backgroundColor: stylesByStatus.bannerBg }]}>
                         <View style={[styles.bannerIconWrap, { backgroundColor: stylesByStatus.bannerIconBg }]}>
                             <Icon
@@ -341,10 +384,18 @@ export default function LeaveDetail() {
                             </Text>
                         </View>
                     </View>
-                )}
+                )} */}
 
                 {isReviewer && detail.status === 'Pending' && (
                     <View style={styles.actionBar}>
+                        <SecondaryButton
+                            title="Reject"
+                            onPress={() => setShowRejectModal(true)}
+                            variant="danger"
+                            disabled={isApproving}
+                            loading={isRejecting}
+                        />
+
                         <PrimaryButton
                             title="Approve"
                             onPress={handleApprove}
@@ -355,6 +406,19 @@ export default function LeaveDetail() {
                     </View>
                 )}
             </ScrollView>
+
+            <RejectModal
+                visible={showRejectModal}
+                onClose={() => setShowRejectModal(false)}
+                onConfirm={(remarksText) => {
+                    setShowRejectModal(false);
+                    handleReject(remarksText);
+                }}
+                title="Reject Leave Request"
+                subtitle="Please enter remarks for rejecting this leave request."
+                placeholder="Enter remarks..."
+                isOperating={isRejecting}
+            />
         </View>
     );
 }
@@ -516,6 +580,21 @@ const styles = StyleSheet.create({
     },
     primaryApproveButton: {
         flex: 1,
+    },
+    rejectBtn: {
+        flex: 1,
+        backgroundColor: '#FEE2E2',
+        borderWidth: 1,
+        borderColor: '#FCA5A5',
+        borderRadius: 12,
+        height: 52,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    rejectBtnText: {
+        color: '#DC2626',
+        fontSize: 16,
+        fontWeight: '700',
     },
     loadingContainer: {
         flex: 1,

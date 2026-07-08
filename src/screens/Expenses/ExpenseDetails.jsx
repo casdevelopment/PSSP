@@ -9,6 +9,8 @@ import { getExpenseDetailsWithSchool, postExpense, deleteExpense } from '../../n
 
 // Components
 import HeroCard from '../../components/HeroCard';
+import RejectModal from '../../components/RejectModal';
+import SecondaryButton from '../../components/SecondaryButton';
 
 export default function ExpenseDetails() {
   const insets = useSafeAreaInsets();
@@ -24,6 +26,8 @@ export default function ExpenseDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOperating, setIsOperating] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [actionType, setActionType] = useState(null); // 'approve' | 'reject' | null
 
   const fetchDetails = useCallback(async () => {
     try {
@@ -57,15 +61,18 @@ export default function ExpenseDetails() {
     }
   }, [expId, fetchDetails]);
 
-  const handleAction = async (saveMode) => {
+  const handleAction = async (saveMode, rejectionRemarks = '') => {
     if (!detail) return;
+    const isDelete = saveMode === 'delete';
+    setActionType(isDelete ? 'reject' : 'approve');
     try {
       setIsOperating(true);
       let response;
       if (saveMode === 'delete') {
         const payload = {
           expenseId: Number(detail.expID) || 0,
-          userId: Number(userId) || 0
+          userId: Number(userId) || 0,
+          remarks: rejectionRemarks
         };
         response = await deleteExpense(payload);
       } else {
@@ -101,6 +108,7 @@ export default function ExpenseDetails() {
       Alert.alert('Error', err.message || 'An error occurred while processing action.');
     } finally {
       setIsOperating(false);
+      setActionType(null);
     }
   };
 
@@ -228,44 +236,52 @@ export default function ExpenseDetails() {
           <Text style={styles.descText}>{detail.expDesc || 'No description provided'}</Text>
         </View>
 
+        {/* Remarks */}
+        {detail.remarks ? (
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Remarks</Text>
+            <Text style={styles.descText}>{detail.remarks}</Text>
+          </View>
+        ) : null}
+
       </ScrollView>
 
       {/* Bottom Action Bar (Approve/Reject) */}
       {!isApproved && !isRejected && role === 'coordinator' && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity
-            style={[styles.rejectBtn, isOperating && { opacity: 0.6 }]}
-            activeOpacity={0.8}
-            onPress={() => handleAction('delete')}
+          <SecondaryButton
+            title="Reject"
+            onPress={() => setShowRejectModal(true)}
+            variant="danger"
+            icon="x"
             disabled={isOperating}
-          >
-            {isOperating ? (
-              <ActivityIndicator color={theme.colors.dangerStrong} size="small" />
-            ) : (
-              <>
-                <Icon name="x" size={18} color={theme.colors.dangerStrong} style={{ marginRight: 6 }} />
-                <Text style={styles.rejectBtnText}>Reject</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={actionType === 'reject'}
+          />
 
-          <TouchableOpacity
-            style={[styles.approveBtn, isOperating && { opacity: 0.6 }]}
-            activeOpacity={0.8}
+          <SecondaryButton
+            title="Approve"
             onPress={() => handleAction('Insert')}
+            variant="success"
+            icon="check"
             disabled={isOperating}
-          >
-            {isOperating ? (
-              <ActivityIndicator color={theme.colors.white} size="small" />
-            ) : (
-              <>
-                <Icon name="check" size={18} color={theme.colors.white} style={{ marginRight: 6 }} />
-                <Text style={styles.approveBtnText}>Approve</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={actionType === 'approve'}
+          />
         </View>
       )}
+
+      {/* Rejection Remarks Modal */}
+      <RejectModal
+        visible={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={(remarksText) => {
+          setShowRejectModal(false);
+          handleAction('delete', remarksText);
+        }}
+        title="Reject Request"
+        subtitle="Please enter remarks for rejecting this expense request."
+        placeholder="Enter remarks..."
+        isOperating={isOperating}
+      />
     </View>
   );
 }

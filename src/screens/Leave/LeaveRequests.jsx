@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,7 @@ import {
     RefreshControl,
     TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import LeaveRequestCard from '../../components/LeaveRequestCard';
@@ -35,7 +35,6 @@ const formatDate = (dateStr) => {
 export default function LeaveRequests() {
     const navigation = useNavigation();
     const empId = useAuthStore((state) => state.empId);
-    const role = useAuthStore((state) => state.userType);
 
     const leaveBalances = useLeaveStore((state) => state.leaveBalances);
 
@@ -57,8 +56,10 @@ export default function LeaveRequests() {
 
             if (historyRes && historyRes.success) {
                 const mapped = (historyRes.data || []).map(item => {
-                    const status = item.approved === true ? 'Approved' : item.approved === false ? 'Pending' : 'Pending';
-                    const statusTone = item.approved === true ? 'approved' : item.approved === false ? 'pending' : 'pending';
+                    const isApproved = item.approved === true;
+                    const isRejected = item.isRejected === true;
+                    const status = isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending';
+                    const statusTone = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
                     const days = item.days || 1;
                     const durationStr = `${days} day${days > 1 ? 's' : ''}`;
 
@@ -78,6 +79,7 @@ export default function LeaveRequests() {
                         dateRange: periodStr,
                         reason: item.reason || 'No reason provided',
                         leaveType: item.entityLeaveType || 'Leave',
+                        rejectedRemarks: item.rejectedRemarks || null,
                         appliedOn: formatDate(item.fromDate),
                         entityLeaveTypeId: item.entityLeaveTypeId,
                         rawItem: item,
@@ -98,11 +100,13 @@ export default function LeaveRequests() {
         }
     }, [empId]);
 
-    useEffect(() => {
-        if (empId) {
-            fetchLeaveData(true);
-        }
-    }, [fetchLeaveData, empId]);
+    useFocusEffect(
+        useCallback(() => {
+            if (empId) {
+                fetchLeaveData(true);
+            }
+        }, [fetchLeaveData, empId])
+    );
 
     const handleRefresh = () => {
         setIsRefreshing(true);

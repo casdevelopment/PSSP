@@ -122,11 +122,11 @@ export default function Profile() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Contact Information</Text>
-            {data.showEdit && (
+            {/* {data.showEdit && (
               <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
                 <Text style={styles.editLink}>Edit Details</Text>
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
 
           <View style={styles.infoRow}>
@@ -181,7 +181,7 @@ export default function Profile() {
         )}
 
         <View style={styles.menuCard}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Notifications')}>
+          {/* <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Notifications')}>
             <View style={styles.menuItemLeft}>
               <Icon name="bell" size={20} color={theme.colors.textBody} />
               <Text style={styles.menuItemText}>Notifications</Text>
@@ -193,7 +193,7 @@ export default function Profile() {
               <Icon name="chevron-right" size={20} color={theme.colors.borderSubtle} />
             </View>
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={styles.divider} /> */}
 
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Settings')}>
             <View style={styles.menuItemLeft}>
@@ -202,7 +202,7 @@ export default function Profile() {
             </View>
             <Icon name="chevron-right" size={20} color={theme.colors.borderSubtle} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          {/* <View style={styles.divider} />
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
@@ -210,7 +210,7 @@ export default function Profile() {
               <Text style={styles.menuItemText}>Help & Support</Text>
             </View>
             <Icon name="chevron-right" size={20} color={theme.colors.borderSubtle} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>

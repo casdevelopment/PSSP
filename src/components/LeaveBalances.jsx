@@ -6,7 +6,8 @@ import { useAuthStore } from '../store/AuthStore';
 import { useLeaveStore } from '../store/LeaveStore';
 
 const ProgressBar = ({ label, used, total, color }) => {
-    const percentage = total > 0 ? (used / total) * 100 : 0;
+    const remaining = Math.max(0, total - used);
+    const percentage = total > 0 ? (remaining / total) * 100 : 0;
 
     return (
         <View style={styles.progressContainer}>
@@ -77,8 +78,8 @@ export default function LeaveBalances() {
         <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Leave Balances</Text>
             {leaveBalances.map((item, index) => {
-                const total = Math.max(item.allowLeavePerMonth || 0, item.balance || 0);
-                const used = Math.max(0, total - (item.balance || 0));
+                const total = item.totalAssignedLeave ?? Math.max(item.allowLeavePerMonth || 0, item.balance || 0);
+                const used = item.usedLeave ?? Math.max(0, total - (item.balance || 0));
                 const barColor = progressColors[index % progressColors.length];
 
                 return (

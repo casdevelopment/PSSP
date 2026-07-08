@@ -59,7 +59,7 @@ export default function AttendanceHistory() {
     const [isLoading, setIsLoading] = useState(false);
     const [summaryData, setSummaryData] = useState(null);
     const [historyData, setHistoryData] = useState([]);
-    
+
     useEffect(() => {
         if (isFocused) {
             loadHistory();
@@ -80,11 +80,11 @@ export default function AttendanceHistory() {
                 const res = await getEmployeeAttendanceSummary(payload);
                 if (res && res.success && res.data) {
                     const { summary, attendList } = res.data;
-                    
+
                     const formattedData = (attendList || []).map((item, index) => {
                         const dateObj = new Date(item.attendanceDate);
                         const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        
+
                         return {
                             id: `${item.attendanceDate}-${item.classId}-${item.sectionId}-${index}`,
                             date: dateStr,
@@ -95,7 +95,7 @@ export default function AttendanceHistory() {
                             subtitle: `${item.gradeName} - ${item.className} (${item.sectionName})`
                         };
                     });
-                    
+
                     setSummaryData({
                         overallAttendancePct: summary?.overallAttendancePct || 0,
                         totalClasses: summary?.totalClasses || 0,
@@ -114,11 +114,11 @@ export default function AttendanceHistory() {
                 const res = await getEmployeesAttendanceLast7Days(schoolId, formattedFromDate, formattedToDate);
                 if (res && res.success && res.data) {
                     const dataList = res.data || [];
-                    
+
                     const formattedData = dataList.map((item, index) => {
                         const dateObj = new Date(item.attendanceDate);
                         const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        
+
                         return {
                             id: `${item.attendanceDate}-${index}`,
                             date: dateStr,
@@ -193,27 +193,24 @@ export default function AttendanceHistory() {
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.headerTitle}>Attendance History</Text>
-                {isStudent ? (
-                    <View style={styles.datePickerRow}>
-                        <TouchableOpacity 
-                            style={styles.dateInput} 
-                            onPress={() => setActiveDatePicker('from')}
-                        >
-                            <Icon name="calendar" size={16} color={theme.colors.white80} />
-                            <Text style={styles.dateInputText}>{formatDateForDisplay(fromDate)}</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.dateRangeSeparator}>to</Text>
-                        <TouchableOpacity 
-                            style={styles.dateInput} 
-                            onPress={() => setActiveDatePicker('to')}
-                        >
-                            <Icon name="calendar" size={16} color={theme.colors.white80} />
-                            <Text style={styles.dateInputText}>{formatDateForDisplay(toDate)}</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <Text style={styles.headerSubtitle}>Last 7 days</Text>
-                )}
+                <View style={styles.datePickerRow}>
+                    <TouchableOpacity
+                        style={styles.dateInput}
+                        onPress={() => setActiveDatePicker('from')}
+                    >
+                        <Icon name="calendar" size={16} color={theme.colors.white80} />
+                        <Text style={styles.dateInputText}>{formatDateForDisplay(fromDate)}</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.dateRangeSeparator}>to</Text>
+                    <TouchableOpacity
+                        style={styles.dateInput}
+                        onPress={() => setActiveDatePicker('to')}
+                    >
+                        <Icon name="calendar" size={16} color={theme.colors.white80} />
+                        <Text style={styles.dateInputText}>{formatDateForDisplay(toDate)}</Text>
+                    </TouchableOpacity>
+                </View>
+
             </View>
 
             {/* Summary Card */}

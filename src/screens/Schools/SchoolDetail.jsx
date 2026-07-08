@@ -35,12 +35,6 @@ export default function SchoolDetail() {
     ? `PKR ${Number(school.totalSchoolSalary).toLocaleString()}`
     : 'N/A';
 
-  const RECENT_ACTIVITY = [
-    { id: '1', title: 'Monthly salary distributed', date: 'Apr 25, 2026', highlight: salaryVal, icon: 'trending-up' },
-    { id: '2', title: 'Lab equipment approved', date: 'Apr 22, 2026', highlight: 'PKR 2,400', icon: 'trending-up' },
-    { id: '3', title: '3 leave requests approved', date: 'Apr 20, 2026', highlight: '', icon: 'trending-up' },
-  ];
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
@@ -111,34 +105,6 @@ export default function SchoolDetail() {
             <Text style={styles.salaryValue}>{salaryVal}</Text>
           </View>
         </View>
-
-        {/* Recent Activity */}
-        <View style={styles.activityContainer}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-
-          {RECENT_ACTIVITY.map((activity, index) => (
-            <View
-              key={activity.id}
-              style={[
-                styles.activityRow,
-                index === RECENT_ACTIVITY.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }
-              ]}
-            >
-              <View style={styles.activityIconCircle}>
-                <Icon name={activity.icon} size={18} color={theme.colors.linkPrimary} />
-              </View>
-
-              <View style={styles.activityDetails}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityDate}>{activity.date}</Text>
-                {activity.highlight ? (
-                  <Text style={styles.activityHighlight}>{activity.highlight}</Text>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </View>
-
       </ScrollView>
     </View>
   );
@@ -262,53 +228,5 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     color: theme.colors.textHeading,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.textHeading,
-    marginBottom: 10,
-  },
-  activityContainer: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSubtle,
-  },
-  activityRow: {
-    flexDirection: 'row',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceSubtle,
-  },
-  activityIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.blueSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  activityDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.textHeading,
-    marginBottom: 4,
-  },
-  activityDate: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    marginBottom: 4,
-  },
-  activityHighlight: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.colors.successStrong,
-  },
+  }
 });

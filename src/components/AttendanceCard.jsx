@@ -41,6 +41,12 @@ const AttendanceOption = ({ label, type, isSelected, onPress, disabled }) => {
 };
 
 export default function AttendanceCard({ person, onStatusChange, disabled }) {
+  React.useEffect(() => {
+    if (!person.status && !disabled && onStatusChange) {
+      onStatusChange(person.id, 'Present');
+    }
+  }, [person.id, person.status, disabled, onStatusChange]);
+
   return (
     <View style={styles.card}>
       <View style={styles.infoRow}>
@@ -51,7 +57,7 @@ export default function AttendanceCard({ person, onStatusChange, disabled }) {
         <AttendanceOption
           label="Present"
           type="Present"
-          isSelected={person.status === 'Present'}
+          isSelected={person.status === 'Present' || (!person.status && !disabled)}
           onPress={() => onStatusChange(person.id, 'Present')}
           disabled={disabled}
         />

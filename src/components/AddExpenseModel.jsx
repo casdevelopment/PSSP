@@ -19,6 +19,7 @@ import { theme } from '../theme/theme';
 import { useAuthStore } from '../store/AuthStore';
 import { getAccountHeadList, saveExpenseList } from '../network/apis';
 import CalendarPickerModal from './CalendarPickerModal';
+import SecondaryButton from './SecondaryButton';
 
 export default function AddExpenseModel({ visible, onClose, onSuccess }) {
     const insets = useSafeAreaInsets();
@@ -287,13 +288,13 @@ export default function AddExpenseModel({ visible, onClose, onSuccess }) {
                         </ScrollView>
 
                         <View style={styles.modelActions}>
-                            <TouchableOpacity
-                                style={styles.cancelBtn}
+                            <SecondaryButton
+                                title="Cancel"
                                 onPress={handleClose}
                                 disabled={isSubmitting}
-                            >
-                                <Text style={styles.cancelBtnText}>Cancel</Text>
-                            </TouchableOpacity>
+                                variant="cancel"
+                                style={{ marginRight: 8 }}
+                            />
 
                             <TouchableOpacity
                                 style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}

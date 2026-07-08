@@ -125,19 +125,19 @@ const Dashboard = () => {
         },
         {
           title: 'Total Staff',
-          value: String(dashboardData.totalStaff ?? dashboardData.staffCount ?? 0),
+          value: String(dashboardData.totalEmployeeSchoolsEmployee ?? 0),
           iconName: 'users',
           gradient: theme.gradients.green,
         },
         {
           title: 'Monthly Salary',
-          value: `Rs. ${(dashboardData.monthlySalary ?? dashboardData.currentSalary ?? 0).toLocaleString()}`,
+          value: `Rs. ${(dashboardData.totalEmployeesCurrentSalary ?? 0).toLocaleString()}`,
           iconName: 'credit-card',
           gradient: theme.gradients.purple,
         },
         {
-          title: 'Pending Requests',
-          value: String(dashboardData.pendingRequests ?? dashboardData.totalPendingRequests ?? 0),
+          title: '',
+          value: String(dashboardData.totalPendingExpenseAndLeave ?? 0),
           iconName: 'clock',
           gradient: theme.gradients.orange,
         },
@@ -147,13 +147,13 @@ const Dashboard = () => {
       return [
         {
           title: 'Total Staff',
-          value: String(dashboardData.totalStaff ?? dashboardData.staffCount ?? 0),
+          value: String(dashboardData.totalEmployee ?? 0),
           iconName: 'users',
           gradient: theme.gradients.blue,
         },
         {
           title: 'Students',
-          value: String(dashboardData.totalStudents ?? dashboardData.studentsCount ?? 0),
+          value: String(dashboardData.totalStudents ?? 0),
           iconName: 'users',
           gradient: theme.gradients.green,
         },
@@ -165,7 +165,7 @@ const Dashboard = () => {
         },
         {
           title: 'Leave Requests',
-          value: String(dashboardData.leaveRequests ?? dashboardData.totalLeaveRequests ?? dashboardData.pendingLeaveRequests ?? 0),
+          value: String(dashboardData.totalPendingLeaveApprovals ?? 0),
           iconName: 'alert-circle',
           gradient: theme.gradients.orange,
         },
@@ -243,9 +243,7 @@ const Dashboard = () => {
                 </View>
               </View>
 
-              {(role === 'coordinator') ? (
-                <RecentSchools />
-              ) : (
+              {(role === 'principal' || role === 'staff') && (
                 <TodaySchedule />
               )}
 
@@ -291,6 +289,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
+    marginBottom: 16,
     borderColor: theme.colors.borderSubtle,
   },
   sectionHeader: {

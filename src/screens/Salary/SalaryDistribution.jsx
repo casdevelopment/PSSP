@@ -11,11 +11,12 @@ import {
   Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import { useAuthStore } from '../../store/AuthStore';
+import SearchFilter from '../../components/SearchFilter';
 import {
   getEmployeeSalaryStatusBySchool,
   getEmployeeSchoolDashboardDetails,
@@ -60,6 +61,7 @@ export default function SalaryDistribution() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [payingId, setPayingId] = useState(null); // tracking paying state for individual items
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -147,8 +149,19 @@ export default function SalaryDistribution() {
       filteredData = [...data]; // School summaries are constant
     } else {
       // Principal shows paid/acknowledged staff records in history tab
-      filteredData = data.filter(d => d.salaryStatus?.toLowerCase() === 'paid' || d.salaryStatus?.toLowerCase() === 'acknowledged');
+      filteredData = data.filter(d => d.salaryStatus?.toLowerCase() === 'paid' || d.salaryStatus?.toLowerCase() === 'acknowledge');
     }
+  }
+
+  // Apply search query filter
+  if (searchQuery) {
+    filteredData = filteredData.filter((item) => {
+      if (role === 'coordinator') {
+        return item.schoolName?.toLowerCase().includes(searchQuery.toLowerCase());
+      } else {
+        return item.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+    });
   }
 
   if (loading && !refreshing) {
@@ -181,6 +194,13 @@ export default function SalaryDistribution() {
           />
         </View>
 
+        {/* Search Bar */}
+        <SearchFilter
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={role === 'coordinator' ? "Search school..." : "Search staff..."}
+        />
+
         {/* Tabs */}
         {/* <View style={styles.tabsRow}>
           <TouchableOpacity 
@@ -206,7 +226,7 @@ export default function SalaryDistribution() {
           {filteredData.length === 0 ? (
             <View style={styles.recordCard}>
               <Text style={{ textAlign: 'center', color: theme.colors.textMuted }}>
-                No records found.
+                {searchQuery ? 'No matching records found.' : 'No records found.'}
               </Text>
             </View>
           ) : (
@@ -262,7 +282,7 @@ export default function SalaryDistribution() {
                 );
               } else {
                 // Principal View (Staff Salaries)
-                const isPaid = item.salaryStatus?.toLowerCase() === 'paid' || item.salaryStatus?.toLowerCase() === 'acknowledged';
+                const isPaid = item.salaryStatus?.toLowerCase() === 'paid' || item.salaryStatus?.toLowerCase() === 'acknowledge';
                 const formattedPaymentDate = formatSalaryDate(item.salaryStatusChangeDate);
 
                 return (

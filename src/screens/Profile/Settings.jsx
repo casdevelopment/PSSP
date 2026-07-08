@@ -47,7 +47,7 @@ export default function Settings() {
       <View style={styles.OptionsContainer}>
 
         {/* Notifications */}
-        <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('Notifications')}>
+        {/* <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('Notifications')}>
           <View style={styles.menuItemLeft}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
               <Icon name="bell" size={20} color={theme.colors.linkPrimary} />
@@ -55,7 +55,7 @@ export default function Settings() {
             <Text style={styles.menuItemText}>Notifications</Text>
           </View>
           <Icon name="chevron-right" size={20} color={theme.colors.textMutedAlt} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Change Password */}
         <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('ChangePassword')}>
@@ -69,7 +69,7 @@ export default function Settings() {
         </TouchableOpacity>
 
         {/* Help Center */}
-        <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('HelpCenter')}>
+        {/* <TouchableOpacity style={styles.menuItemCard} activeOpacity={0.8} onPress={() => navigation.navigate('HelpCenter')}>
           <View style={styles.menuItemLeft}>
             <View style={[styles.iconCircle, { backgroundColor: theme.colors.blueSurface }]}>
               <Icon name="help-circle" size={20} color={theme.colors.linkPrimary} />
@@ -77,7 +77,7 @@ export default function Settings() {
             <Text style={styles.menuItemText}>Help Center</Text>
           </View>
           <Icon name="chevron-right" size={20} color={theme.colors.textMutedAlt} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
       </View>
     </View>

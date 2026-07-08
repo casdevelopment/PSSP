@@ -7,6 +7,7 @@ import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
 import AttendanceCard from '../../components/AttendanceCard';
 import { useAuthStore } from '../../store/AuthStore';
+import SearchFilter from '../../components/SearchFilter';
 
 import { getEmpAssignGradeList, getGradesByClasses, getClassesBySection, getStudentForAttendance, markStudentsAttendance, getHRShift, getEmployeesShift, markEmployeeAttendance } from '../../network/apis';
 import { saveApiCache, getApiCache, checkOfflineSubmission, saveOfflineAttendance, markCachedAttendanceAsSubmitted } from '../../utils/db';
@@ -31,6 +32,7 @@ export default function Attendance() {
   const isStudent = type === 'student';
 
   const [data, setData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Trigger sync on mount
   useEffect(() => {
@@ -140,6 +142,7 @@ export default function Attendance() {
     if (isStudent && schoolId && selectedClass && selectedSection) {
       setIsLoadingStudents(true);
       setIsSubmitted(false);
+      setSearchQuery('');
       const payload = {
         schoolId: Number(schoolId) || 0,
         sectionId: Number(selectedSection.sectionId) || 0,
@@ -267,6 +270,7 @@ export default function Attendance() {
     if (!isStudent && schoolId && selectedShift) {
       setIsLoadingStaff(true);
       setIsSubmitted(false);
+      setSearchQuery('');
 
       const cacheKey = `getEmployeesShift_${selectedShift.id}_${schoolId}`;
       getEmployeesShift(currentDateFormatted, selectedShift.id, schoolId)
@@ -296,7 +300,7 @@ export default function Attendance() {
               };
             });
             setData(mapped);
-            
+
             const allSaved = mapped.length > 0 && mapped.every(s => s.status !== null);
             const anyMarked = mapped.some(s => s.rawItem?.attendanceColorStatus === 'marked');
             setIsSubmitted(allSaved || anyMarked);
@@ -371,6 +375,10 @@ export default function Attendance() {
 
   const markedCount = data.filter(s => s.status !== null).length;
   const isSubmitActive = markedCount === data.length && data.length > 0;
+
+  const filteredData = data.filter(person =>
+    person.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const submitStudentAttendance = async () => {
     // Build API Request Body
@@ -542,8 +550,13 @@ export default function Attendance() {
 
     if (isStudent) {
       await submitStudentAttendance();
+      setSelectedGrade(null)
+      setSelectedClass(null)
+      setSelectedSection(null)
     } else {
       await submitStaffAttendance();
+      setSelectedShift(null)
+
     }
   };
 
@@ -641,18 +654,32 @@ export default function Attendance() {
           </View>
         )}
 
+        {!isLoadingStudents && !isLoadingStaff && data.length > 0 && (
+          <SearchFilter
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={isStudent ? "Search student..." : "Search staff..."}
+          />
+        )}
+
         {(isLoadingStudents || isLoadingStaff) ? (
           <ActivityIndicator size="large" color={theme.colors.purple} style={{ marginTop: 40 }} />
         ) : (
           <View style={styles.listContainer}>
-            {data.map((person) => (
-              <AttendanceCard
-                key={person.id}
-                person={person}
-                onStatusChange={handleStatusChange}
-                disabled={isSubmitted || person.rawItem?.attendanceColorStatus === 'marked'}
-              />
-            ))}
+            {filteredData.length === 0 ? (
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
+                <Text style={{ fontSize: 16, color: theme.colors.textMuted }}>No record found.</Text>
+              </View>
+            ) : (
+              filteredData.map((person) => (
+                <AttendanceCard
+                  key={person.id}
+                  person={person}
+                  onStatusChange={handleStatusChange}
+                  disabled={isSubmitted || person.rawItem?.attendanceColorStatus === 'marked'}
+                />
+              ))
+            )}
           </View>
         )}
 

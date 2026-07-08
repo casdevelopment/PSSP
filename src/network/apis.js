@@ -559,6 +559,17 @@ export const deleteExpense = async (payload) => {
   }
 };
 
+export const rejectStaffAndPrincipalLeaveRequest = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/EP/RejectedStaffAndPrincipalLeave', payload);
+    return response?.data;
+  } catch (error) {
+    console.error('Reject staff and principal leave request error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 
 
 

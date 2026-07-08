@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
+import SecondaryButton from './SecondaryButton';
 
 export default function AddScheduleModal({ visible, onClose }) {
     const insets = useSafeAreaInsets();
@@ -121,12 +122,12 @@ export default function AddScheduleModal({ visible, onClose }) {
                     </ScrollView>
 
                     <View style={styles.modelActions}>
-                        <TouchableOpacity
-                            style={styles.cancelBtn}
+                        <SecondaryButton
+                            title="Cancel"
                             onPress={onClose}
-                        >
-                            <Text style={styles.cancelBtnText}>Cancel</Text>
-                        </TouchableOpacity>
+                            variant="cancel"
+                            style={{ marginRight: 8 }}
+                        />
 
                         <TouchableOpacity
                             style={styles.submitBtn}

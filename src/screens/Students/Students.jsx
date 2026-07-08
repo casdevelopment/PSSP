@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
@@ -9,24 +9,26 @@ import { getEmpAssignGradeList, getGradesByClasses, getEmployeeAssignedClassesSt
 
 // Components
 import HeroCard from '../../components/HeroCard';
+import SearchFilter from '../../components/SearchFilter';
 
 export default function Students() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  
+
   const empId = useAuthStore((state) => state.empId);
   const schoolId = useAuthStore((state) => state.schoolId);
 
   const [gradesList, setGradesList] = useState([]);
   const [classesList, setClassesList] = useState([]);
-  
+
   const [selectedGrade, setSelectedGrade] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
-  
+
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
-  
+
   const [students, setStudents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // 1. Fetch Grades on mount
@@ -61,6 +63,7 @@ export default function Students() {
 
   // 3. Fetch Students when selectedClass changes
   useEffect(() => {
+    setSearchQuery('');
     if (schoolId && empId && selectedClass) {
       setIsLoading(true);
       getEmployeeAssignedClassesStudents(schoolId, empId, selectedClass.classId)
@@ -81,7 +84,19 @@ export default function Students() {
     }
   }, [schoolId, empId, selectedClass]);
 
-  const renderHeader = () => (
+  // Filter students based on search query
+  const filteredStudents = students.filter(student => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    const nameMatch = student.studentName?.toLowerCase().includes(query);
+    const rollMatch = student.rollNumber ? String(student.rollNumber).toLowerCase().includes(query) : false;
+    const fatherMatch = student.fatherName?.toLowerCase().includes(query);
+
+    return nameMatch || rollMatch || fatherMatch;
+  });
+
+  const headerElement = (
     <View>
       <HeroCard
         topLabel="Total Students"
@@ -126,8 +141,16 @@ export default function Students() {
         </View>
       </View>
 
+      {!isLoading && selectedClass && students.length > 0 && (
+        <SearchFilter
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search students..."
+        />
+      )}
+
       {isLoading && (
-        <ActivityIndicator size="large" color={theme.colors.linkPrimary} style={{ marginTop: 40, marginBottom: 20 }} />
+        <ActivityIndicator size="large" color={theme.colors.linkPrimary} style={styles.loader} />
       )}
 
       {!isLoading && students.length === 0 && (
@@ -143,8 +166,8 @@ export default function Students() {
   );
 
   const renderStudentItem = ({ item: student }) => (
-    <View style={{ paddingHorizontal: 16 }}>
-      <TouchableOpacity 
+    <View style={styles.studentCardWrapper}>
+      <TouchableOpacity
         style={styles.studentCard}
         activeOpacity={0.7}
         onPress={() => navigation.navigate('StudentDetail', { student })}
@@ -179,10 +202,21 @@ export default function Students() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={isLoading ? [] : students}
+        data={isLoading ? [] : filteredStudents}
         renderItem={renderStudentItem}
         keyExtractor={(item) => String(item.studentId)}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={headerElement}
+        ListEmptyComponent={
+          (!isLoading && students.length > 0 && filteredStudents.length === 0) ? (
+            <View style={styles.centered}>
+              <Icon name="search" size={48} color={theme.colors.textMuted} style={styles.emptyIcon} />
+              <Text style={styles.emptyText}>No matches found</Text>
+              <Text style={styles.emptySubtitle}>
+                We couldn't find any student matching "{searchQuery}"
+              </Text>
+            </View>
+          ) : null
+        }
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       />
@@ -403,5 +437,12 @@ const styles = StyleSheet.create({
   modalItemTextSelected: {
     color: theme.colors.linkPrimary,
     fontWeight: 'bold',
+  },
+  studentCardWrapper: {
+    paddingHorizontal: 16,
+  },
+  loader: {
+    marginTop: 40,
+    marginBottom: 20,
   },
 });
