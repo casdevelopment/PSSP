@@ -137,7 +137,7 @@ const Dashboard = () => {
         },
         {
           title: 'Pending Expense Requests',
-          value: String(dashboardData.totalPendingExpenseRequests ?? 0),
+          value: String(dashboardData.totalPendingExpenseAndLeave ?? 0),
           iconName: 'clock',
           gradient: theme.gradients.orange,
         },
