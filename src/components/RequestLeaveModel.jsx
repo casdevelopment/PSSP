@@ -22,7 +22,7 @@ import SecondaryButton from './SecondaryButton';
 import CalendarPickerModal from './CalendarPickerModal';
 import { useLeaveStore } from '../store/LeaveStore';
 
-export default function RequestLeaveModel({ visible, onClose }) {
+export default function RequestLeaveModel({ visible, onClose, onSuccess }) {
     const insets = useSafeAreaInsets();
 
 
@@ -84,8 +84,15 @@ export default function RequestLeaveModel({ visible, onClose }) {
 
             const res = await applyLeave(payload);
             if (res && res.success !== false) {
-                Alert.alert('Success', 'Leave requested successfully');
-                handleClose();
+                Alert.alert('Success', 'Leave requested successfully', [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            if (onSuccess) onSuccess();
+                            handleClose();
+                        }
+                    }
+                ]);
             } else {
                 Alert.alert('Request Failed', 'You have exceeded allowed leaves per month.');
             }

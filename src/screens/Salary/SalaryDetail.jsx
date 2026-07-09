@@ -5,8 +5,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/AuthStore';
-import { getEmployeeSalaryDetails, updateSalaryAcknowledgement } from '../../network/apis';
-import SalaryNotPaidModal from '../../components/SalaryNotPaidModal';
+import { getEmployeeSalaryDetails, updateSalaryAcknowledgement, saveSalaryNotAcknowledgement } from '../../network/apis';
+import RejectModal from '../../components/RejectModal';
+import SecondaryButton from '../../components/SecondaryButton';
 
 export default function SalaryDetail() {
     const insets = useSafeAreaInsets();
@@ -59,6 +60,40 @@ export default function SalaryDetail() {
         } catch (error) {
             console.error('Acknowledgement error:', error);
             Alert.alert('Error', 'An error occurred while acknowledging salary.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleReportNotPaid = async (remarksText) => {
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            const payload = {
+                empId: Number(empId) || 0,
+                registerId: Number(registerMasterId) || 0,
+                remarks: remarksText.trim(),
+            };
+
+            const res = await saveSalaryNotAcknowledgement(payload);
+            if (res && res.success) {
+                Alert.alert('Success', 'Remarks submitted successfully.', [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            setSalaryStatus('Not Paid');
+                            setIsNotPaidModalVisible(false);
+                            navigation.goBack();
+                        }
+                    }
+                ]);
+            } else {
+                Alert.alert('Error', res?.message || 'Failed to submit remarks.');
+            }
+        } catch (error) {
+            console.error('Submit remarks error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to submit remarks.';
+            Alert.alert('Error', errorMsg);
         } finally {
             setSubmitting(false);
         }
@@ -173,30 +208,24 @@ export default function SalaryDetail() {
                 {/* Conditional Acknowledgment Action Buttons */}
                 {isStatusPaid && (
                     <>
-                        <TouchableOpacity
-                            style={[styles.primaryBtn, { marginBottom: 12 }]}
-                            activeOpacity={0.8}
+                        <SecondaryButton
+                            title="Acknowledge Receipt"
                             onPress={handleAcknowledge}
+                            variant="success"
+                            icon="check-circle"
                             disabled={submitting}
-                        >
-                            {submitting ? (
-                                <ActivityIndicator color={theme.colors.white} />
-                            ) : (
-                                <>
-                                    <Icon name="check-circle" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
-                                    <Text style={styles.primaryBtnText}>Acknowledge Receipt</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
+                            loading={submitting}
+                            style={styles.actionBtn}
+                        />
 
-                        <TouchableOpacity
-                            style={[styles.outlineBtnDanger, { marginBottom: 16 }]}
-                            activeOpacity={0.8}
+                        <SecondaryButton
+                            title="Salary Not Paid"
                             onPress={() => setIsNotPaidModalVisible(true)}
-                        >
-                            <Icon name="x-circle" size={18} color={theme.colors.dangerStrong || '#DC2626'} style={{ marginRight: 8 }} />
-                            <Text style={styles.outlineBtnDangerText}>Salary Not Paid</Text>
-                        </TouchableOpacity>
+                            variant="danger"
+                            icon="x-circle"
+                            disabled={submitting}
+                            style={styles.actionBtnDanger}
+                        />
                     </>
                 )}
 
@@ -245,14 +274,14 @@ export default function SalaryDetail() {
 
             </ScrollView>
 
-            <SalaryNotPaidModal
+            <RejectModal
                 visible={isNotPaidModalVisible}
                 onClose={() => setIsNotPaidModalVisible(false)}
-                empId={empId}
-                registerId={registerMasterId}
-                onSuccess={() => {
-                    navigation.goBack();
-                }}
+                onConfirm={handleReportNotPaid}
+                title="Report Salary Not Paid"
+                subtitle="Please enter remarks/comments describing the issue."
+                placeholder="Describe the issue (e.g., salary not credited, incorrect amount, etc.)"
+                isOperating={submitting}
             />
         </View>
     );
@@ -424,47 +453,14 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: theme.colors.successStrong,
     },
-    primaryBtn: {
-        flexDirection: 'row',
-        backgroundColor: theme.colors.successStrong,
-        paddingVertical: 18,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
+    actionBtn: {
+        flex: 0,
+        width: '100%',
+        marginBottom: 12,
     },
-    primaryBtnText: {
-        color: theme.colors.white,
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    outlineBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.colors.white,
-        borderWidth: 1,
-        borderColor: theme.colors.borderSubtle,
-        borderRadius: 14,
-        paddingVertical: 18,
-    },
-    outlineBtnText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: theme.colors.textHeading,
-    },
-    outlineBtnDanger: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.colors.white,
-        borderWidth: 1,
-        borderColor: theme.colors.dangerStrong || '#DC2626',
-        borderRadius: 14,
-        paddingVertical: 18,
-    },
-    outlineBtnDangerText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: theme.colors.dangerStrong || '#DC2626',
+    actionBtnDanger: {
+        flex: 0,
+        width: '100%',
+        marginBottom: 16,
     },
 });

@@ -3,16 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Modal,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
+import SecondaryButton from './SecondaryButton';
 
 export default function RejectModal({
   visible,
@@ -73,28 +72,20 @@ export default function RejectModal({
           />
 
           <View style={styles.modalButtonsRow}>
-            <TouchableOpacity
-              style={styles.modalCancelBtn}
+            <SecondaryButton
+              title="Cancel"
               onPress={handleClose}
               disabled={isOperating}
-            >
-              <Text style={styles.modalCancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
+              variant="cancel"
+            />
 
-            <TouchableOpacity
-              style={[
-                styles.modalConfirmBtn,
-                (!remarks.trim() || isOperating) && styles.modalConfirmBtnDisabled
-              ]}
-              disabled={!remarks.trim() || isOperating}
+            <SecondaryButton
+              title="Reject"
               onPress={handleConfirm}
-            >
-              {isOperating ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <Text style={styles.modalConfirmBtnText}>Reject</Text>
-              )}
-            </TouchableOpacity>
+              disabled={!remarks.trim() || isOperating}
+              loading={isOperating}
+              variant="danger"
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -145,36 +136,7 @@ const styles = StyleSheet.create({
   },
   modalButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: 12,
-  },
-  modalCancelBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: theme.colors.textMuted || '#9CA3AF',
-  },
-  modalConfirmBtn: {
-    backgroundColor: theme.colors.dangerStrong || '#DC2626',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 90,
-  },
-  modalConfirmBtnDisabled: {
-    opacity: 0.5,
-  },
-  modalConfirmBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFF',
   },
 });

@@ -396,12 +396,11 @@ export default function LeaveDetail() {
                             loading={isRejecting}
                         />
 
-                        <PrimaryButton
+                        <SecondaryButton
                             title="Approve"
                             onPress={handleApprove}
                             loading={isApproving}
-                            showChevron={false}
-                            style={styles.primaryApproveButton}
+                            variant="success"
                         />
                     </View>
                 )}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { theme } from '../../theme/theme';
 import HeroCard from '../../components/HeroCard';
@@ -38,11 +38,13 @@ export default function MySalary() {
     }
   }, [empId]);
 
-  useEffect(() => {
-    if (empId) {
-      fetchData();
-    }
-  }, [empId, fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      if (empId) {
+        fetchData();
+      }
+    }, [empId, fetchData])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);

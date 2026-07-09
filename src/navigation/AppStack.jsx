@@ -10,7 +10,6 @@ import LeaveRequestsManagement from '../screens/Leave/LeaveRequestsManagement';
 import LeaveDetail from '../screens/Leave/LeaveDetail';
 import { useAuthStore } from '../store/AuthStore';
 import HeaderPlusButton from '../components/HeaderPlusButton';
-import RequestLeaveModel from '../components/RequestLeaveModel';
 import StudentDetail from '../screens/Students/StudentDetail';
 import StaffDetail from '../screens/staff/StaffDetails';
 import SalaryHistory from '../screens/Salary/SalaryHistory';
@@ -36,8 +35,6 @@ const Stack = createNativeStackNavigator();
 export default function AppStack() {
     const role = useAuthStore((state) => state.userType);
 
-    const [isLeavemodelVisible, setIsLeavemodelVisible] = useState(false);
-
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.appBackground }}>
             <Stack.Navigator initialRouteName='MainTabs'>
@@ -53,11 +50,6 @@ export default function AppStack() {
                             fontSize: 20,
                             fontWeight: '600',
                         },
-                        headerRight: () => (
-                            (role === 'principal' || role === 'staff') ? (
-                                <HeaderPlusButton onPress={() => setIsLeavemodelVisible(true)} />
-                            ) : null
-                        )
                     }}
                 />
 
@@ -136,10 +128,6 @@ export default function AppStack() {
                 <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }} />
             </Stack.Navigator>
 
-            <RequestLeaveModel
-                visible={isLeavemodelVisible}
-                onClose={() => setIsLeavemodelVisible(false)}
-            />
         </View>
     );
 }

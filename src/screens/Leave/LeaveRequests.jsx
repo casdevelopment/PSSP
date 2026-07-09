@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,8 @@ import { getEmpAllLeaveListHistory } from '../../network/apis';
 import { useLeaveStore } from '../../store/LeaveStore';
 import LeaveBalances from '../../components/LeaveBalances';
 import HeroCard from '../../components/HeroCard';
+import HeaderPlusButton from '../../components/HeaderPlusButton';
+import RequestLeaveModel from '../../components/RequestLeaveModel';
 
 export const LEAVE_REQUESTS = [];
 
@@ -35,6 +37,7 @@ const formatDate = (dateStr) => {
 export default function LeaveRequests() {
     const navigation = useNavigation();
     const empId = useAuthStore((state) => state.empId);
+    const role = useAuthStore((state) => state.userType);
 
     const leaveBalances = useLeaveStore((state) => state.leaveBalances);
 
@@ -42,6 +45,17 @@ export default function LeaveRequests() {
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const [isLeaveModelVisible, setIsLeaveModelVisible] = useState(false);
+
+    useEffect(() => {
+        if (role === 'principal' || role === 'staff') {
+            navigation.setOptions({
+                headerRight: () => (
+                    <HeaderPlusButton onPress={() => setIsLeaveModelVisible(true)} />
+                ),
+            });
+        }
+    }, [navigation, role]);
 
     const fetchLeaveData = useCallback(async (showLoader = true) => {
         if (!empId) return;
@@ -187,6 +201,12 @@ export default function LeaveRequests() {
                     ))}
                 </View>
             </ScrollView>
+
+            <RequestLeaveModel
+                visible={isLeaveModelVisible}
+                onClose={() => setIsLeaveModelVisible(false)}
+                onSuccess={() => fetchLeaveData(true)}
+            />
         </View>
     );
 }
