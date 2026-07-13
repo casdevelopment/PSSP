@@ -137,7 +137,7 @@ export default function Login() {
             />
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
+            {/* <View style={styles.dividerContainer}>
               <View style={styles.divider} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.divider} />
@@ -145,16 +145,16 @@ export default function Login() {
 
             <TouchableOpacity style={styles.faceIdBtn}>
               <Text style={styles.faceIdBtnText}>Sign in with Face ID</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          {/* <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity>
               <Text style={styles.contactAdminText}>Contact Admin</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
 
