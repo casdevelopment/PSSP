@@ -260,11 +260,11 @@ export default function SalaryDistribution() {
                         <Text style={styles.staffName}>{item.schoolName}</Text>
                         <Text style={styles.staffSubject}>Principal: {item.principalName || 'Not Assigned'}</Text>
                       </View>
-                      <View style={[styles.statusBadge, { backgroundColor: theme.colors.blueSurface }]}>
+                      {/* <View style={[styles.statusBadge, { backgroundColor: theme.colors.blueSurface }]}>
                         <Text style={[styles.statusBadgeText, { color: theme.colors.linkPrimary }]}>
                           Active
                         </Text>
-                      </View>
+                      </View> */}
                     </View>
 
                     <View style={styles.cardBottom}>
