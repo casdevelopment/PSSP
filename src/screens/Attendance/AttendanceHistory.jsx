@@ -263,7 +263,6 @@ export default function AttendanceHistory() {
                                             <Icon name="calendar" size={18} color={theme.colors.linkPrimary} />
                                             <View style={styles.dateTextContainer}>
                                                 <Text style={styles.dateText}>{item.date}</Text>
-                                                {item.subtitle && <Text style={styles.dateSubtitle}>{item.subtitle}</Text>}
                                             </View>
                                         </View>
                                         <View style={[styles.percentBadge, { backgroundColor: percentStyle.bg }]}>
@@ -272,6 +271,7 @@ export default function AttendanceHistory() {
                                             </Text>
                                         </View>
                                     </View>
+                                    {item.subtitle && <Text style={styles.dateSubtitle}>{item.subtitle}</Text>}
 
                                     <View style={styles.historyChipsRow}>
                                         <StatChip value={item.present} label="Present" type="present" />
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginBottom: 4,
     },
     dateContainer: {
         flexDirection: 'row',
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     dateSubtitle: {
         fontSize: 14,
         color: theme.colors.textMuted,
-        marginTop: 2,
+        marginBottom: 12,
     },
     percentBadge: {
         paddingHorizontal: 10,
